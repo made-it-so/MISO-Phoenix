@@ -4,4 +4,4 @@ python-dotenv
 httpx
 langchain-text-splitters
 pydantic
-python-multipartpython-multipart
+python-multipart
