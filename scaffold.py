@@ -1,4 +1,88 @@
 import os
+from pathlib import Path
+
+# This script builds the entire MISO project structure and files.
+# It is the single source of truth for the project's foundation.
+
+# --- Project Structure and File Contents ---
+# The keys are the file paths, and the values are the file contents.
+PROJECT_FILES = {
+    "docker-compose.yml": """
+version: '3.8'
+
+services:
+  nginx:
+    image: miso-10-8-2025-nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8888:80"
+    networks:
+      - miso-net
+    depends_on:
+      - backend
+
+  backend:
+    image: miso-10-8-2025-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    networks:
+      - miso-net
+    environment:
+      - CHROMA_HOST=chromadb
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      chromadb:
+        condition: service_healthy
+
+  chromadb:
+    image: ghcr.io/chroma-core/chroma:0.5.0
+    networks:
+      - miso-net
+    volumes:
+      - chroma_data:/chroma/chroma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama
+    networks:
+      - miso-net
+    volumes:
+      - ollama_data:/root/.ollama
+
+networks:
+  miso-net:
+    driver: bridge
+
+volumes:
+  chroma_data:
+    driver: local
+  ollama_data:
+    driver: local
+""",
+    "backend/Dockerfile": """
+FROM python:3.11-slim
+WORKDIR /app
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+""",
+    "backend/requirements.txt": """
+fastapi
+uvicorn
+python-dotenv
+httpx
+langchain-text-splitters
+pydantic
+""",
+    "backend/main.py": """
+import os
 import httpx
 import logging
 import time
@@ -78,8 +162,8 @@ async def chat_with_collection(request: ChatRequest):
             query_response.raise_for_status()
             results = query_response.json()
             context_chunks = results.get("documents", [[]])[0]
-        context_str = "\n\n".join(context_chunks)
-        prompt = f"Based ONLY on the following context, provide a concise answer to the user's question.\n\nContext:\n{context_str}\n\nQuestion: {request.query}"
+        context_str = "\\n\\n".join(context_chunks)
+        prompt = f"Based ONLY on the following context, provide a concise answer to the user's question.\\n\\nContext:\\n{context_str}\\n\\nQuestion: {request.query}"
         async with httpx.AsyncClient(timeout=120.0) as client:
             generation_response = await client.post(f"{OLLAMA_BASE_URL}/api/generate", json={"model": request.model_name, "prompt": prompt, "stream": False})
             generation_response.raise_for_status()
@@ -87,3 +171,42 @@ async def chat_with_collection(request: ChatRequest):
         return {"answer": answer.strip(), "sources": context_chunks, "processing_time_seconds": round(time.time() - start_time, 2)}
     except Exception as e:
         logger.error(f"Chat failed: {e}"); return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=str(e))
+""",
+    "nginx/Dockerfile": """
+FROM nginx:1.25-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+""",
+    "nginx/nginx.conf": """
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        proxy_pass http://backend:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+"""
+}
+
+def main():
+    """Main function to create the project structure."""
+    print("--- 🤖 Starting Project Scaffolding ---")
+    root = Path.cwd()
+    
+    for file_path, content in PROJECT_FILES.items():
+        full_path = root / file_path
+        # Ensure the parent directory exists
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        # Write the file content
+        full_path.write_text(content.strip())
+        print(f"✅ Created: {file_path}")
+        
+    print("--- 🎉 Scaffolding Complete! ---")
+    print("Run 'Get-ChildItem -Recurse' to verify the structure.")
+
+if __name__ == "__main__":
+    main()
