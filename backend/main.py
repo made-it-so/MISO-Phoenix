@@ -54,15 +54,15 @@ async def ingest_document(file: UploadFile = File(...), collection_name: str = F
         embeddings = []
         for chunk in chunks:
             async with httpx.AsyncClient(timeout=60.0) as client:
-                embedding_response = await client.post(f"{OLLAMA_BASE_URL}/api/embed", json={"model": "nomic-embed-text", "prompt": chunk})
+                # FINAL FIX: Switched to the 'all-minilm' model
+                embedding_response = await client.post(f"{OLLAMA_BASE_URL}/api/embed", json={"model": "all-minilm", "prompt": chunk})
                 embedding_response.raise_for_status()
                 response_json = embedding_response.json()
                 
-                # FINAL BUG FIX: Use the correct key 'embeddings' and get the first element.
-                if "embeddings" in response_json and len(response_json["embeddings"]) > 0:
-                    embeddings.append(response_json["embeddings"][0])
+                if "embedding" in response_json: # all-minilm uses the 'embedding' key (singular)
+                    embeddings.append(response_json["embedding"])
                 else:
-                    raise KeyError("Ollama API response did not return a valid embeddings list.")
+                    raise KeyError("Ollama API response did not return a valid embedding vector.")
 
         async with httpx.AsyncClient(timeout=60.0) as client:
             add_response = await client.post(
@@ -81,15 +81,15 @@ async def chat_with_collection(request: ChatRequest):
     start_time = time.time()
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
-            embedding_response = await client.post(f"{OLLAMA_BASE_URL}/api/embed", json={"model": "nomic-embed-text", "prompt": request.query})
+            # FINAL FIX: Switched to the 'all-minilm' model
+            embedding_response = await client.post(f"{OLLAMA_BASE_URL}/api/embed", json={"model": "all-minilm", "prompt": request.query})
             embedding_response.raise_for_status()
             response_json = embedding_response.json()
 
-            # FINAL BUG FIX: Use the correct key 'embeddings' and get the first element.
-            if "embeddings" in response_json and len(response_json["embeddings"]) > 0:
-                query_embedding = response_json["embeddings"][0]
+            if "embedding" in response_json: # all-minilm uses the 'embedding' key (singular)
+                query_embedding = response_json["embedding"]
             else:
-                raise KeyError("Ollama API response did not return a valid embeddings list for chat.")
+                raise KeyError("Ollama API response did not return a valid embedding vector for chat.")
         
         async with httpx.AsyncClient(timeout=60.0) as client:
             query_response = await client.post(
