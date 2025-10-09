@@ -48,7 +48,6 @@ async def ingest_document(file: UploadFile = File(...), collection_name: str = F
         chunks = text_splitter.split_text(text_content)
         
         async with httpx.AsyncClient() as client:
-            # BUG FIX 1: Corrected ChromaDB collection creation payload and added error checking.
             create_collection_response = await client.post(f"{CHROMA_URL}/api/v1/collections", json={"name": collection_name})
             create_collection_response.raise_for_status()
         
@@ -59,11 +58,12 @@ async def ingest_document(file: UploadFile = File(...), collection_name: str = F
                 embedding_response.raise_for_status()
                 response_json = embedding_response.json()
                 
-                # BUG FIX 2: Added defensive check for the 'embedding' key.
-                if "embedding" not in response_json:
-                    raise KeyError("Ollama API response did not contain 'embedding' key.")
-                embeddings.append(response_json["embedding"])
-        
+                # FINAL BUG FIX: Use the correct key 'embeddings' and get the first element.
+                if "embeddings" in response_json and len(response_json["embeddings"]) > 0:
+                    embeddings.append(response_json["embeddings"][0])
+                else:
+                    raise KeyError("Ollama API response did not return a valid embeddings list.")
+
         async with httpx.AsyncClient(timeout=60.0) as client:
             add_response = await client.post(
                 f"{CHROMA_URL}/api/v1/collections/{collection_name}/add",
@@ -73,7 +73,6 @@ async def ingest_document(file: UploadFile = File(...), collection_name: str = F
             
         return {"filename": file.filename, "collection_name": collection_name, "vectors_added": len(chunks), "processing_time_seconds": round(time.time() - start_time, 2)}
     except Exception as e:
-        # Improved error logging
         logger.error(f"Ingestion failed: {repr(e)}")
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=str(e))
 
@@ -86,10 +85,11 @@ async def chat_with_collection(request: ChatRequest):
             embedding_response.raise_for_status()
             response_json = embedding_response.json()
 
-            # BUG FIX 2: Added defensive check for the 'embedding' key.
-            if "embedding" not in response_json:
-                raise KeyError("Ollama API response did not contain 'embedding' key for chat.")
-            query_embedding = response_json["embedding"]
+            # FINAL BUG FIX: Use the correct key 'embeddings' and get the first element.
+            if "embeddings" in response_json and len(response_json["embeddings"]) > 0:
+                query_embedding = response_json["embeddings"][0]
+            else:
+                raise KeyError("Ollama API response did not return a valid embeddings list for chat.")
         
         async with httpx.AsyncClient(timeout=60.0) as client:
             query_response = await client.post(
@@ -110,6 +110,5 @@ async def chat_with_collection(request: ChatRequest):
         
         return {"answer": answer.strip(), "sources": context_chunks, "processing_time_seconds": round(time.time() - start_time, 2)}
     except Exception as e:
-        # Improved error logging
         logger.error(f"Chat failed: {repr(e)}")
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=str(e))
