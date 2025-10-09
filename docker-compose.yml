@@ -20,7 +20,7 @@ services:
       - miso-net
 
   chromadb:
-    image: ghcr.io/chroma-core/chroma:latest
+    image: ghcr.io/chroma-core/chroma:0.4.24 # <-- VERSION PINNED
     volumes:
       - chroma_data:/chroma
     ports:
@@ -29,7 +29,7 @@ services:
       - miso-net
 
   ollama:
-    image: ollama/ollama:latest # <-- THIS LINE IS UPDATED
+    image: ollama/ollama:latest
     volumes:
       - ollama_data:/root/.ollama
     ports:
