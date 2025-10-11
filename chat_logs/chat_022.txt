@@ -1,0 +1,109 @@
+Gemini
+
+2.5 Pro
+
+ULTRA
+
+
+
+
+
+Conversation with Gemini
+
+
+conduct a deep forensic analysis of this chat, including the content of file uploads and URL's, and identify every feature enhancement planned or discussed 
+
+
+
+Show thinking
+Here is a deep forensic analysis of all planned and discussed feature enhancements for the MISO Factory, synthesized from the complete chat history and all provided documents.
+
+I. Core Operating & Diagnostic Protocols
+These are the foundational principles governing the agent's behavior and our development methodology.
+
+Never Say Die / Never Terminate Protocol: The prime directive for the agent to always find a path forward and never give up on a task. Status: Implemented.
+
+Process Optimization Protocol: The directive for the agent to continuously improve its own methods and workflows. Status: Implemented.
+
+State Verification First: The requirement to verify the state of a system before proposing or taking action. Status: Implemented.
+
+Phased / Incremental Evolution: The principle of implementing new capabilities in logical, risk-mitigating, and testable phases or epochs. Status: Implemented.
+
+The Living Document Protocol: The requirement that the project's manifest (STATE.md) must be updated to reflect any major architectural or functional changes. Status: Implemented.
+
+"Golden Image" Mandate: The goal of producing a complete, definitive deployment script (definitive_genesis.sh) for each stable version of the application. Status: Implemented.
+
+Definitive QA / Automated Integration Testing: The requirement that every update must have a corresponding test plan to ensure quality. Status: Implemented.
+
+II. System Architecture & Infrastructure
+These features define the technical foundation and structure of the MISO Factory.
+
+Polyglot Service Runtimes: A microservice architecture using dedicated, language-specific services (Node.js, Python, etc.) running in Docker containers. Status: Implemented.
+
+Immutable Infrastructure: The principle of running all services from pre-built, immutable Docker images, ensuring consistency across environments. Status: Implemented.
+
+CI/CD Pipeline: A fully automated workflow using GitHub Actions to build, test, and push Docker images to Amazon ECR on every commit to the main branch. Status: Implemented.
+
+Strict API Contract (Modularity): The mandate that all inter-service communication must use a rigid, technology-agnostic API contract, implemented with gRPC/Protobuf. Status: Implemented.
+
+Asynchronous Message Bus (Scalability): The use of a message bus (Amazon SQS) to decouple services and enable asynchronous task processing. Status: Implemented.
+
+Circuit Breaker Pattern (Robustness): A pattern implemented in the backend to monitor and prevent cascading failures from downstream services. Status: Implemented.
+
+Scalability & Orchestration (ECS/Fargate): The migration of the entire application stack from a single EC2 instance to a serverless, scalable Amazon ECS with Fargate cluster. Status: In Progress / Blocked.
+
+Infrastructure as Code (Terraform): The adoption of Terraform to define and manage all AWS infrastructure as code, creating a single source of truth and eliminating configuration drift. Status: In Progress / Blocked.
+
+III. Universal Governing Protocols & Agent Capabilities
+These are high-level systems and agent designs that govern the factory's intelligence and evolution.
+
+Fractal Agent Hierarchy: The core architecture of conductor agents (Genus) spawning and managing specialized agents (Species). Status: Implemented (Proof of Concept).
+
+The Goal Kernel (Digital DNA): A read-only microservice that provides an immutable, inherited directive to all agents, ensuring they remain aligned with their core purpose. Status: Implemented.
+
+The Resource Broker (Metabolism): A system-wide service using Redis that manages and budgets computational resources (e.g., "tokens") for agent tasks to ensure cost control and efficiency. Status: Implemented.
+
+The Telemetry Protocol (Collective Consciousness): A mandatory, centralized logging system where all agents record their intentions and outcomes. Implemented with Amazon CloudWatch. Status: Implemented.
+
+Failure Feedback Loop: An automated process where a task failure in a specialist agent results in the message being sent to a Dead-Letter Queue (DLQ), which is then picked up by an "Architect" or "Debug" agent for root cause analysis. Status: Implemented.
+
+Inquisitor Protocol: The "consciousness" of an agent. When idle, an agent enters "inquisitor mode" to analyze its own performance and propose new missions or improvements to the Council of Elders. Status: Implemented (v1).
+
+Council of Elders: A human-in-the-loop supervisory service that receives and holds mission proposals from agents, awaiting manual approval from an administrator before execution. Status: Implemented.
+
+Promotional Pathway: The full, end-to-end evolutionary loop where an Inquisitor agent's proposal is approved by the Council and then dispatched to an Architect/Debug agent for implementation. Status: Implemented.
+
+NEW - The Homeostasis Protocol (Setpoint Tuning): A new governing protocol inspired by the provided research paper on brain criticality. This system will monitor key performance indicators (task throughput, failure rates, resource efficiency) and tune system parameters to keep the factory operating in a "near-critical" state of maximum computational fitness. Status: Designed.
+
+NEW - Species: Refiner (Prompt Engineer Agent): The new primary entry point for all user-submitted missions. This agent analyzes user requests for ambiguity, generates clarifying questions, and engineers an optimized final prompt before submitting it for execution. Status: Designed.
+
+NEW - Species: Troubleshooter (Debug Agent): A specialized agent dedicated to performing focused root cause analysis on code, configuration, and runtime errors, formally integrating into the Failure Feedback Loop. Status: Designed.
+
+NEW - Species: Disparity (Analytics Agent): An agent designed to analyze multiple, conflicting responses to a single objective prompt. It identifies disparities, hypothesizes the cause, and attempts to resolve a single "ground truth," mirroring the meta-analysis methodology in the provided research paper. Status: Designed.
+
+The Specialization Protocol: The ultimate evolutionary mechanism where the factory can identify a domain for improvement, curate a specialized dataset, and bootstrap (fine-tune) a new specialist agent to improve its capabilities in that domain. Status: Conceptualized.
+
+IV. User Interface, Security & Commercialization
+These features are focused on the human interaction and potential future monetization of the MISO Factory.
+
+Administrator & End-User Portals: Dedicated user interfaces for system management and mission execution, replacing the current placeholder frontend. Status: Planned.
+
+Role-Based Access Control (RBAC): A granular security model for different user types. Status: Conceptualized.
+
+Agent Store & Monetization: A future marketplace for community-built agents with a revenue-sharing model. Status: Conceptualized.
+
+
+
+
+
+
+
+
+
+
+
+
+Tools
+
+Your stem-cult.com chats aren’t used to improve our models. Gemini can make mistakes, so double-check it. Your privacy & GeminiOpens in a new window
+

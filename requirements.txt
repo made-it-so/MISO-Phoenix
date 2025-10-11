@@ -1,0 +1,7 @@
+requests
+langchain
+langchain-together
+langchain_pinecone
+langchain-text-splitters
+Flask
+gunicorn
