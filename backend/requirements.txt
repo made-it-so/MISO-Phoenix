@@ -1,8 +1,7 @@
-requests
-langchain
-langchain-community
-langchain-together
-langchain_pinecone
-langchain-text-splitters
 Flask
 gunicorn
+langchain
+langchain-community
+langchain_pinecone
+langchain-openai
+langchain-text-splitters
