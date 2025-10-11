@@ -1,7 +1,7 @@
-fastapi
-uvicorn
-python-dotenv
-httpx
+requests
+langchain
+langchain-together
+langchain_pinecone
 langchain-text-splitters
-pydantic
-python-multipart
+Flask
+gunicorn
