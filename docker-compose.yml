@@ -11,8 +11,12 @@ services:
   backend:
     build:
       context: ./backend
+    # --- THIS IS THE FIX ---
+    # This block tells Docker to load the .env file from the project root
+    # and make its variables available to the backend service.
     env_file:
       - .env
+    # -----------------------
     depends_on:
       - chromadb
 
