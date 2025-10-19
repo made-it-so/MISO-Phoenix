@@ -1,11 +1,9 @@
+celery
+chromadb
+langchain
 langchain-core
 langchain-openai
-langchain-google-genai
-langchain-anthropic
 pytest
-chromadb
+redis
 sentence-transformers
 setuptools
-black
-celery
-redis
