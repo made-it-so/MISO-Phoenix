@@ -1,6 +1,7 @@
 setup.py
 src/miso_engine/__init__.py
 src/miso_engine/adversaries.py
+src/miso_engine/agents.py
 src/miso_engine/archivist.py
 src/miso_engine/auditor.py
 src/miso_engine/economy.py
@@ -17,5 +18,4 @@ src/miso_engine/tools.py
 src/miso_engine.egg-info/PKG-INFO
 src/miso_engine.egg-info/SOURCES.txt
 src/miso_engine.egg-info/dependency_links.txt
-src/miso_engine.egg-info/requires.txt
 src/miso_engine.egg-info/top_level.txt

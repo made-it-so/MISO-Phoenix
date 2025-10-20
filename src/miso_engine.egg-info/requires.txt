@@ -1,9 +1,0 @@
-celery
-chromadb
-langchain
-langchain-core
-langchain-openai
-pytest
-redis
-sentence-transformers
-setuptools
