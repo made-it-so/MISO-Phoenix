@@ -13,7 +13,7 @@ def extract_json(text: str) -> dict | None:
     except json.JSONDecodeError: return None
 
 def execute_approved_project(bid: dict, agents: dict, agent_names: list):
-    """Executes milestones using the V31.13 Roster-Aware Orchestrator."""
+    """Executes milestones using the V33 Self-Provisioning Orchestrator."""
     project_root = Path(os.getcwd())
     project_name = bid.get("project_name", "miso_project")
     orchestrator = Orchestrator(
@@ -35,14 +35,7 @@ def execute_approved_project(bid: dict, agents: dict, agent_names: list):
             
             with orchestrator.sandbox() as sandbox_path:
                 roster_str = ", ".join(f"'{name}'" for name in agent_names)
-                architect_prompt = f"""--- TASK ---
-{task}
-
---- AVAILABLE SPECIALISTS ---
-{roster_str}
---- END AVAILABLE SPECIALISTS ---
-
-Based on the task and available specialists, design a JSON plan using the tool manifest from your persona."""
+                architect_prompt = f"""--- TASK ---\n{task}\n\n--- AVAILABLE SPECIALISTS ---\n{roster_str}\n--- END AVAILABLE SPECIALISTS ---\n\nBased on the task and available specialists, design a JSON plan using the tool manifest from your persona."""
 
                 briefing_str = agents['ArchitectAgent'].run(input=architect_prompt)
                 briefing = extract_json(briefing_str)
@@ -52,6 +45,7 @@ Based on the task and available specialists, design a JSON plan using the tool m
                     continue
 
                 if briefing['tool'] == 'read_file':
+                    # ... (This logic is unchanged from V32) ...
                     file_path_str = briefing.get("file_path")
                     analysis_task = briefing.get("analysis_task")
                     specialist_name = briefing.get("specialist_agent")
@@ -68,20 +62,15 @@ Based on the task and available specialists, design a JSON plan using the tool m
                         target_file = project_root / file_path_str
                         print(f"      Reading file: {target_file}")
                         file_contents = target_file.read_text()
-                        
                         specialist = agents[specialist_name]
                         print(f"      Delegating to {specialist_name} for analysis.")
-                        
                         analysis_prompt = f"""--- ANALYSIS TASK ---\n{analysis_task}\n\n--- FILE CONTENTS ---\n```\n{file_contents}\n```\n--- END FILE CONTENTS ---\n\nBased on your analysis, provide your response as a JSON object."""
-                        
                         analysis_result_str = specialist.run(input=analysis_prompt)
                         analysis_result = extract_json(analysis_result_str)
-                        
                         if analysis_result and "problem_statement" in analysis_result:
                             print(f"      ✅ ANALYSIS COMPLETE. New Problem Statement: \"{analysis_result['problem_statement']}\"")
                         else:
                             print("      ⚠️ Specialist agent failed to return a valid problem statement.")
-
                     except FileNotFoundError:
                         print(f"      ❌ File not found for analysis: {file_path_str}. Skipping task.")
                     except Exception as e:
@@ -90,27 +79,60 @@ Based on the task and available specialists, design a JSON plan using the tool m
                 elif briefing['tool'] == 'execute_shell':
                     command = briefing.get('command')
                     if not command:
-                        print(f"      ❌ Architect proposed an 'execute_shell' task but provided no command. Skipping task.")
+                        print("      ❌ Architect proposed an 'execute_shell' task but provided no command. Skipping task.")
                         continue
-                    try:
-                        print(f"      Tactician executing: `{command}`")
-                        # --- V31.13 CHANGE: Removed check=True for resilience ---
-                        result = subprocess.run(command, shell=True, cwd=orchestrator.workspace_root, capture_output=True, text=True)
-                        if result.returncode != 0:
-                             print(f"      ⚠️ Command finished with a non-zero exit code. STDERR: {result.stderr.strip()}")
-                        if result.stdout:
-                            print(f"      STDOUT: {result.stdout.strip()}")
-                        print(f"      ✅ Task complete.")
-                    except Exception as e:
-                        print(f"      ❌ Execution crashed with an exception: {e}. Skipping task.")
+                    
+                    # --- V33 SELF-PROVISIONING LOOP ---
+                    is_installed = False
+                    max_retries = 2
+                    for attempt in range(max_retries):
+                        if is_installed: break # Exit loop if installation was successful
+                        try:
+                            print(f"      Tactician executing (Attempt {attempt+1}/{max_retries}): `{command}`")
+                            cmd_env = os.environ.copy()
+                            cmd_env['MISO_ROOT'] = str(project_root)
+                            result = subprocess.run(command, shell=True, cwd=orchestrator.workspace_root, capture_output=True, text=True, env=cmd_env)
+                            
+                            if result.returncode == 0:
+                                if result.stdout: print(f"      STDOUT: {result.stdout.strip()}")
+                                is_installed = True # Command succeeded, no need to install
+                            else:
+                                missing_cmd_match = re.search(r"(\w+):\snot found", result.stderr)
+                                if missing_cmd_match:
+                                    missing_cmd = missing_cmd_match.group(1)
+                                    print(f"      ⚠️ Command '{missing_cmd}' not found. Delegating to ExecutionEngineerAgent.")
+                                    engineer = agents["ExecutionEngineerAgent"]
+                                    install_plan_str = engineer.run(input=missing_cmd)
+                                    install_plan = extract_json(install_plan_str)
+                                    if install_plan and install_plan.get("command"):
+                                        install_cmd = install_plan["command"]
+                                        print(f"      Engineer proposed installation: `{install_cmd}`. Executing...")
+                                        install_result = subprocess.run(install_cmd, shell=True, capture_output=True, text=True)
+                                        if install_result.returncode == 0:
+                                            print(f"      ✅ Installation successful.")
+                                            # On the next loop, the original command will be retried.
+                                        else:
+                                            print(f"      ❌ Installation failed. STDERR: {install_result.stderr.strip()}")
+                                            is_installed = True # Break loop, installation failed
+                                    else:
+                                        print("      ❌ Engineer failed to provide a valid installation command.")
+                                        is_installed = True # Break loop
+                                else:
+                                    print(f"      ⚠️ Command finished with a non-zero exit code. STDERR: {result.stderr.strip()}")
+                                    is_installed = True # Break loop, not a "not found" error
+                        except Exception as e:
+                            print(f"      ❌ Execution crashed with an exception: {e}. Skipping task.")
+                            break # Break on code crashes
+                    print(f"      ✅ Task complete.")
+                    # --- END V33 LOOP ---
                 else:
                     print(f"      ⚠️ Unknown tool '{briefing['tool']}'. Skipping task.")
             
     print("\n--- Project Execution Concluded ---")
 
 def run_bidding_system(problem_statement: str):
-    """Initializes and runs the MISO V31.13 system."""
-    print(f"🚀 MISO V31 Bidding System Initialized.") 
+    """Initializes and runs the MISO V33 system."""
+    print(f"🚀 MISO V33 Bidding System Initialized.")
     print(f"    Problem Statement: {problem_statement}")
 
     try:
@@ -124,7 +146,7 @@ def run_bidding_system(problem_statement: str):
         print("❌ CRITICAL: 'tool_kb.json' is corrupted. Halting.")
         return
 
-    agent_names = ["SolutionsArchitectAgent", "ArchitectAgent", "ProgrammerAgent", "WriterAgent", "AuditorGeneralAgent"]
+    agent_names = ["SolutionsArchitectAgent", "ArchitectAgent", "ProgrammerAgent", "WriterAgent", "AuditorGeneralAgent", "ExecutionEngineerAgent"]
     agents = { name: Agent(persona_name=name, tool_kb=tool_kb) for name in agent_names }
 
     print("\n--- Generating Project Bid ---")
@@ -149,7 +171,7 @@ def run_bidding_system(problem_statement: str):
         print("\n❌ Project Rejected by Operator. Halting.")
 
 if __name__ == "__main__":
-    print("🚀 MISO V31.13 Interactive Shell Initialized.")
+    print("🚀 MISO V33 Interactive Shell Initialized.")
     print("   Enter a problem statement for the MISO council or 'exit' to quit.")
     while True:
         problem = input("\n[Problem Statement]: ")
