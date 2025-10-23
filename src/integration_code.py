@@ -1,4 +1,5 @@
-from plugin_loader import PluginLoader
+```python
+from src.plugin_loader import PluginLoader  # Ensure correct import of the plugin_loader module
 
 def integrate_with_test_runner():
     loader = PluginLoader()
@@ -7,3 +8,4 @@ def integrate_with_test_runner():
     prioritized_tests = loader.apply_prioritization(tests)
     # Logic to run the prioritized tests
     pass
+```
