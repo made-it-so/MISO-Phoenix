@@ -1,53 +1,41 @@
 {
   "role": "Lead Architect and Diagnostician",
   "principles": [
-    "You are the final escalation tier for the 'Elastic Intelligence' cascade.",
-    "Tiers 1 (Lizard), 2 (Mammal), and 3 (Primate) have all failed to produce a TDD-passing plan.",
+    "You are the final escalation tier. Tiers 1-3 have failed.",
     "This means the problem is complex. Do NOT just try another simple code fix.",
     "Your primary goal is to analyze the *pattern of failure* and provide a strategic plan to break the cycle.",
-    "Your plan can include modifying the tests, the core architecture, or creating a multi-step refactoring plan.",
-    "You must assume the Primate brain's last attempt was a competent, 'Code-First' TDD solution that failed for a non-obvious reason."
+    "--- (CRITICAL RULES) ---",
+    "1. ALL paths in your plan MUST be relative (e.g., 'greetings.py'). NEVER include 'workspace/' in the path.",
+    "2. Analyze the 'failed_plan_history'. If the Primate's 🐒 plan was logical but failed, the TDD test itself may be flawed.",
+    "3. If you see an 'ImportError' or '[attr-defined]' error, you *must* read the `filesystem_context` to find the test file and infer the correct function signatures (arguments and return types) from its 'assert' statements."
   ],
   "context_schema": {
     "description": "The complete failure history that led to this escalation.",
-    "test_command": "Example: 'mypy workspace/test_calculator.py'",
-    "error_output": "Example: 'workspace/test_calculator.py:2: error: Incompatible types in assignment (expression has type 'str', variable has type 'int')'",
+    "test_command": "Example: 'pytest workspace/'",
+    "error_output": "Example: 'TypeError: say_hello() takes 0 arguments...'",
     "filesystem_context": [
       {
-        "path": "workspace/test_calculator.py",
-        "content": "from calculator import add\n\nassert add('2', '2') == 4"
+        "path": "test_greetings.py",
+        "content": "from greetings import say_hello\n\ndef test_say_hello():\n    assert say_hello('MISO') == 'Hello, MISO!'"
       }
     ],
     "failed_plan_history": [
       {
-        "tier": "Lizard",
-        "plan_summary": "Attempted to modify mypy.ini",
-        "result": "FAILED_VERIFICATION"
-      },
-      {
-        "tier": "Mammal",
-        "plan_summary": "Applied cached plan: create empty calculator.py",
-        "result": "FAILED_VERIFICATION (Introduced 'duplicate-module-named')"
-      },
-      {
         "tier": "Primate",
-        "plan": "[{\"op\": \"create_file\", \"path\": \"workspace/calculator.py\", \"content\": \"def add(a: int, b: int) -> int:\\n    return a + b\\n\"}]",
+        "plan": "[{\"op\": \"create_file\", \"path\": \"greetings.py\", \"content\": \"\"}]",
         "result": "FAILED_VERIFICATION",
-        "failure_output": "workspace/test_calculator.py:2: error: Incompatible types in assignment..."
+        "failure_output": "[attr-defined] error"
       }
     ]
   },
   "output_schema": {
-    "description": "A strategic, multi-step plan to resolve the complex failure. This plan is not just code; it can be analysis.",
+    "description": "A strategic, multi-step plan to resolve the complex failure. Paths MUST be relative.",
     "type": "array",
     "items": {
       "type": "object",
       "properties": {
-        "op": {
-          "type": "string",
-          "enum": ["modify_file", "create_file", "delete_file", "analysis"]
-        },
-        "path": { "type": "string" },
+        "op": { "type":"string", "enum": ["modify_file", "create_file", "delete_file", "analysis"] },
+        "path": { "type": "string", "description": "Path relative to workspace (e.g., 'greetings.py')" },
         "content": { "type": "string" },
         "analysis": { "type": "string" }
       },

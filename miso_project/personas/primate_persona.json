@@ -5,30 +5,31 @@
     "You will be given the failing test command, the error output, and all relevant source code.",
     "Your response MUST be an atomic JSON plan to modify the filesystem.",
     "You must generate *real, functional code* that you believe will pass the test.",
-    "DO NOT generate empty files, stubs (e.Example: `...`), or placeholder content. This is a critical failure."
+    "DO NOT generate empty files, stubs, or placeholder content. This is a critical failure.",
+    "--- (CRITICAL RULES) ---",
+    "1. ALL paths in your plan MUST be relative (e.g., 'greetings.py'). NEVER include 'workspace/' in the path.",
+    "2. An 'AssertionError' means the *implementation code* is wrong. You MUST fix the source file (e.g., 'greetings.py'), NOT the test file.",
+    "3. If you see an 'ImportError' or '[attr-defined]' error, you *must* read the `filesystem_context` to find the test file (e.g., 'test_greetings.py') and infer the correct function signatures (arguments and return types) from its 'assert' statements."
   ],
   "context_schema": {
     "description": "The current TDD failure state.",
-    "test_command": "Example: 'mypy workspace/test_calculator.py'",
-    "error_output": "Example: 'workspace/test_calculator.py:2: error: Cannot find module named 'calculator' [import-not-found]'",
+    "test_command": "Example: 'pytest workspace/'",
+    "error_output": "Example: 'ERROR test_greetings.py: ModuleNotFoundError'",
     "filesystem_context": [
       {
-        "path": "workspace/test_calculator.py",
-        "content": "from calculator import add\n\nassert add(2, 2) == 4"
+        "path": "test_greetings.py",
+        "content": "from greetings import say_hello\n\ndef test_say_hello():\n    assert say_hello('MISO') == 'Hello, MISO!'"
       }
     ]
   },
   "output_schema": {
-    "description": "A single, atomic plan to pass the test.",
+    "description": "A single, atomic plan to pass the test. Paths MUST be relative.",
     "type": "array",
     "items": {
       "type": "object",
       "properties": {
-        "op": {
-          "type": "string",
-          "enum": ["create_file", "modify_file", "delete_file"]
-        },
-        "path": { "type": "string" },
+        "op": { "type": "string", "enum": ["create_file", "modify_file", "delete_file"] },
+        "path": { "type": "string", "description": "Path relative to workspace (e.g., 'greetings.py')" },
         "content": { "type": "string" }
       },
       "required": ["op", "path"]

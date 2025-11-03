@@ -1,0 +1,9 @@
+{
+  "workspace/test_calculator.py:1: error: Cannot find implementation or library stub for module named \"calculator\"  [import-not-found]": [
+    {
+      "op": "create_file",
+      "path": "calculator.py",
+      "content": ""
+    }
+  ]
+}

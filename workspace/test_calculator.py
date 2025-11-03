@@ -1,8 +1,6 @@
-import pytest
-from calculator import add_numbers
+from calculator import add, subtract, divide, multiply
 
-def test_add_numbers():
-    assert add_numbers(1, 2) == 3
-    assert add_numbers(-1, 1) == 0
-    assert add_numbers(0, 0) == 0
-    assert add_numbers(1.5, 2.5) == 4.0
+assert add(2, 2) == 4
+assert subtract(5, 2) == 3
+assert divide(10, 2) == 5
+assert multiply(3, 3) == 9
