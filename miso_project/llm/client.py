@@ -1,10 +1,9 @@
 import json
 import os
 
-print("--- LLM CLIENT (PATCHED V8 - ATOMIC HUMAN) ---") # <-- NEW CANARY
+print("--- LLM CLIENT (PATCHED V10 - FINAL) ---") # <-- CANARY
 
 # This is a placeholder for your real LLM client.
-# We are using a simulator here for demonstration.
 # from ollama import Client 
 # LLM_CLIENT = Client(host=os.getenv("OLLAMA_HOST", "http://localhost:11434"))
 
@@ -24,11 +23,7 @@ def call_gemini_pro_programmer(prompt: str, persona: dict) -> dict:
     """
     Calls the "ProgrammerAgent-Pro" LLM (e.g., gemini-pro).
     
-    This function now accepts a 'persona' object to define
-    its role and output schema.
-    
     *** THIS IS A SIMULATOR ***
-    Replace this with your actual Gemini/Ollama/OpenAI client.
     """
     
     messages = [
@@ -52,7 +47,6 @@ def call_gemini_pro_programmer(prompt: str, persona: dict) -> dict:
         llm_output_text = "[]" # Default to empty plan
         
         try:
-            # We parse the full JSON context
             prompt_data = json.loads(prompt[prompt.find("{"):prompt.rfind("}")+1])
             isolated_error = prompt_data.get("isolated_error", prompt_data.get("error_output", ""))
             history_str = json.dumps(prompt_data.get("failed_plan_history", []))
@@ -62,8 +56,25 @@ def call_gemini_pro_programmer(prompt: str, persona: dict) -> dict:
 
         if persona['role'] == "Senior TDD Programmer":
             
-            # (Primate's 'add' logic)
-            if 'has no attribute "add"' in isolated_error:
+            # (PATCH: Handles 'divide' error)
+            if 'has no attribute "divide"' in isolated_error:
+                print("🐒 Primate: (Simulating LLM) Generating multi-file 'divide' fix...")
+                llm_output_text = """
+                [
+                  {
+                    "op": "create_file",
+                    "path": "utils.py",
+                    "content": "def safe_division_helper(a: int, b: int) -> int:\\n    if b == 0:\\n        return 0\\n    return a // b\\n"
+                  },
+                  {
+                    "op": "modify_file",
+                    "path": "calculator.py",
+                    "content": "from utils import safe_division_helper\\n\\ndef add(a: int, b: int) -> int:\\n    \\"\\"\\"Adds two integers.\\"\\"\\"\\n    return a + b\\n\\ndef subtract(a: int, b: int) -> int:\\n    \\"\\"\\"Subtracts two integers.\\"\\"\\"\\n    return a - b\\n\\ndef divide(a: int, b: int) -> int:\\n    return safe_division_helper(a, b)\\n"
+                  }
+                ]
+                """
+            
+            elif 'has no attribute "add"' in isolated_error:
                 print("🐒 Primate: (Simulating LLM) Generating 'add' AND 'subtract' functions...")
                 llm_output_text = """
                 [
@@ -74,7 +85,6 @@ def call_gemini_pro_programmer(prompt: str, persona: dict) -> dict:
                   }
                 ]
                 """
-            # (Primate's 'import' logic)
             elif "Cannot find implementation or library stub" in isolated_error or "Cannot find module named 'calculator'" in isolated_error:
                 print("🐒 Primate: (Simulating LLM) Generating 'add' AND 'subtract' functions...")
                 llm_output_text = """
@@ -92,10 +102,24 @@ def call_gemini_pro_programmer(prompt: str, persona: dict) -> dict:
 
         elif persona['role'] == "Lead Architect and Diagnostician":
             
-            # (THE FIX: This is the ATOMIC plan)
-            # This simulates the Human brain seeing that the *current* error
-            # is [arg-type], which was revealed by a Primate failure.
+            # (Human's 'flawed test' logic)
             if "incompatible type" in isolated_error.lower() or "argument 1" in isolated_error.lower():
+                print("👨‍🔬 Human: (Simulating LLM) Meta-analysis complete. The TDD test is flawed.")
+                llm_output_text = """
+                [
+                  {
+                    "op": "analysis",
+                    "analysis": "The Primate brain's code is correct. The TDD test at 'test_calculator.py' is flawed, as it is passing strings to a function expecting integers. The plan will correct the test file."
+                  },
+                  {
+                    "op": "modify_file",
+                    "path": "test_calculator.py",
+                    "content": "from calculator import add, subtract\\n\\nassert add(2, 2) == 4\\nassert subtract(5, 2) == 3\\n"
+                  }
+                ]
+                """
+            # (Human's 'atomic fix' logic)
+            elif ("incompatible type" in history_str or "argument 1" in history_str) and "import-not-found" in isolated_error:
                 print("👨‍🔬 Human: (Simulating LLM) Meta-analysis complete. Primate and Test are *both* flawed. Generating atomic fix.")
                 llm_output_text = """
                 [
@@ -122,7 +146,7 @@ def call_gemini_pro_programmer(prompt: str, persona: dict) -> dict:
         
         plan = json.loads(llm_output_text)
         if not isinstance(plan, list):
-            raise ValueError("LLM did not return a list (plan).")
+            raise ValueError("LLM did_not return a list (plan).")
         return plan
     
     except json.JSONDecodeError as e:

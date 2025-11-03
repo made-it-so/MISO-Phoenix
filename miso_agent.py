@@ -152,8 +152,7 @@ class MISO_Agent:
         if result_1["status"] == "VERIFIED": return result_1
         failure_history.append({"tier": "Lizard", "result": result_1})
         # --- (THE FIX) ---
-        # Only update the error if it was a REAL TDD failure (exit_code > 0)
-        # not an internal one like "Empty plan." (exit_code: -1)
+        # Only update the error if it was a REAL TDD failure
         if result_1.get("exit_code", -1) > 0:
             current_error = result_1.get("error_output", current_error)
 
