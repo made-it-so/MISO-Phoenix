@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, jsonify
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
-from langchain.document_loaders import TextLoader
+from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 app = Flask(__name__)

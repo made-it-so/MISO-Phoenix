@@ -4,6 +4,10 @@ import os
 class ToolError(Exception):
     pass
 
+def _handle_error(message: str) -> None:
+    """Handles errors by raising a ToolError with the given message."""
+    raise ToolError(message)
+
 def read_file(file_path: str) -> str:
     encodings_to_try = ['utf-8', 'utf-16', 'latin-1']
     for encoding in encodings_to_try:
@@ -12,7 +16,8 @@ def read_file(file_path: str) -> str:
                 return f.read()
         except UnicodeDecodeError:
             continue
-    raise ToolError(f"Could not read file {file_path} with tried encodings.")
+    _handle_error(f"Could not read file {file_path} with tried encodings.")
+    return ""
 
 def write_file(file_path: str, content: str):
     directory = os.path.dirname(file_path)
@@ -25,7 +30,7 @@ def write_file(file_path: str, content: str):
 def patch_code(file_path: str, find_block: str, replace_with: str):
     original_content = read_file(file_path)
     if find_block not in original_content:
-        raise ToolError("'find_block' not found.")
+        _handle_error("'find_block' not found.")
     new_content = original_content.replace(find_block, replace_with)
     write_file(file_path, new_content)
     return f"Successfully patched {file_path}."

@@ -1,96 +1,102 @@
-import os
 import json
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+import os
+import traceback
+from pathlib import Path
+from typing import Dict, Any, Optional, List
+from .util import MisoLLM, logger, extract_json
 
-# Assuming personas.py is in the same directory
-from . import personas
+# --- 🚀 DYNAMIC PERSONA LOADER ---
 
-# --- Helper Function for Brace Escaping ---
-# Moved here as per the refactoring task
-def _escape_braces(text: str) -> str:
-    """Escapes single braces for LangChain templating."""
-    return text.replace("{", "{{").replace("}", "}}")
+def load_persona_registry(persona_dir: Path) -> Dict[str, Dict[str, Any]]:
+    """Dynamically loads all .json personas from the persona directory."""
+    registry = {}
+    if not persona_dir.exists():
+        logger.error(f"Persona directory not found: {persona_dir}")
+        return {}
+        
+    for f in persona_dir.glob("*.json"):
+        try:
+            with open(f, 'r', encoding='utf-8') as pf:
+                persona_data = json.load(pf)
+                name = persona_data.get("name")
+                if name:
+                    registry[name] = persona_data
+                    logger.info(f"Loading persona: {name}")
+                else:
+                    logger.warning(f"Persona file {f.name} is missing 'name' key.")
+        except Exception as e:
+            logger.error(f"Failed to load persona {f.name}: {e}")
+    return registry
+
+# Get the persona directory relative to this file
+PERSONA_DIR = Path(__file__).parent / "personas"
+MISO_PERSONAS = load_persona_registry(PERSONA_DIR)
+
+# --- END DYNAMIC LOADER ---
 
 class Agent:
-    """Represents a MISO agent with a specific persona."""
+    _llm_client = None # Shared LLM client
+
     def __init__(self, persona_name: str):
-        """Initializes an agent with a persona from personas.py."""
+        if persona_name not in MISO_PERSONAS:
+            logger.error(f"Persona '{persona_name}' not found in MISO_PERSONAS registry.")
+            raise ValueError(f"Persona '{persona_name}' not found.")
+        
+        persona = MISO_PERSONAS[persona_name]
+        self.name = persona["name"]
+        self.model = persona["model"]
+        self.system_prompt = persona["system_prompt"]
+        
+        # Initialize shared client if it doesn't exist
+        if Agent._llm_client is None:
+            Agent._llm_client = MisoLLM()
+        self.llm = Agent._llm_client
+        
+        # No need to log here, load_persona_registry already did
+        # logger.info(f"Agent '{self.name}' initialized with persona '{persona_name}'. Model: {self.model}")
 
-        # --- Load Persona Config ---
-        if persona_name not in personas.MISO_PERSONAS:
-            raise ValueError(f"Persona '{persona_name}' not found in personas.py.")
-
-        cfg = personas.MISO_PERSONAS[persona_name]
-
-        # Ensure the critical 'persona' key exists (which contains the main instructions)
-        if 'persona' not in cfg:
-             raise KeyError(f"Persona '{persona_name}' is missing the required 'persona' key in its definition.")
-
-        # --- Prepare Persona/System Message ---
-        # Escape braces in the base persona for LangChain templater
-        base_persona_raw = cfg['persona']
-        base_persona_escaped = _escape_braces(base_persona_raw)
-
-        # Use 'system_message_template' if available, otherwise fallback to 'persona'
-        system_message_content = cfg.get('system_message_template', base_persona_escaped)
-        # Escape this too, just in case it wasn't the same as 'persona'
-        system_message_content_escaped = _escape_braces(system_message_content)
-
-        # --- Initialize LangChain Components ---
-        # Use environment variable for API key (as fixed earlier)
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            # Re-raise the specific error main.py expects if key is missing
-             raise ImportError("OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable.")
-
-        self.llm = ChatOpenAI(
-            model=cfg.get("model_name", "gpt-4o"), # Default to gpt-4o if not specified
-            temperature=cfg.get("temperature", 0.0), # Default to deterministic
-            api_key=api_key
-        )
-
-        # Assuming the input will always be passed with the key 'input'
-        # and the persona is the system message
-        self.prompt = ChatPromptTemplate.from_messages([
-            ("system", system_message_content_escaped),
-            ("user", "{input}")
-        ])
-
-        self.output_parser = StrOutputParser()
-
-        # --- Chain ---
-        self.chain = self.prompt | self.llm | self.output_parser
-
-        # print(f"✅ Agent '{persona_name}' initialized.") # Quieted for less verbose output
-
+    def _build_messages(self, input_text: str) -> List[Dict[str, str]]:
+        """Builds the message list for the LLM call."""
+        messages = []
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
+        messages.append({"role": "user", "content": input_text})
+        return messages
 
     def run(self, input: str) -> str:
-        """Runs the agent's chain with the given input."""
+        """Runs the agent with the given input."""
+        # --- 🚀 F-STRING FIX ---
+        prompt_snippet = input[:100].replace('\n', ' ')
+        logger.info(f"Agent '{self.name}' received prompt: {prompt_snippet}...")
+        # ---------------------
+        
+        messages = self._build_messages(input)
+        
         try:
-            # LangChain expects a dictionary for the input variables
-            response = self.chain.invoke({"input": input})
-            return response
-        except Exception as e:
-            print(f"❌ ERROR running agent: {e}")
-            # Re-raise or return an error message
-            # For simplicity, returning the error message string
-            return f"Agent execution failed: {e}"
+            logger.info(f"Agent '{self.name}' running in text-only mode (no tools).")
+            response = self.llm.chat(model=self.model, messages=messages)
+            
+            # Handle the different response objects from MisoLLM
+            if hasattr(response, 'content'): # MisoLLM.LLMResponse
+                final_content = response.content
+            elif hasattr(response, 'text'): # Gemini raw
+                final_content = response.text
+            elif isinstance(response, str): # Raw string
+                final_content = response
+            elif hasattr(response, 'message') and hasattr(response.message, 'content'): # OpenAI/Ollama
+                final_content = response.message.content
+            else:
+                logger.error(f"Unknown response type from llm.chat: {type(response)}")
+                final_content = f"Error: Unknown response type {type(response)}"
+            
+            # --- 🚀 F-STRING FIX ---
+            response_snippet = final_content[:100].replace('\n', ' ')
+            logger.info(f"Agent '{self.name}' (no tools used) response: {response_snippet}...")
+            # ---------------------
+            return final_content
 
-# Example of how agents might be retrieved (needed for main.py's agents.get call)
-# This assumes the global 'agents' dict is populated in main.py
-def get(agent_name: str) -> Agent | None:
-    """Helper to retrieve an agent instance from the global dict (defined in main.py)."""
-    # Import 'agents' dict from main.py - slightly unusual, but matches usage
-    # This might indicate a need for better structure (e.g., a central AgentRegistry)
-    try:
-        from __main__ import agents as main_agents_dict
-        return main_agents_dict.get(agent_name)
-    except ImportError:
-        # This can happen during testing or if run differently
-        # print("⚠️ Warning: Could not import agents dict from main.py in agents.get")
-        return None
-    except Exception as e:
-        print(f"⚠️ Warning: Error importing agents dict: {e}")
-        return None
+        except Exception as e:
+            logger.error(f"An error occurred in Agent.run: {e}")
+            # Log the full traceback for debugging
+            logger.error(traceback.format_exc())
+            return f"Error: {e}"
