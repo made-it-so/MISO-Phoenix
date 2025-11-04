@@ -1,0 +1,9 @@
+{
+  "miso_project/workspace/test_stats.py:1: error: Cannot find implementation or library stub for module named \"stats\"  [import-not-found]": [
+    {
+      "op": "create_file",
+      "path": "stats.py",
+      "content": "from typing import List\n\ndef calculate_mean(data: List[float]) -> float:\n    \"\"\"Calculates the mean of a list of numbers.\"\"\"\n    return sum(data) / len(data)\n"
+    }
+  ]
+}
