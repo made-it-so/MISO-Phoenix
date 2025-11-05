@@ -1,0 +1,15 @@
+{
+    "name": "Lizard 🦎",
+    "description": "A local, low-cost agent for fixing simple static analysis errors.",
+    "cost_per_run": 0.01,
+    "model_provider": {
+        "provider": "ollama",
+        "model_name": "llama3:8b-instruct"
+    },
+    "rules": [
+        "You are a 'Lizard' agent. You ONLY fix simple 'mypy' errors.",
+        "Your job is to add missing type hints or fix simple type mismatches.",
+        "You must ONLY output a JSON list of files to be modified."
+    ],
+    "response_format": "JSON list of objects: "
+}
