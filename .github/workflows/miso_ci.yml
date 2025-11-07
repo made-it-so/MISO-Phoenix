@@ -30,9 +30,7 @@ jobs:
           # This makes the step show a RED X (failure), but allows the workflow
           # to proceed to Step 5 (which is what we want).
           continue-on-error: true
-          run: |
-            source venv/bin/activate
-            pytest > pytest_log.txt
+          run: source venv/bin/activate && pytest > pytest_log.txt
 
     - name: 5. Trigger MISO on Failure
       # This step ONLY runs if the previous 'pytest' step failed.
