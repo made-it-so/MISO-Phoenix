@@ -3,7 +3,7 @@ name: "MISO Autonomous CI/CD"
 on:
   push:
     branches:
-      - main # Or whatever your main branch is
+      - main
 
 jobs:
   test-and-trigger-miso:
@@ -19,17 +19,19 @@ jobs:
         python-version: '3.10'
 
     - name: 3. Install Dependencies
-      # NEW: This is a robust, single-line command
       run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
     - name: 4. Run Pytest (and save log)
-      # This is the fix: We use a robust, single-line command
-      # and 'continue-on-error' to ensure we proceed to Step 5.
+      # --- THE FIRST FIX IS HERE ---
+      # We give this step a unique ID so we can reference it
+      id: pytest
       continue-on-error: true
       run: source venv/bin/activate && pytest > pytest_log.txt
 
     - name: 5. Trigger MISO on Failure
-      if: failure()
+      # --- THE SECOND FIX IS HERE ---
+      # We check the *specific outcome* of the 'pytest' step
+      if: steps.pytest.outcome == 'failure'
       run: |
         echo "--- PYTEST FAILED. Triggering MISO ---"
         
