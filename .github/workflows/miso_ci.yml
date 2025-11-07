@@ -25,12 +25,14 @@ jobs:
         pip install -r requirements.txt # (We'll need to create this)
         pip install pytest
 
-    - name: 4. Run Pytest (and save log)
-      # We run pytest, pipe the output to a file 'pytest_log.txt',
-      # and use '|| true' to ensure the job continues even if tests fail.
-      run: |
-        source venv/bin/activate
-        pytest > pytest_log.txt || true
+        - name: 4. Run Pytest (and save log)
+          # This is the fix: we remove '|| true' and add 'continue-on-error'
+          # This makes the step show a RED X (failure), but allows the workflow
+          # to proceed to Step 5 (which is what we want).
+          continue-on-error: true
+          run: |
+            source venv/bin/activate
+            pytest > pytest_log.txt
 
     - name: 5. Trigger MISO on Failure
       # This step ONLY runs if the previous 'pytest' step failed.
