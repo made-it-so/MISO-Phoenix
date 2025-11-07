@@ -1,14 +1,8 @@
-# This file contains a bug the Lizard brain
-# is not designed to fix.
-
+# This file contains a bug
 def divide_by(a, b):
-    # This will cause a ZeroDivisionError if b is 0
-    return a / b
-
+    return a / b # The bug
 def get_average(numbers):
     if not numbers:
         return 0
-
-    # This is the "bait" bug.
     total_sum = sum(numbers)
-    return divide_by(total_sum, 0)
+    return divide_by(total_sum, 0) # The trigger
