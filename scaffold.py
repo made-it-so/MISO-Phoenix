@@ -194,7 +194,7 @@ server {
 
 def main():
     """Main function to create the project structure."""
-    print("--- 🤖 Starting Project Scaffolding ---")
+    print("---  Starting Project Scaffolding ---")
     root = Path.cwd()
     
     for file_path, content in PROJECT_FILES.items():
@@ -203,9 +203,9 @@ def main():
         full_path.parent.mkdir(parents=True, exist_ok=True)
         # Write the file content
         full_path.write_text(content.strip())
-        print(f"✅ Created: {file_path}")
+        print(f" Created: {file_path}")
         
-    print("--- 🎉 Scaffolding Complete! ---")
+    print("---  Scaffolding Complete! ---")
     print("Run 'Get-ChildItem -Recurse' to verify the structure.")
 
 if __name__ == "__main__":

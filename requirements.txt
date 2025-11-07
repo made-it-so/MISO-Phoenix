@@ -1,11 +1,5 @@
-langchain-core
-langchain-openai
-langchain-google-genai
-langchain-anthropic
+Flask
+google-generativeai
+python-dotenv
+ollama
 pytest
-chromadb
-sentence-transformers
-setuptools
-black
-celery
-redis

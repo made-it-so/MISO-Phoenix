@@ -22,7 +22,7 @@ def get_llm_response(persona_prompt: str, context_prompt: str, model_provider: D
     provider_type = model_provider.get("provider", "google_api")
     model_name = model_provider.get("model_name", "gemini-2.5-flash-preview-09-2025")
     
-    # CRITICAL FIX: Make the check more robust
+    # Make the check more robust
     is_simple_mypy_bug = "stats.py" in context_prompt and "type annotation" in context_prompt
 
     # --- SIMULATED OLLAMA PROVIDER (Tier 2: Lizard) ---
@@ -36,12 +36,12 @@ def get_llm_response(persona_prompt: str, context_prompt: str, model_provider: D
         
         # This is the "cheap model success" check
         if is_simple_mypy_bug:
-            print(f"LLM (Lizard 🦎): Detected simple mypy error. Simulating fix.")
-            # CRITICAL FIX: Use json.dumps to create a valid, single-line JSON string
+            print(f"LLM (Lizard): Detected simple mypy error. Simulating fix.")
+            # Use json.dumps to create a valid, single-line JSON string
             fix_data = [
                 {
                     "filename": "stats.py",
-                    "code": "from typing import List\n\ndef calculate_mean(l: List[float]) -> float:\n    if not l:\n        return 0.0\n    return sum(l) / len(l)\n"
+                    "code": "from typing import List\\n\\ndef calculate_mean(l: List[float]) -> float:\\n    if not l:\\n        return 0.0\\n    return sum(l) / len(l)\\n"
                 }
             ]
             return json.dumps(fix_data)
@@ -57,7 +57,7 @@ def get_llm_response(persona_prompt: str, context_prompt: str, model_provider: D
     print(f"LLM: Calling Google AI API (Model: {model_name})")
     try:
         model = genai.GenerativeModel(model_name)
-        full_prompt = f"{persona_prompt}\n\n{context_prompt}"
+        full_prompt = f"{persona_prompt}\\n\\n{context_prompt}"
         response = model.generate_content(full_prompt)
         
         if not response.parts:

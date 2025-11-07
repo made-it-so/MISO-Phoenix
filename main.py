@@ -12,7 +12,7 @@ import time
 import tempfile
 import shutil
 import importlib
-import ast # 🚀 NEW: Abstract Syntax Tree for context
+import ast #  NEW: Abstract Syntax Tree for context
 
 # --- FIX: ADD SRC TO SYS.PATH ---
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
@@ -90,7 +90,7 @@ def get_agent_case_insensitive(agent_name: Optional[str]) -> Optional[Agent]:
     return None
 # --- END ROBUST AGENT LOOKUP ---
 
-# 🚀 --- PLAN EXECUTION (SANDBOX-AWARE) --- 🚀
+#  --- PLAN EXECUTION (SANDBOX-AWARE) --- 
 def execute_plan_step(plan: Dict[str, Any], project_root: Path) -> Tuple[bool, str, Optional[List[Dict[str, Any]]], Optional[Dict[str, Any]]]:
     """
     Executes a single, validated plan step *against a given project_root*.
@@ -119,7 +119,7 @@ def execute_plan_step(plan: Dict[str, Any], project_root: Path) -> Tuple[bool, s
             analysis_result = extract_json(analysis_result_str)
             
             if not analysis_result or "problem_statement" not in analysis_result:
-                logger.warning(f"    ⚠️ Analyst failed to return valid JSON. Using raw output.")
+                logger.warning(f"     Analyst failed to return valid JSON. Using raw output.")
                 structured_data = [{"level": "note", "message": f"Analyst raw output: {analysis_result_str}"}]
                 return True, "Analysis complete (raw output).", structured_data, None
                 
@@ -130,7 +130,7 @@ def execute_plan_step(plan: Dict[str, Any], project_root: Path) -> Tuple[bool, s
         elif tool == "modify_file":
             file_path = project_root / plan["file_path"]
             
-            # 🚀 --- "CODE-FIRST" AGENT FIX v2 ---
+            #  --- "CODE-FIRST" AGENT FIX v2 ---
             # We now default to the *reliable* "Pro" programmer.
             specialist_agent_name = plan.get("specialist_agent", "ProgrammerAgent-Pro")
             programmer = get_agent_case_insensitive(specialist_agent_name) 
@@ -143,7 +143,7 @@ def execute_plan_step(plan: Dict[str, Any], project_root: Path) -> Tuple[bool, s
             current_content = read_file(file_path)
             
             if current_content.startswith("ERROR: File not found"):
-                logger.warning(f"    ⚠️ File '{file_path}' not found. Treating 'modify_file' as 'create_file'.")
+                logger.warning(f"     File '{file_path}' not found. Treating 'modify_file' as 'create_file'.")
                 current_content = "" # This is the correct logic
             elif current_content.startswith("ERROR:"):
                 return False, current_content, None, None 
@@ -159,7 +159,7 @@ Respond with ONLY the new, full file content.
             try:
                 prog_output = programmer.run(input=modification_prompt).strip()
                 
-                # 🚀 --- BRITTLE CHECK (FINAL FIX) ---
+                #  --- BRITTLE CHECK (FINAL FIX) ---
                 # This logic is key: if the agent fails, we *don't* write the file
                 # We REMOVED the 'or "{" in prog_output' check, which was brittle
                 if (not prog_output 
@@ -167,7 +167,7 @@ Respond with ONLY the new, full file content.
                     or "client not configured" in prog_output
                     or "API returned no content" in prog_output):
                 # ------------------------------------
-                    logger.error(f"    ❌ {specialist_agent_name} FAILED. Output: {prog_output[:100]}...")
+                    logger.error(f"     {specialist_agent_name} FAILED. Output: {prog_output[:100]}...")
                     return False, f"{specialist_agent_name} failed to generate valid code: {prog_output[:100]}", None, None
                 
                 prog_output = re.sub(r"^```(python)?\n?", "", prog_output)
@@ -177,7 +177,7 @@ Respond with ONLY the new, full file content.
                 write_file(file_path, prog_output)
                 return True, f"Modification complete (via {specialist_agent_name}): {file_path}", None, None
             except Exception as e:
-                logger.error(f"    ❌ Error during {specialist_agent_name} call or file write: {e}")
+                logger.error(f"     Error during {specialist_agent_name} call or file write: {e}")
                 traceback.print_exc()
                 return False, f"Error during modification step: {e}", None, None
 
@@ -197,24 +197,24 @@ Respond with ONLY the new, full file content.
             if "python -m mypy" in command:
                 parsed_result = parse_mypy_output(output)
                 if parsed_result == "SUCCESS":
-                    logger.info("    ✅ mypy check passed. No issues found.")
+                    logger.info("     mypy check passed. No issues found.")
                     return True, "Mpy check passed. All issues resolved.", None, None
                 else:
-                    logger.info(f"    ✅ mypy check ran, issues found.")
+                    logger.info(f"     mypy check ran, issues found.")
                     return True, "Mpy check ran, issues found.", parsed_result, None
             elif "ruff check" in command:
                 parsed_result = parse_ruff_output(output)
                 if parsed_result == "SUCCESS":
-                    logger.info("    ✅ ruff check passed. No issues found.")
+                    logger.info("     ruff check passed. No issues found.")
                     return True, "Ruff check passed. All issues resolved.", None, None
                 else:
-                    logger.info(f"    ✅ ruff check ran, issues found.")
+                    logger.info(f"     ruff check ran, issues found.")
                     return True, "Ruff check ran, issues found.", parsed_result, None
 
             if success:
                 return True, f"Command executed successfully. STDOUT: {stdout}", None, None
             
-            logger.warning(f"    ⚠️ Command failed. STDOUT: {stdout} STDERR: {stderr}")
+            logger.warning(f"     Command failed. STDOUT: {stdout} STDERR: {stderr}")
             
             # --- Ant Brain: "Missing Tool" Auto-Fix ---
             if "not found" in stderr or "No module named" in stderr:
@@ -227,7 +227,7 @@ Respond with ONLY the new, full file content.
                     if match: tool_name = shlex.split(match.group(1).strip())[0]
                 
                 if tool_name:
-                    logger.info(f"    ✅ Ant Brain: Detected missing tool '{tool_name}'. Generating 'pip install' plan.")
+                    logger.info(f"     Ant Brain: Detected missing tool '{tool_name}'. Generating 'pip install' plan.")
                     next_plan_override = {"tool": "execute_shell", "command": f"pip install {tool_name}"}
                     return True, f"Diagnosed missing tool: {tool_name}", None, next_plan_override
             # --- End Ant Brain ---
@@ -236,22 +236,22 @@ Respond with ONLY the new, full file content.
 
         elif tool == "halt":
              reason = plan.get("reason", "Planner requested halt.")
-             logger.info(f"    🛑 PLANNER HALT: {reason}")
+             logger.info(f"     PLANNER HALT: {reason}")
              return False, f"Planner requested halt: {reason}", None, None
         else:
             error_message = f"Unknown tool: {tool}"
-            logger.error(f"    ❌ {error_message}")
+            logger.error(f"     {error_message}")
             return False, error_message, None, None
 
     except Exception as e:
-        logger.error(f"    ❌ CRITICAL ERROR during execution: {e}")
+        logger.error(f"     CRITICAL ERROR during execution: {e}")
         traceback.print_exc()
         return False, f"Unhandled exception: {e}", None, None
 # --- END: PLAN EXECUTION ---
 
-# 🚀 --- "ELASTIC INTELLIGENCE" ARCHITECTURE --- 🚀
+#  --- "ELASTIC INTELLIGENCE" ARCHITECTURE --- 
 
-# --- "Ant Brain" 🐜 (Plugin Loader) ---
+# --- "Ant Brain"  (Plugin Loader) ---
 DETERMINISTIC_FIXERS: Dict[str, Any] = {}
 
 def load_fixer_plugins():
@@ -308,7 +308,7 @@ def deterministic_plan_router(errors: List[Dict[str, Any]]) -> Optional[Dict[str
 
     return None # No deterministic fix found
 
-# --- "Mammal Brain" 🧠 (Cache) ---
+# --- "Mammal Brain"  (Cache) ---
 def load_archivist_cache() -> Dict[str, Any]:
     """v1 Archivist: Loads a simple JSON cache."""
     try:
@@ -335,7 +335,7 @@ def query_archivist(error_key: str, cache: Dict[str, Any]) -> Optional[Dict[str,
     """v1 Mid-Brain: Checks the simple cache for a known fix."""
     return cache.get(error_key)
 
-# --- "Lizard Brain" 🦎 (Context Isolator) ---
+# --- "Lizard Brain"  (Context Isolator) ---
 class ImportFinder(ast.NodeVisitor):
     """
     Uses the AST to find all imported modules.
@@ -409,11 +409,11 @@ def get_relevant_files_for_error(error_dict: Dict[str, Any], project_root: Path)
         logger.warning(f"    Lizard Brain (Isolator): Failed to parse AST: {e}")
         return list(relevant_files) # Return at least the error file
 
-# --- "Primate/Human Brain" 🐒/🧠 (TDD Sandbox) ---
+# --- "Primate/Human Brain" / (TDD Sandbox) ---
 def verify_plan_in_sandbox(
     plan: Dict[str, Any], 
     test_command: str, 
-    error_to_fix: Dict[str, Any], # <-- 🚀 Pass in the original error
+    error_to_fix: Dict[str, Any], # <--  Pass in the original error
     relevant_files: List[str], 
     project_root: Path
 ) -> bool:
@@ -456,7 +456,7 @@ def verify_plan_in_sandbox(
         # 3. Run the test command in the sandbox
         logger.info(f"    VERIFY: Running test command: `{test_command}` in sandbox...")
         
-        # 🚀 --- TDD FIX: We must use the REAL project root for mypy to resolve paths ---
+        #  --- TDD FIX: We must use the REAL project root for mypy to resolve paths ---
         # But we run the command from the SANDBOX to use the modified files
         test_command_sandboxed = test_command.replace("$MISO_ROOT", str(project_root)) 
         
@@ -470,9 +470,9 @@ def verify_plan_in_sandbox(
         elif "ruff" in test_command:
             parsed_result = parse_ruff_output(test_output)
         
-        # --- 🚀 "Smart" TDD Verification ---
+        # ---  "Smart" TDD Verification ---
         if parsed_result == "SUCCESS":
-            logger.info("    VERIFY: ✅ Test PASSED (SUCCESS). Plan is VERIFIED.")
+            logger.info("    VERIFY:  Test PASSED (SUCCESS). Plan is VERIFIED.")
             return True
         
         if isinstance(parsed_result, list):
@@ -484,15 +484,15 @@ def verify_plan_in_sandbox(
                     break
             
             if not error_is_still_present:
-                logger.info("    VERIFY: ✅ Test PASSED (Original error is gone). Plan is VERIFIED.")
+                logger.info("    VERIFY:  Test PASSED (Original error is gone). Plan is VERIFIED.")
                 return True
         
         # If we get here, the test failed AND the original error is still there.
-        logger.warning(f"    VERIFY: ❌ Test FAILED. Plan is REJECTED. Output: {test_output[:200]}")
+        logger.warning(f"    VERIFY:  Test FAILED. Plan is REJECTED. Output: {test_output[:200]}")
         return False
         
     except Exception as e:
-        logger.error(f"    VERIFY: ❌ CRITICAL error in sandbox: {e}")
+        logger.error(f"    VERIFY:  CRITICAL error in sandbox: {e}")
         return False
     finally:
         # 5. Clean up
@@ -500,17 +500,17 @@ def verify_plan_in_sandbox(
         shutil.rmtree(sandbox_dir)
 # --- END: TDD SANDBOX VERIFICATION ---
 
-# 🚀 --- "ELASTIC INTELLIGENCE" ORCHESTRATOR (v4.0 - TDD-First Cache) --- 🚀
+#  --- "ELASTIC INTELLIGENCE" ORCHESTRATOR (v4.0 - TDD-First Cache) --- 
 def run_miso_system(problem_statement: str):
     """Initializes and runs the MISO V63 TDD system."""
-    print(f"🚀 MISO V63 TDD System Initialized.")
+    print(f" MISO V63 TDD System Initialized.")
     project_root = Path(os.getcwd())
     
-    # --- 🚀 Load "Ant Brain" Plugins ---
+    # ---  Load "Ant Brain" Plugins ---
     load_fixer_plugins()
     # ---
 
-    # 🚀 --- AGENT FIX: Add new "Pro" programmer ---
+    #  --- AGENT FIX: Add new "Pro" programmer ---
     agent_names = [
         "PlannerAgent-Lite", 
         "PlannerAgent-Pro", 
@@ -522,11 +522,11 @@ def run_miso_system(problem_statement: str):
     global agents
     try:
         if not os.environ.get("GOOGLE_API_KEY"):
-                print("⚠️ WARNING: No Google API key found. Human Brain will fail.")
+                print(" WARNING: No Google API key found. Human Brain will fail.")
         agents = { name: Agent(persona_name=name) for name in agent_names }
         print("    All agents initialized.")
     except Exception as e:
-        print(f"❌ CRITICAL: Failed to initialize agents: {e}. Halting.")
+        print(f" CRITICAL: Failed to initialize agents: {e}. Halting.")
         traceback.print_exc()
         return
 
@@ -544,7 +544,7 @@ def run_miso_system(problem_statement: str):
     last_error_key_for_cache = None 
     plan_was_from_cache = False  
     
-    # 🚀 --- "CODE-FIRST" STAGNATION FIX v3 ---
+    #  --- "CODE-FIRST" STAGNATION FIX v3 ---
     # We now track the *plan itself* to avoid simple error key collisions
     last_deterministic_plan_json = None 
     # -----------------------------------------
@@ -553,16 +553,16 @@ def run_miso_system(problem_statement: str):
     for i in range(1, 101):
         print(f"\n--- MISO LOOP {i} ---")
         
-        # --- 🚀 TDD FIX: Define the *default* test command ---
+        # ---  TDD FIX: Define the *default* test command ---
         test_command_for_loop = f"python -m {analysis_tool} $MISO_ROOT"
         error_to_fix = {} # The specific error we are trying to fix this loop
 
         # --- 1. PLAN GENERATION (The Cascade) ---
         if not plan:
             
-            # --- 🚀 "Analyze-First" Bootstrap ---
+            # ---  "Analyze-First" Bootstrap ---
             if i == 1 and not structured_errors and not current_refinement.startswith("REFINEMENT:"):
-                print("    ✅ INFO - Ant Brain: Loop 1. No structured errors. Forcing analysis.")
+                print("     INFO - Ant Brain: Loop 1. No structured errors. Forcing analysis.")
                 plan = {"tool": "execute_shell", "command": test_command_for_loop}
             
             # --- 1A. ANT BRAIN (Code: Fallbacks) ---
@@ -570,7 +570,7 @@ def run_miso_system(problem_statement: str):
                 "Previous step completed successfully. Re-running analysis.",
                 "Previous plan failed validation. Re-running analysis."
             ]:
-                print("    ✅ INFO - Ant Brain: Detected fallback trigger. Generating default mypy plan.")
+                print("     INFO - Ant Brain: Detected fallback trigger. Generating default mypy plan.")
                 plan = {"tool": "execute_shell", "command": test_command_for_loop}
                 structured_errors = None # Clear errors
             
@@ -583,22 +583,22 @@ def run_miso_system(problem_statement: str):
                 err_line = error_to_fix.get('line', '')
                 current_refinement = f"REFINEMENT: {err_path}:{err_line}: {err_msg}"
                 
-                # --- 🚀 TDD FIX: Create ATOMIC test command ---
+                # ---  TDD FIX: Create ATOMIC test command ---
                 if err_path:
                     test_command_for_loop = f"python -m {analysis_tool} {err_path}"
                     logger.info(f"    Atomic TDD: Test command set to: {test_command_for_loop}")
 
-                # 🚀 --- TDD-FIRST CACHE FIX: We must clear the 'plan_was_from_cache'
+                #  --- TDD-FIRST CACHE FIX: We must clear the 'plan_was_from_cache'
                 # flag *before* we try to get a new plan.
                 plan_was_from_cache = False
                 
                 # Check "Stagnation" (Mammal Brain failure)
                 # This logic is now only for *verified* cached plans that fail
                 if current_refinement == last_error_key_for_cache:
-                    print("    ❌ INFO - Mammal Brain: CACHE INVALIDATION. A previously *verified* plan has failed. Re-learning.")
+                    print("     INFO - Mammal Brain: CACHE INVALIDATION. A previously *verified* plan has failed. Re-learning.")
                     invalidate_archivist_cache(archivist_cache, last_error_key_for_cache)
                 
-                # 🚀 --- STAGNATION FIX v3 ---
+                #  --- STAGNATION FIX v3 ---
                 # 1. ALWAYS try the "Code-First" router first.
                 candidate_plan = deterministic_plan_router(structured_errors)
                 
@@ -609,18 +609,18 @@ def run_miso_system(problem_statement: str):
                     # 2. Check if this *exact plan* has already failed
                     if candidate_plan_json == last_deterministic_plan_json:
                         # We are trying to run the same "Lizard" plan that just failed.
-                        print("    ❌ INFO - Lizard Brain: STAGNATION. Deterministic plan failed to fix the error. Escalating.")
+                        print("     INFO - Lizard Brain: STAGNATION. Deterministic plan failed to fix the error. Escalating.")
                         # Do not set `plan`. Let it escalate.
                     else:
                         # This is a new deterministic plan. Use it.
-                        print("    ✅ INFO - Lizard Brain: Found new deterministic plan. Applying.")
+                        print("     INFO - Lizard Brain: Found new deterministic plan. Applying.")
                         plan = candidate_plan
                         # We track the *plan*, not the error key
                         last_deterministic_plan_json = candidate_plan_json 
                 # If `candidate_plan` is None, we just fall through to Mammal Brain.
                 # --- END STAGNATION FIX ---
             
-            # 🚀 --- TDD-FIRST ORCHESTRATOR REFACTOR --- 🚀
+            #  --- TDD-FIRST ORCHESTRATOR REFACTOR --- 
             
             # --- 1C. MAMMAL BRAIN (Cache) ---
             if not plan:
@@ -633,7 +633,7 @@ def run_miso_system(problem_statement: str):
                     cached_plan = query_archivist(current_refinement, archivist_cache)
                     
                     if cached_plan:
-                        print(f"    ✅ INFO - Mammal Brain: Found cached plan. Sending to verification...")
+                        print(f"     INFO - Mammal Brain: Found cached plan. Sending to verification...")
                         plan = cached_plan # Set the *candidate* plan
                         plan_was_from_cache = True
                     
@@ -675,10 +675,10 @@ def run_miso_system(problem_statement: str):
                                  raise ValueError(f"Planner-Lite returned invalid/empty JSON. Raw: {plan_str[:200]}")
 
                         except TimeoutError as e:
-                            print(f"    ❌ Primate Brain (Einstein-Lite) FAILED: {e}. Escalating to Pro.")
+                            print(f"     Primate Brain (Einstein-Lite) FAILED: {e}. Escalating to Pro.")
                             plan = None
                         except Exception as e:
-                            print(f"    ❌ Primate Brain (Einstein-Lite) FAILED: {e}. Escalating to Pro.")
+                            print(f"     Primate Brain (Einstein-Lite) FAILED: {e}. Escalating to Pro.")
                             plan = None 
 
                         # --- 1E. HUMAN BRAIN (Einstein-Pro) ---
@@ -687,7 +687,7 @@ def run_miso_system(problem_statement: str):
                             
                             stagnation_warning = ""
                             if current_refinement == last_error_key_for_planner:
-                                 print("    ⚠️ Refinement stagnated. Retrying with warning.")
+                                 print("     Refinement stagnated. Retrying with warning.")
                                  stagnation_warning = "\n\n<STAGNATION_WARNING>WARNING: Your previous plan failed. You MUST NOT generate the same plan again.</STAGNATION_WARNING>"
                             
                             tool_hint = """
@@ -709,12 +709,12 @@ IMPORTANT: If you generate a "modify_file" plan, you MUST set the "specialist_ag
                                     raise ValueError(f"Planner-Pro returned invalid/empty JSON. Raw: {plan_str[:200]}")
 
                             except Exception as e:
-                                print(f"    ❌ Planner-Pro failed: {e}. Halting loop.")
+                                print(f"     Planner-Pro failed: {e}. Halting loop.")
                                 traceback.print_exc()
                                 plan = None 
                                 continue
             
-            # --- 🚀 TDD-FIRST VERIFICATION BLOCK ---
+            # ---  TDD-FIRST VERIFICATION BLOCK ---
             # All non-Lizard-Brain plans MUST be verified.
             # This block now handles Mammal, Primate, AND Human brains.
             
@@ -731,9 +731,9 @@ IMPORTANT: If you generate a "modify_file" plan, you MUST set the "specialist_ag
                 is_verified = verify_plan_in_sandbox(plan, test_command_for_loop, error_to_fix, list(relevant_files), project_root)
                 
                 if not is_verified:
-                    print(f"    ❌ INFO - TDD Sandbox: Plan FAILED verification. Discarding.")
+                    print(f"     INFO - TDD Sandbox: Plan FAILED verification. Discarding.")
                     if plan_was_from_cache:
-                        print("    ❌ INFO - Mammal Brain: Cached plan FAILED verification. INVALIDATING.")
+                        print("     INFO - Mammal Brain: Cached plan FAILED verification. INVALIDATING.")
                         invalidate_archivist_cache(archivist_cache, current_refinement)
                     
                     last_error_key_for_planner = current_refinement # Mark stagnation for planner
@@ -741,9 +741,9 @@ IMPORTANT: If you generate a "modify_file" plan, you MUST set the "specialist_ag
                     continue # Go to the next loop (which will escalate)
                 
                 else:
-                    print(f"    ✅ INFO - TDD Sandbox: Plan VERIFIED.")
+                    print(f"     INFO - TDD Sandbox: Plan VERIFIED.")
                     if not plan_was_from_cache:
-                        print("    ✅ INFO - Mammal Brain: Promoting new plan to cache.")
+                        print("     INFO - Mammal Brain: Promoting new plan to cache.")
                         save_to_archivist_cache(archivist_cache, current_refinement, plan)
                     # Set the key to track if this *verified* plan fails later
                     last_error_key_for_cache = current_refinement
@@ -761,29 +761,29 @@ IMPORTANT: If you generate a "modify_file" plan, you MUST set the "specialist_ag
         is_valid, reason = validate_plan(plan, manifest_files) 
         
         if not is_valid:
-            print(f"    ❌ PLAN FAILED VALIDATION: {reason}.")
+            print(f"     PLAN FAILED VALIDATION: {reason}.")
             print(f"    Forcing re-analysis...")
             current_refinement = "Previous plan failed validation. Re-running analysis."
             plan = None
             structured_errors = None
             continue
             
-        print("    ✅ Plan passed all deterministic validation.")
+        print("     Plan passed all deterministic validation.")
         
         # --- 3. Plan Execution (COMMIT) ---
         task_succeeded, exec_summary, structured_errors, next_plan_override = execute_plan_step(plan, project_root)
         
         if next_plan_override:
-            print(f"    ✅ INFO - Ant Brain: Execution override. Setting next plan.")
+            print(f"     INFO - Ant Brain: Execution override. Setting next plan.")
             plan = next_plan_override
             current_refinement = f"Deterministic fix: {exec_summary}"
             continue
 
         if not task_succeeded:
             if "Planner requested halt" in exec_summary:
-                print(f"    🛑 Planner requested halt. Halting loop.")
+                print(f"     Planner requested halt. Halting loop.")
             else:
-                print(f"    ❌ Task failed during execution ({exec_summary}). Halting loop.")
+                print(f"     Task failed during execution ({exec_summary}). Halting loop.")
             break
 
         # --- 4. Post-Execution Refinement ---
@@ -794,7 +794,7 @@ IMPORTANT: If you generate a "modify_file" plan, you MUST set the "specialist_ag
             current_refinement = f"REFINEMENT: {err.get('file_path', '')}:{err.get('line', '')}: {err.get('message', 'Complex error')}"
         else:
             # No structured data == SUCCESS
-            print(f"    ✅ Simple task step complete: {exec_summary}")
+            print(f"     Simple task step complete: {exec_summary}")
             current_refinement = "Previous step completed successfully. Re-running analysis."
         
         plan = None # Clear plan for next loop
@@ -811,38 +811,38 @@ def main():
     args = parser.parse_args()
     
     if args.prompt_file:
-        print(f"📄 Reading prompt from file: {args.prompt_file}")
+        print(f" Reading prompt from file: {args.prompt_file}")
         try:
             with open(args.prompt_file, 'r', encoding='utf-8') as f: problem_statement = f.read().strip()
-            if not problem_statement: print("❌ Error: Prompt file is empty."); return
+            if not problem_statement: print(" Error: Prompt file is empty."); return
             run_miso_system(problem_statement)
-            print("\n🏁 MISO Task Concluded (File Mode).")
+            print("\n MISO Task Concluded (File Mode).")
         except FileNotFoundError:
-            # 🚀 --- TYPO FIX ---
-            print(f"❌ Error: Prompt file not found: '{args.prompt_file}'")
+            #  --- TYPO FIX ---
+            print(f" Error: Prompt file not found: '{args.prompt_file}'")
             # ------------------
-        except Exception as e: print(f"\n❌ CRITICAL FILE MODE ERROR: {e}"); traceback.print_exc()
+        except Exception as e: print(f"\n CRITICAL FILE MODE ERROR: {e}"); traceback.print_exc()
     else:
         main_interactive_shell()
 
 
 def main_interactive_shell():
     """Runs the MISO TDD interactive shell."""
-    print("🚀 MISO V63 TDD System Initialized.")
+    print(" MISO V63 TDD System Initialized.")
     print("    Enter task or 'exit'.")
     
     while True:
         print("\n" + "="*80)
         try:
             problem_statement = input("[MISO Task]: ")
-            if problem_statement.lower() == 'exit': print("🏁 MISO Shutting Down."); break
+            if problem_statement.lower() == 'exit': print(" MISO Shutting Down."); break
             if not problem_statement: continue
             
             run_miso_system(problem_statement)
 
-        except KeyboardInterrupt: print("\n🏁 MISO Shutting Down."); break
-        except Exception as e: print(f"\n❌ SHELL ERROR: {e}"); traceback.print_exc(); print("Restarting...")
-        print("\n🏁 MISO Task Concluded.")
+        except KeyboardInterrupt: print("\n MISO Shutting Down."); break
+        except Exception as e: print(f"\n SHELL ERROR: {e}"); traceback.print_exc(); print("Restarting...")
+        print("\n MISO Task Concluded.")
 
 if __name__ == "__main__":
     main()

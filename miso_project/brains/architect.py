@@ -61,11 +61,11 @@ def check_tdd_harness(tdd_harness: Dict[str, str]) -> Tuple[TDD_STATUS, str, TDD
 
 def _construct_llm_prompt(workspace_dir: str, tdd_output: str) -> str:
     '''Constructs the context prompt for the LLM.'''
-    context = "## TDD FAILURE ##\n"
-    context += "The following TDD checks failed:\n"
-    context += f"\n\n"
-    context += "## CURRENT FILE CONTENTS ##\n"
-    context += "Here are the contents of the files in the workspace:\n\n"
+    context = "## TDD FAILURE ##\\n"
+    context += "The following TDD checks failed:\\n"
+    context += f"```\\n{tdd_output}\\n```\\n\\n"
+    context += "## CURRENT FILE CONTENTS ##\\n"
+    context += "Here are the contents of the files in the workspace:\\n\\n"
     
     for root, _, files in os.walk(workspace_dir):
         for file in files:
@@ -73,14 +73,14 @@ def _construct_llm_prompt(workspace_dir: str, tdd_output: str) -> str:
                 filepath = os.path.join(root, file)
                 # Get path relative to workspace dir for the LLM
                 relative_path = os.path.relpath(filepath, workspace_dir)
-                context += f"### File: {relative_path} ###\n"
+                context += f"### File: {relative_path} ###\\n"
                 try:
                     with open(filepath, 'r') as f:
-                        context += f"\n\n"
+                        context += f"```python\\n{f.read()}\\n```\\n\\n"
                 except Exception as e:
-                    context += f"[Could not read file: {e}]\n\n"
+                    context += f"[Could not read file: {e}]\\n\\n"
     
-    context += "\nYour task is to fix the code to pass the TDD tests."
+    context += "\\nYour task is to fix the code to pass the TDD tests."
     context += "You must provide your answer ONLY in the specified JSON format."
     return context
 
@@ -88,7 +88,7 @@ def _parse_llm_response(response_text: str) -> List[Dict[str, str]]:
     '''Parses the LLM's JSON response, handling errors.'''
     try:
         # Find the JSON block
-        json_match = re.search(r'', response_text, re.DOTALL)
+        json_match = re.search(r'```json\\n(.*?)\\n```', response_text, re.DOTALL)
         if json_match:
             json_str = json_match.group(1)
         else:
@@ -106,7 +106,7 @@ def _parse_llm_response(response_text: str) -> List[Dict[str, str]]:
             print(f"LLM Error: Response was valid JSON but not a list: {parsed}")
             return []
     except json.JSONDecodeError:
-        print(f"LLM Error: Failed to decode JSON response:\n{response_text}")
+        print(f"LLM Error: Failed to decode JSON response:\\n{response_text}")
         return []
     except Exception as e:
         print(f"LLM Error: Unknown parsing error: {e}")
@@ -122,10 +122,10 @@ def generate_fix(
     
     # 1. Construct Persona Prompt
     persona_prompt = (
-        f"You are {persona['name']}. {persona['description']}.\n"
-        "Your response MUST follow these rules:\n"
-        + "\n".join(f"- {rule}" for rule in persona['rules'])
-        + f"\nYour response MUST be in this exact format: {persona['response_format']}"
+        f"You are {persona['name']}. {persona['description']}.\\n"
+        "Your response MUST follow these rules:\\n"
+        + "\\n".join(f"- {rule}" for rule in persona['rules'])
+        + f"\\nYour response MUST be in this exact format: {persona['response_format']}"
     )
     
     # 2. Construct Context Prompt
