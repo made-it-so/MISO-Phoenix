@@ -22,30 +22,26 @@ jobs:
       run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
     - name: 4. Run Pytest (and save log)
+      # This is the "logic fix" - we give the step an ID
+      # and check its specific outcome in the next step.
       id: pytest
       continue-on-error: true
       run: source venv/bin/activate && pytest > pytest_log.txt
 
     - name: 5. Trigger MISO on Failure
+      # This is the "logic fix" - we check the 'pytest' step's outcome
       if: steps.pytest.outcome == 'failure'
       run: |
         echo "--- PYTEST FAILED. Triggering MISO ---"
-        
-        # 1. Read and escape the error log
-        LOG_CONTENT=$(cat pytest_log.txt | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
-        
-        # --- THE FIX IS HERE ---
-        # 2. Read and escape the *buggy code*
-        # (We hard-code the file path for this G6 test)
-        BUGGY_FILE="broken_math.py"
-        CODE_CONTENT=$(cat $BUGGY_FILE | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
 
-        # 3. Build the *complete* JSON payload
+        # This is the "payload fix" - we read and send the original_code
+        BUGGY_FILE="broken_math.py"
+        LOG_CONTENT=$(cat pytest_log.txt | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
+        CODE_CONTENT=$(cat $BUGGY_FILE | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
         JSON_PAYLOAD="{\"target_file\": \"${BUGGY_FILE}\", \"error_log\": ${LOG_CONTENT}, \"original_code\": ${CODE_CONTENT}}"
-        
+
         echo "Sending complete payload to MISO server at ${{ secrets.MISO_SERVER_IP }}..."
-        
-        # 4. Send the secure webhook
+
         curl -X POST "http://${{ secrets.MISO_SERVER_IP }}:5000/miso/trigger" \
              -H "Content-Type: application/json" \
              -H "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
