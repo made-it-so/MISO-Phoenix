@@ -5,4 +5,4 @@ def get_average(numbers):
     if not numbers:
         return 0
     total_sum = sum(numbers)
-    return divide_by(total_sum, 0) # The trigger
+    return divide_by(total_sum, len(numbers)) # The trigger
