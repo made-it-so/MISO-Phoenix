@@ -22,25 +22,30 @@ jobs:
       run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
     - name: 4. Run Pytest (and save log)
-      # --- THE FIRST FIX IS HERE ---
-      # We give this step a unique ID so we can reference it
       id: pytest
       continue-on-error: true
       run: source venv/bin/activate && pytest > pytest_log.txt
 
     - name: 5. Trigger MISO on Failure
-      # --- THE SECOND FIX IS HERE ---
-      # We check the *specific outcome* of the 'pytest' step
       if: steps.pytest.outcome == 'failure'
       run: |
         echo "--- PYTEST FAILED. Triggering MISO ---"
         
+        # 1. Read and escape the error log
         LOG_CONTENT=$(cat pytest_log.txt | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
-        JSON_PAYLOAD="{\"target_file\": \"broken_math.py\", \"error_log\": ${LOG_CONTENT}}"
         
-        echo "Sending payload to MISO server at ${{ secrets.MISO_SERVER_IP }}..."
+        # --- THE FIX IS HERE ---
+        # 2. Read and escape the *buggy code*
+        # (We hard-code the file path for this G6 test)
+        BUGGY_FILE="broken_math.py"
+        CODE_CONTENT=$(cat $BUGGY_FILE | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
+
+        # 3. Build the *complete* JSON payload
+        JSON_PAYLOAD="{\"target_file\": \"${BUGGY_FILE}\", \"error_log\": ${LOG_CONTENT}, \"original_code\": ${CODE_CONTENT}}"
         
-        # Send the secure webhook
+        echo "Sending complete payload to MISO server at ${{ secrets.MISO_SERVER_IP }}..."
+        
+        # 4. Send the secure webhook
         curl -X POST "http://${{ secrets.MISO_SERVER_IP }}:5000/miso/trigger" \
              -H "Content-Type: application/json" \
              -H "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
