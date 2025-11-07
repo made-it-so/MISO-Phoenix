@@ -1,0 +1,15 @@
+# Ignore the virtual environment
+venv/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore Git
+.gitignore
+
+# Ignore local secrets and Dockerfiles
+.env
+Dockerfile
+.dockerignore
