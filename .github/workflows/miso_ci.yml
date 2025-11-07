@@ -19,33 +19,24 @@ jobs:
         python-version: '3.10'
 
     - name: 3. Install Dependencies
-      run: |
-        python -m venv venv
-        source venv/bin/activate
-        pip install -r requirements.txt # (We'll need to create this)
-        pip install pytest
+      # NEW: This is a robust, single-line command
+      run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
-        - name: 4. Run Pytest (and save log)
-          # This is the fix: we remove '|| true' and add 'continue-on-error'
-          # This makes the step show a RED X (failure), but allows the workflow
-          # to proceed to Step 5 (which is what we want).
-          continue-on-error: true
-          run: source venv/bin/activate && pytest > pytest_log.txt
+    - name: 4. Run Pytest (and save log)
+      # This is the fix: We use a robust, single-line command
+      # and 'continue-on-error' to ensure we proceed to Step 5.
+      continue-on-error: true
+      run: source venv/bin/activate && pytest > pytest_log.txt
 
     - name: 5. Trigger MISO on Failure
-      # This step ONLY runs if the previous 'pytest' step failed.
       if: failure()
       run: |
         echo "--- PYTEST FAILED. Triggering MISO ---"
         
-        # Read the error log and escape it for JSON
         LOG_CONTENT=$(cat pytest_log.txt | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
-        
-        # Build the JSON payload
-        # This is hard-coded for our G6 test. A production version would find this dynamically.
         JSON_PAYLOAD="{\"target_file\": \"broken_math.py\", \"error_log\": ${LOG_CONTENT}}"
         
-        echo "Sending payload to MISO server..."
+        echo "Sending payload to MISO server at ${{ secrets.MISO_SERVER_IP }}..."
         
         # Send the secure webhook
         curl -X POST "http://${{ secrets.MISO_SERVER_IP }}:5000/miso/trigger" \
