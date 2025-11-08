@@ -4,3 +4,4 @@ python-dotenv
 ollama
 pytest
 boto3
+gunicorn

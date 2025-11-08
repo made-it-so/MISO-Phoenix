@@ -54,7 +54,7 @@ jobs:
         echo "Sending swarm payload to MISO server at ${{ secrets.MISO_SERVER_IP }}..."
         
         # Send the secure webhook to the NEW swarm endpoint
-        curl -X POST "http://${{ secrets.MISO_SERVER_IP }}:5000/miso/swarm_trigger" \
+        curl -X POST "http://${{ secrets.MISO_SERVER_IP }}/miso/swarm_trigger" \
              -H "Content-Type: application/json" \
              -H "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
              -d "${JSON_PAYLOAD}"
