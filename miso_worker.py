@@ -99,7 +99,7 @@ def run_fix(target_file: str, error_log: str):
         with open(target_file, 'r') as f:
             original_code = f.read()
     except Exception as e:
-        print(f"[WORKER]: CRITICAL: Failed to read {target_file}: {e}")
+        print(f"[WORKTER]: CRITICAL: Failed to read {target_file}: {e}")
         sys.exit(1)
 
     # --- 3. Call the Lizard Brain ---

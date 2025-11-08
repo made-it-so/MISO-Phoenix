@@ -38,10 +38,7 @@ jobs:
       # We expect it to fail, so we set 'continue-on-error'.
       id: mypy
       continue-on-error: true
-      run: |
-        source venv/bin/activate
-        # We run mypy with the strict flag
-        mypy --disallow-untyped-defs g7_buggy_test_*.py > mypy_log.txt
+      run: source venv/bin/activate && mypy --disallow-untyped-defs g7_buggy_test_*.py > mypy_log.txt
 
     - name: 6. Trigger MISO Swarm on Failure
       # This step ONLY runs if mypy failed
