@@ -59,8 +59,6 @@ def _commit_and_push_fix(target_file: str, brain_name: str, file_content: str) -
     print(f"[WORKER_GIT]: Creating new branch: {branch_name}")
     success, output = _run_git_command(["git", "checkout", "-b", branch_name])
     if not success:
-        # This will fail if another worker already pushed a 'main' update.
-        # A real system would have a retry-pull-checkout loop.
         print(f"[WORKER_GIT]: Failed to create new branch. Retrying pull... {output}")
         _run_git_command(["git", "pull", "origin", "main"])
         success, output = _run_git_command(["git", "checkout", "-b", branch_name])
@@ -99,7 +97,7 @@ def run_fix(target_file: str, error_log: str):
         with open(target_file, 'r') as f:
             original_code = f.read()
     except Exception as e:
-        print(f"[WORKTER]: CRITICAL: Failed to read {target_file}: {e}")
+        print(f"[WORKER]: CRITICAL: Failed to read {target_file}: {e}")
         sys.exit(1)
 
     # --- 3. Call the Lizard Brain ---

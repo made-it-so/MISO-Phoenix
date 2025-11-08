@@ -35,7 +35,6 @@ jobs:
 
     - name: 5. Run Mypy (and save log)
       # This step runs mypy on all the new files and saves the log.
-      # We expect it to fail, so we set 'continue-on-error'.
       id: mypy
       continue-on-error: true
       run: source venv/bin/activate && mypy --disallow-untyped-defs g7_buggy_test_*.py > mypy_log.txt

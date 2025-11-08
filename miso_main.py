@@ -42,7 +42,6 @@ if MISO_SECRET:
         # We also need the specialist brains for single tasks
         human_brain = HumanBrain()
         einstein_brain = EinsteinBrain()
-        # We don't need Lizard, as it only runs in the swarm
         
         print("[MISO_APP]: All brains are hot. MISO is operational.")
     except Exception as e:

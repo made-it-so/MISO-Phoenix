@@ -12,7 +12,8 @@ class MisoTriageAgent:
         self.ecs_client = boto3.client('ecs', region_name='us-east-1')
         
         # We need to know what Task Definition to run
-        self.worker_task_def_arn = "arn:aws:ecs:us-east-1:356206423360:task-definition/miso-task-def-elastic:5"
+        # We use the *latest* revision, which we will create
+        self.worker_task_def_arn = "arn:aws:ecs:us-east-1:356206423360:task-definition/miso-task-def-elastic"
         self.worker_cluster = "miso-cluster"
         self.worker_subnets = [
             'subnet-01df846c12e725654',
@@ -35,7 +36,6 @@ class MisoTriageAgent:
         
         all_errors = self.mypy_error_regex.findall(error_log)
         
-        # We process *every* error, not just unique files
         if not all_errors:
             print("[COORDINATOR]: No parseable mypy errors found in log.")
             return 0
@@ -44,15 +44,13 @@ class MisoTriageAgent:
 
         for (filename, error_message) in all_errors:
             
-            # We only know how to fix this one bug in a swarm
             if "missing a type annotation" in error_message:
                 try:
                     print(f"[COORDINATOR]: Launching Fargate 'Lizard' worker for {filename}...")
                     
-                    # This is the "Fargate-on-Fargate" call
                     response = self.ecs_client.run_task(
                         cluster=self.worker_cluster,
-                        taskDefinition=self.worker_task_def_arn,
+                        taskDefinition=self.worker_task_def_arn, # We will update this to the latest
                         launchType='FARGATE',
                         networkConfiguration={
                             'awsvpcConfiguration': {
@@ -64,8 +62,6 @@ class MisoTriageAgent:
                             'containerOverrides': [
                                 {
                                     'name': 'miso-app',
-                                    # This is the KEY: We override the Docker CMD
-                                    # to run our new "worker" script instead of the server
                                     'command': [
                                         "python", "miso_worker.py", 
                                         filename, error_message
@@ -74,7 +70,6 @@ class MisoTriageAgent:
                             ]
                         }
                     )
-                    # print(f"  [COORDINATOR]: Task {response['tasks'][0]['taskArn']} launched.")
                     tasks_launched += 1
                 
                 except Exception as e:
