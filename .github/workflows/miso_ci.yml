@@ -42,7 +42,7 @@ jobs:
 
         echo "Sending complete payload to MISO server at ${{ secrets.MISO_SERVER_IP }}..."
 
-        curl -X POST "http://${{ secrets.MISO_SERVER_IP }}:5000/miso/trigger" \
+        curl -X POST "http://${{ secrets.MISO_SERVER_IP }}/miso/trigger" \
              -H "Content-Type: application/json" \
              -H "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
              -d "${JSON_PAYLOAD}"
