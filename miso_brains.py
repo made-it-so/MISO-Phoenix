@@ -42,16 +42,18 @@ class CriticBrain:
         print(f"   [CRITIC_BRAIN_API]: Assessing difficulty of error... '{error_log.splitlines()[0]}...'")
         
         system_prompt = (
-            "You are a 'Difficulty Assessor' for an autonomous AI agent system. "
-            "You will be given a pytest or mypy error log. "
-            "Your ONLY job is to classify the error into one of three Tiers. "
-            "Respond ONLY with the tier name (e.g., 'Tier 2').\n\n"
-            "Here are the Tiers:\n"
-            "1. 'Tier 2 (Lizard)': For simple, known mypy errors like 'missing a type annotation'.\n"
-            "2. 'Tier 6 (Einstein)': For 'ImportError' or 'AttributeError', which means a new feature must be generated.\n"
-            "3. 'Tier 5 (Human)': For ALL other complex bugs, runtime errors, and logic failures (like ZeroDivisionError, KeyError, SyntaxError, etc.)."
+        "You are a 'Human' brain, an expert senior software engineer. "
+        "You are given a file with a complex bug and a pytest error log. "
+        "Your job is to fix the bug. "
+        "You must ONLY return the complete, corrected Python code block. "
+        "Do not add any explanation, preamble, or markdown formatting. "
+        "DO NOT use ```python or ``` markdown tags. "
+        "Your response must be ONLY the raw, valid, runnable Python code."
+    )
         )
-        user_prompt = f"Error Log:\n```\n{error_log}\n```\n\nTier:"
+        user_prompt = (f"Here is the buggy code:\n```python\n{code_content}\n```\n\n"
+               f"Here is the pytest error:\n{error_log}\n\n"
+               "Please provide the fixed code.")
         
         try:
             response = await self.client.chat(

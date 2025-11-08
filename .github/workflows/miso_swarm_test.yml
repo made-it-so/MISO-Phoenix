@@ -1,0 +1,72 @@
+name: "MISO G7 - Elastic Swarm Test"
+
+# This action is NOT run on 'push'.
+# It can only be started manually from the GitHub "Actions" tab.
+on:
+  workflow_dispatch:
+
+jobs:
+  run-swarm-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 1. Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 2. Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: 3. Install Dependencies
+      # We just need mypy for this test
+      run: python -m venv venv && source venv/bin/activate && pip install mypy
+
+    - name: 4. Create Swarm of 10 Buggy Files
+      run: |
+        echo "--- Creating 10 buggy mypy files... ---"
+        for i in $(seq 0 9); do
+          BUGGY_FILE="g7_buggy_test_${i}.py"
+          echo "def get_name(name):" > $BUGGY_FILE
+          echo "    # This function is missing type hints" >> $BUGGY_FILE
+          echo "    return f'Hello, {name}'" >> $BUGGY_FILE
+        done
+        echo "--- 10 files created. ---"
+
+    - name: 5. Run Mypy (and save log)
+      # This step runs mypy on all the new files and saves the log.
+      # We expect it to fail, so we set 'continue-on-error'.
+      id: mypy
+      continue-on-error: true
+      run: |
+        source venv/bin/activate
+        # We run mypy with the strict flag
+        mypy --disallow-untyped-defs g7_buggy_test_*.py > mypy_log.txt
+
+    - name: 6. Trigger MISO Swarm on Failure
+      # This step ONLY runs if mypy failed
+      if: steps.mypy.outcome == 'failure'
+      run: |
+        echo "--- MYPY FAILED (as expected). Triggering MISO Swarm ---"
+        
+        # Read and escape the full mypy error log
+        LOG_CONTENT=$(cat mypy_log.txt | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
+        
+        # Build the JSON payload
+        JSON_PAYLOAD="{\"error_log\": ${LOG_CONTENT}}"
+        
+        echo "Sending swarm payload to MISO server at ${{ secrets.MISO_SERVER_IP }}..."
+        
+        # Send the secure webhook to the NEW swarm endpoint
+        curl -X POST "http://${{ secrets.MISO_SERVER_IP }}:5000/miso/swarm_trigger" \
+             -H "Content-Type: application/json" \
+             -H "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
+             -d "${JSON_PAYLOAD}"
+        
+    - name: 7. Cleanup Swarm Files
+      # This step runs regardless of failure/success
+      if: always()
+      run: |
+        echo "--- Cleaning up buggy files... ---"
+        rm -f g7_buggy_test_*.py
+        rm -f mypy_log.txt
