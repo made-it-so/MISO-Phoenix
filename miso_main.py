@@ -100,17 +100,19 @@ def run_ai_fix_cycle(commit_sha, branch_name, error_log, file_to_fix):
         logging.info(f"BACKGROUND_JOB: Successfully pushed fix to branch: {branch_name}")
 
     except Exception as e:
-        logging.error(f"BACKGROUND_JOB: Git/AI operation failed: {e}", exc_info=True)
+        logging.error(f"BACKGROUND_JOB: Git/AI operation failed: {e}", exc_info:True)
     finally:
         if os.path.exists(repo_dir):
             shutil.rmtree(repo_dir)
             logging.info(f"BACKGROUND_JOB: Cleaned up temp directory {repo_dir}")
 
-# --- Fixed Triage Regex ---
+# --- THIS IS THE FIX: Improved Triage Regex ---
 def triage_error_log(error_log):
     logging.info("Triage: Parsing error log...")
     
-    traceback_pattern = re.compile(r'File ".*?/MISO-Phoenix/(.*?)"', re.IGNORECASE)
+    # This regex looks for the GHA workspace path and captures everything after it.
+    # This will correctly find 'miso_brains.py' or 'miso_project/workspace/test_stats.py'
+    traceback_pattern = re.compile(r'File "/home/runner/work/MISO-Phoenix/MISO-Phoenix/(.*?)"', re.IGNORECASE)
     match = traceback_pattern.search(error_log)
     
     if match:
@@ -118,6 +120,7 @@ def triage_error_log(error_log):
         logging.info(f"Triage: Found file in traceback: {relative_path}")
         return relative_path
         
+    # Fallback for summary errors
     summary_pattern = re.compile(r'ERROR ([\w/]+\.py)')
     match = summary_pattern.search(error_log)
     if match:
@@ -161,7 +164,7 @@ def handle_ci_webhook():
         file_to_fix = triage_error_log(error_log)
         if not file_to_fix:
             logging.error("Triage failed to find a file to fix.")
-            return jsonify({"error": "Triage failed"}), 400
+            return jsonify({"error": "Triage failed"}), 400 # <-- This is what happened
         
         fix_branch_name = f"miso-fix/{file_to_fix.replace('/', '-')}-{commit_sha[:7]}"
         
@@ -178,7 +181,7 @@ def handle_ci_webhook():
         return jsonify({"status": "received", "action": "fix_job_scheduled", "branch": fix_branch_name}), 200
 
     except Exception as e:
-        logging.error(f"FATAL ERROR in /miso/trigger: {e}", exc_info=True)
+        logging.error(f"FATAL ERROR in /miso/trigger: {e}", exc_info:True)
         return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/miso/swarm_trigger', methods=['POST'])
