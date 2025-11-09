@@ -24,14 +24,18 @@ jobs:
 
       - name: Run Pytest and Capture Log
         id: pytest
-        # Run pytest, but tee its output to stdout (for the GHA log)
-        # and also to a file (pytest_errors.log) for MISO.
-        # We use '|| true' to ensure the step doesn't stop the job.
+        # Run pytest, tee output to file.
+        # We REMOVED '|| true' to let the step fail.
         run: |
-          pytest 2>&1 | tee pytest_errors.log || true
+          pytest 2>&1 | tee pytest_errors.log
+        # We use continue-on-error HERE.
+        # This makes the step's 'outcome' == 'failure'
+        # but allows the workflow to continue.
+        continue-on-error: true
 
-      # This step makes the log file available to the next job
       - name: Upload pytest log artifact
+        # This step must run even if pytest failed.
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pytest-log
@@ -39,17 +43,16 @@ jobs:
 
   trigger-miso:
     needs: test
+    # This 'if' condition will now work correctly.
     if: needs.test.outputs.pytest_outcome == 'failure'
     runs-on: ubuntu-latest
 
     steps:
-      # We need the log file from the 'test' job
       - name: Download pytest log artifact
         uses: actions/download-artifact@v4
         with:
           name: pytest-log
 
-      # Install jq to build the JSON payload safely
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
@@ -57,10 +60,8 @@ jobs:
         run: |
           ALB_DNS_NAME="miso-alb-345728313.us-east-1.elb.amazonaws.com"
           
-          # Read the error log into a variable
           ERROR_LOG=$(cat pytest_errors.log)
 
-          # Use jq to build a valid JSON payload
           JSON_PAYLOAD=$(jq -n \
             --arg event "pytest_failure" \
             --arg branch "${{ github.ref_name }}" \
