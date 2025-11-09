@@ -100,7 +100,7 @@ def run_ai_fix_cycle(commit_sha, branch_name, error_log, file_to_fix):
         logging.info(f"BACKGROUND_JOB: Successfully pushed fix to branch: {branch_name}")
 
     except Exception as e:
-        # --- THIS IS THE FIX ---
+        # --- THIS IS THE SYNTAX FIX ---
         logging.error(f"BACKGROUND_JOB: Git/AI operation failed: {e}", exc_info=True)
         # --- END OF FIX ---
     finally:
@@ -108,7 +108,7 @@ def run_ai_fix_cycle(commit_sha, branch_name, error_log, file_to_fix):
             shutil.rmtree(repo_dir)
             logging.info(f"BACKGROUND_JOB: Cleaned up temp directory {repo_dir}")
 
-# --- Fixed Triage Regex ---
+# --- Triage Regex ---
 def triage_error_log(error_log):
     logging.info("Triage: Parsing error log...")
     
