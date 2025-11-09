@@ -113,8 +113,6 @@ def run_ai_fix_cycle(commit_sha, branch_name, error_log, file_to_fix):
 def triage_error_log(error_log):
     logging.info("Triage: Parsing error log...")
     
-    # This pattern now finds the full path *after* the repo root directory
-    # e.g. "File ".../MISO-Phoenix/miso_brains.py", line 53"
     traceback_pattern = re.compile(r'File ".*?/MISO-Phoenix/(.*?)"', re.IGNORECASE)
     match = traceback_pattern.search(error_log)
     
