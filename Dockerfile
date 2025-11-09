@@ -1,25 +1,31 @@
-# Start from an official Python 3.10 slim image
+# Use a secure, slim base image
 FROM python:3.10-slim
 
-# Set the working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy the requirements file first to leverage Docker cache
+# --- THIS IS THE FIX ---
+# Install the 'git' binary into the container's OS
+# We update apt, install git, then clean up to keep the image small
+RUN apt-get update && \
+    apt-get install -y git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+# --- END OF FIX ---
+
+# Install Python dependencies
 COPY requirements.txt .
-
-# Install git
-RUN apt-get update && apt-get install -y git
-
-# Install all Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Now, copy all of our application code into the container
-# (We will create a .dockerignore to skip venv)
-COPY . .
+# Copy the application
+COPY miso_main.py .
 
-# Expose port 5000 to the outside world
+# Expose the port Gunicorn will run on
 EXPOSE 5000
 
-# This is the command that runs when the container starts
-# It's the same command you've been running manually
-CMD ["flask", "--app", "miso_main", "run", "--host=0.0.0.0", "--port=5000"]
+# Add a non-root user for security
+RUN useradd --no-log-init -u 1001 appuser
+USER appuser
+
+# Run the production server
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "miso_main:app"]

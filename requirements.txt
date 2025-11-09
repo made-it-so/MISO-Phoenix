@@ -1,7 +1,6 @@
 Flask
-google-generativeai
-python-dotenv
-ollama
-pytest
-boto3
 gunicorn
+boto3
+google-generativeai
+ollama
+GitPython
