@@ -20,9 +20,6 @@ logging.basicConfig(level=logging.INFO,
 EXPECTED_SECRET = os.environ.get('MISO_WEBHOOK_SECRET')
 GEMINI_API_KEY = os.environ.get('GOOGLE_API_KEY')
 GITHUB_PAT = os.environ.get('MISO_GITHUB_PAT')
-
-# --- THIS IS THE FIX ---
-# Using your real repository URL
 GITHUB_REPO_URL = "https://github.com/made-it-so/MISO-Phoenix.git"
 
 # --- Configure Gemini API ---
