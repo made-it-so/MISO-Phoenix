@@ -24,7 +24,15 @@ logging.basicConfig(level=logging.INFO,
 EXPECTED_SECRET = os.environ.get('MISO_WEBHOOK_SECRET')
 GEMINI_API_KEY = os.environ.get('GOOGLE_API_KEY')
 GITHUB_PAT = os.environ.get('MISO_GITHUB_PAT')
-GITHUB_REPO_URL = "https://github.com/MISO-MISO/MISO-Phoenix.git" # TODO: Update this if wrong
+
+# --- ⚠️ THIS IS THE FIX (Part 1) ---
+# --- ⚠️ This must be your *actual* repository URL
+GITHUB_REPO_URL = "[YOUR_REAL_REPO_URL_HERE]" # e.g., https://github.com/YourUsername/MISO-Phoenix.git
+
+if GITHUB_REPO_URL == "[YOUR_REAL_REPO_URL_HERE]":
+    logging.critical("FATAL: GITHUB_REPO_URL is not set in miso_main.py. Aborting.")
+    # We abort here to prevent a crash loop if you forget to edit this.
+    exit(1)
 
 # --- Configure Gemini API ---
 try:
@@ -44,12 +52,7 @@ if not GITHUB_PAT:
 app = Flask(__name__)
 
 # --- BACKGROUND TASK LOGIC ---
-# This is the full autonomous cycle. It runs in a separate thread.
 def run_ai_fix_cycle(commit_sha, branch_name, error_log, file_to_fix):
-    """
-    Clones repo, reads file, calls AI, applies fix, and pushes.
-    This function is now executed in a background thread.
-    """
     logging.info(f"BACKGROUND_JOB: Starting fix for {commit_sha} on branch {branch_name}")
     auth_repo_url = GITHUB_REPO_URL.replace("https://", f"https://oauth2:{GITHUB_PAT}@")
     repo_dir = tempfile.mkdtemp(prefix="miso-")
@@ -119,18 +122,23 @@ def run_ai_fix_cycle(commit_sha, branch_name, error_log, file_to_fix):
             shutil.rmtree(repo_dir)
             logging.info(f"BACKGROUND_JOB: Cleaned up temp directory {repo_dir}")
 
-# --- TRIAGE BRAIN ---
+# --- ⚠️ THIS IS THE FIX (Part 2) ---
+# --- Fixed regex to properly find the relative file path ---
 def triage_error_log(error_log):
     logging.info("Triage: Parsing error log...")
-    traceback_pattern = re.compile(r'File ".*?/(MISO-Phoenix/.*?)"', re.IGNORECASE)
+    
+    # This pattern now finds the full path *after* the repo root directory
+    # e.g. "File ".../MISO-Phoenix/miso_brains.py", line 53"
+    # The (.*?) will capture "miso_brains.py" or "miso_project/workspace/test_stats.py"
+    traceback_pattern = re.compile(r'File ".*?/MISO-Phoenix/(.*?)"', re.IGNORECASE)
     match = traceback_pattern.search(error_log)
     
     if match:
-        full_path = match.group(1)
-        relative_path = full_path.split("MISO-Phoenix/", 1)[-1]
+        relative_path = match.group(1)
         logging.info(f"Triage: Found file in traceback: {relative_path}")
         return relative_path
         
+    # Fallback for summary errors
     summary_pattern = re.compile(r'ERROR ([\w/]+\.py)')
     match = summary_pattern.search(error_log)
     if match:
@@ -155,7 +163,7 @@ def check_auth():
     logging.info("**AUTH SUCCESSFUL.**")
     return True
 
-# --- MISO CI ENDPOINT (NOW ASYNCHRONOUS) ---
+# --- MISO CI ENDPOINT (ASYNCHRONOUS) ---
 @app.route('/miso/trigger', methods=['POST'])
 def handle_ci_webhook():
     logging.info("Endpoint /miso/trigger HIT.")
@@ -168,7 +176,6 @@ def handle_ci_webhook():
         logging.info(f"Received payload: {payload_data[:500]}...")
         payload = json.loads(payload_data)
         
-        branch = payload.get("branch")
         commit_sha = payload.get("commit_sha")
         error_log = payload.get("error_log")
         
@@ -189,8 +196,8 @@ def handle_ci_webhook():
         scheduler.add_job(
             func=run_ai_fix_cycle,
             args=[commit_sha, fix_branch_name, error_log, file_to_fix],
-            id=f"job-{commit_sha}", # Use a unique ID
-            trigger='date' # Run immediately, but only once
+            id=f"job-{commit_sha}",
+            trigger='date'
         )
         
         logging.info("Job scheduled. Sending 200 OK immediately.")
@@ -212,7 +219,6 @@ def handle_swarm_webhook():
 
 # --- INITIALIZE AND START SCHEDULER ---
 if __name__ != '__main__':
-    # This block runs when Gunicorn loads the app
     scheduler = BackgroundScheduler()
     scheduler.start()
     logging.info("BackgroundScheduler started.")
