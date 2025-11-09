@@ -1,48 +1,47 @@
-name: "MISO Autonomous CI/CD"
+name: "MISO CI: Pytest Failure Trigger"
 
 on:
   push:
     branches:
-      - main
+      - main # Or your primary branch
 
 jobs:
-  test-and-trigger-miso:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-    - name: 1. Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: 2. Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: 3. Install Dependencies
-      run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-    - name: 4. Run Pytest (and save log)
-      # This is the "logic fix" - we give the step an ID
-      # and check its specific outcome in the next step.
-      id: pytest
-      continue-on-error: true
-      run: source venv/bin/activate && pytest > pytest_log.txt
+      - name: Run Pytest
+        id: pytest
+        run: pytest
+        continue-on-error: true # Continue even if pytest fails
 
-    - name: 5. Trigger MISO on Failure
-      # This is the "logic fix" - we check the 'pytest' step's outcome
-      if: steps.pytest.outcome == 'failure'
-      run: |
-        echo "--- PYTEST FAILED. Triggering MISO ---"
-
-        # This is the "payload fix" - we read and send the original_code
-        BUGGY_FILE="broken_math.py"
-        LOG_CONTENT=$(cat pytest_log.txt | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
-        CODE_CONTENT=$(cat $BUGGY_FILE | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
-        JSON_PAYLOAD="{\"target_file\": \"${BUGGY_FILE}\", \"error_log\": ${LOG_CONTENT}, \"original_code\": ${CODE_CONTENT}}"
-
-        echo "Sending complete payload to MISO server at ${{ secrets.MISO_SERVER_IP }}..."
-
-        curl -X POST "http://${{ secrets.MISO_SERVER_IP }}/miso/trigger" \
-             -H "Content-Type: application/json" \
-             -H "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
-             -d "${JSON_PAYLOAD}"
+  trigger-miso:
+    # This job runs ONLY IF the 'test' job failed
+    needs: test
+    if: failure() && needs.test.outputs.outcome == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "CRITICAL FAILURE: Triggering MISO Fixer"
+        run: |
+          # Using the correct HTTP endpoint and DNS name
+          ALB_DNS_NAME="miso-alb-345728313.us-east-1.elb.amazonaws.com"
+          
+          curl --fail-with-body --connect-timeout 60 --max-time 180 \
+            -X POST "http://${ALB_DNS_NAME}/miso/trigger" \
+            --header "Content-Type: application/json" \
+            --header "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
+            --data-raw '{
+              "event": "pytest_failure",
+              "branch": "${{ github.ref_name }}",
+              "commit_sha": "${{ github.sha }}"
+            }'
