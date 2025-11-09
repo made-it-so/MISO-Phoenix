@@ -20,5 +20,5 @@ RUN useradd --no-log-init -u 1001 appuser
 USER appuser
 
 # --- THIS IS THE FIX ---
-# Added --preload to fix APScheduler crash
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "--preload", "miso_main:app"]
+# Removed --preload. This will run a scheduler in each worker.
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "miso_main:app"]
