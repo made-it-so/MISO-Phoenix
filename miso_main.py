@@ -1,77 +1,204 @@
 import os
 import logging
+import json
+import tempfile
+import shutil
+import re
 from flask import Flask, request, jsonify
 
-# --- REQUIRED IMPORTS (Fixes ModuleNotFoundError) ---
-# These must match requirements.txt
+# --- REQUIRED IMPORTS ---
 import boto3
-import google.generativeai
+import google.generativeai as genai
 import ollama
-import git
+from git import Repo, Actor
 
 # --- Configuration & Logging ---
 logging.basicConfig(level=logging.INFO,
                     format='[%(asctime)s] [%(levelname)s] [MISO_APP]: %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
-# Get the secret from environment variables (provided by Fargate Task Def)
+# --- Environment Variable Secrets (from Fargate Task Def) ---
 EXPECTED_SECRET = os.environ.get('MISO_WEBHOOK_SECRET')
+GEMINI_API_KEY = os.environ.get('GOOGLE_API_KEY')
+GITHUB_PAT = os.environ.get('MISO_GITHUB_PAT')
+GITHUB_REPO_URL = "https://github.com/MISO-MISO/MISO-Phoenix.git" # TODO: Update this if wrong
+
+# --- Configure Gemini API ---
+try:
+    if not GEMINI_API_KEY:
+        logging.critical("GEMINI_API_KEY env var not set.")
+    genai.configure(api_key=GEMINI_API_KEY)
+    gemini_model = genai.GenerativeModel('gemini-1.5-pro-latest')
+    logging.info("Gemini AI model configured.")
+except Exception as e:
+    logging.critical(f"Failed to configure Gemini: {e}")
 
 if not EXPECTED_SECRET:
-    logging.critical("CRITICAL_FAILURE: MISO_WEBHOOK_SECRET env var not set. Auth will fail.")
+    logging.critical("MISO_WEBHOOK_SECRET env var not set.")
+if not GITHUB_PAT:
+    logging.critical("MISO_GITHUB_PAT env var not set.")
 
 app = Flask(__name__)
 
 # --- ALB HEALTH CHECK ---
-# This endpoint is CRITICAL. The ALB pings this.
-# If it fails, the task is marked Unhealthy (503 error).
 @app.route('/health', methods=['GET'])
 def health_check():
-    """A simple health check endpoint for the ALB."""
-    # This proves the Flask app is running.
     return jsonify({"status": "healthy"}), 200
 
 # --- AUTHENTICATION CHECK (Helper Function) ---
 def check_auth():
-    """Checks the 'Authorization' header for the MISO secret."""
     auth_header = request.headers.get('Authorization')
-    
-    if not EXPECTED_SECRET:
-        logging.error("Auth check failed: Server secret is not configured.")
-        return False
-
     if not auth_header or auth_header != f'Bearer {EXPECTED_SECRET}':
         logging.warning("AUTH FAILED. Invalid or missing token.")
         return False
-        
     logging.info("**AUTH SUCCESSFUL.**")
     return True
+
+# --- 1. TRIAGE BRAIN ---
+def triage_error_log(error_log):
+    """
+    Parses a pytest error log to find the file path of the first major error.
+    This is a simple regex parser; a real Triage Brain could be much more complex.
+    """
+    logging.info("Triage: Parsing error log...")
+    
+    # Regex to find file paths from pytest tracebacks
+    # e.g., "File "/home/runner/work/MISO-Phoenix/MISO-Phoenix/miso_brains.py", line 53"
+    # Or "ERROR miso_project/workspace/test_stats.py"
+    
+    # This pattern looks for "File "..." (a full path)
+    traceback_pattern = re.compile(r'File ".*?/(MISO-Phoenix/.*?)"', re.IGNORECASE)
+    match = traceback_pattern.search(error_log)
+    
+    if match:
+        # Extract the relative path (e.g., "miso_project/workspace/test_stats.py")
+        full_path = match.group(1)
+        # We need the path relative to the repo root, so we strip the repo name
+        relative_path = full_path.split("MISO-Phoenix/", 1)[-1]
+        logging.info(f"Triage: Found file in traceback: {relative_path}")
+        return relative_path
+        
+    # Fallback pattern for summary errors like "ERROR run_lizard_unit_test.py"
+    summary_pattern = re.compile(r'ERROR ([\w/]+\.py)')
+    match = summary_pattern.search(error_log)
+    if match:
+        file_path = match.group(1)
+        logging.info(f"Triage: Found file in summary: {file_path}")
+        return file_path
+
+    logging.warning("Triage: Could not determine file to fix from error log.")
+    return None
+
+# --- 2. AI + GIT CYCLE ---
+def run_ai_fix_cycle(commit_sha, branch_name, error_log, file_to_fix):
+    """
+    Clones repo, reads file, calls AI, applies fix, and pushes.
+    This is the core autonomous loop.
+    """
+    auth_repo_url = GITHUB_REPO_URL.replace("https://", f"https://oauth2:{GITHUB_PAT}@")
+    repo_dir = tempfile.mkdtemp(prefix="miso-")
+    logging.info(f"Cloning {GITHUB_REPO_URL} into {repo_dir}...")
+    
+    try:
+        # --- Git Clone ---
+        repo = Repo.clone_from(auth_repo_url, repo_dir, branch='main')
+        author = Actor("MISO-AI", "miso@autonomous-agent.ai")
+        repo.config_writer().set_value("user", "name", author.name).release()
+        repo.config_writer().set_value("user", "email", author.email).release()
+        
+        # --- Read Broken File ---
+        full_file_path = os.path.join(repo_dir, file_to_fix)
+        if not os.path.exists(full_file_path):
+            logging.error(f"File not found in repo: {full_file_path}")
+            return
+            
+        with open(full_file_path, "r") as f:
+            original_code = f.read()
+
+        # --- Call Real AI ---
+        logging.info(f"Sending error and file content to Gemini...")
+        prompt = f"""
+        You are an autonomous AI software engineer (MISO). A pytest run has failed.
+        You must fix the provided Python file to resolve the error.
+
+        THE ERROR LOG:
+        {error_log}
+
+        THE BROKEN FILE: {file_to_fix}
+        ```python
+        {original_code}
+        ```
+
+        You must provide *only* the full, corrected Python code for the file {file_to_fix}.
+        Do not add any explanation, markdown, or chat. Your output will be piped directly
+        to a file and committed.
+        """
+        
+        response = gemini_model.generate_content(prompt)
+        fixed_code = response.text
+        logging.info("Gemini has provided a fix.")
+
+        # --- Apply Fix and Push ---
+        new_branch = repo.create_head(branch_name)
+        new_branch.checkout()
+
+        with open(full_file_path, "w") as f:
+            # Clean up Gemini's response (in case it added markdown)
+            cleaned_code = fixed_code.strip().strip("```python").strip("```")
+            f.write(cleaned_code)
+
+        repo.git.add(update=True)
+        repo.git.add(full_file_path)
+        commit_message = f"FIX(MISO-AI): Autonomous fix for {file_to_fix} [{commit_sha[:7]}]"
+        repo.index.commit(commit_message, author=author)
+        
+        origin = repo.remote(name='origin')
+        origin.push(new_branch.name)
+        
+        logging.info(f"Successfully pushed fix to branch: {branch_name}")
+
+    except Exception as e:
+        logging.error(f"Git/AI operation failed: {e}", exc_info=True)
+    finally:
+        if os.path.exists(repo_dir):
+            shutil.rmtree(repo_dir)
 
 # --- MISO CI ENDPOINT ---
 @app.route('/miso/trigger', methods=['POST'])
 def handle_ci_webhook():
-    """Receives the main trigger from the GHA pytest failure."""
     logging.info("Endpoint /miso/trigger HIT.")
-    
     if not check_auth():
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        # data = request.json
-        logging.info(f"Received payload: {request.data[:200]}...") # Log snippet
+        # 1. Parse Payload
+        payload_data = request.data.decode('utf-8')
+        logging.info(f"Received payload: {payload_data[:500]}...")
+        payload = json.loads(payload_data)
+        
+        branch = payload.get("branch")
+        commit_sha = payload.get("commit_sha")
+        error_log = payload.get("error_log")
+        
+        if not error_log:
+            logging.error("No error_log found in payload.")
+            return jsonify({"error": "Missing error_log"}), 400
 
-        # --- TODO: PASTE YOUR TRIAGE / AI / GIT LOGIC HERE ---
-        # 1. Parse the pytest failure from 'data'.
-        # 2. Call Gemini (HumanBrain) API.
-        # 3. Call git.Repo() to clone, commit, and push the fix.
-        #    (Ensure your Fargate Task Role 'ecsTaskRole' has CodeCommit/GitHub permissions)
-        # --- END OF LOGIC ---
-
-        # IMPORTANT: You must return 200 OK *fast* or the GHA will time out.
-        # If your AI/Git logic takes > 2 minutes, run it in a background thread.
+        # 2. Triage
+        file_to_fix = triage_error_log(error_log)
+        if not file_to_fix:
+            logging.error("Triage failed to find a file to fix.")
+            return jsonify({"error": "Triage failed"}), 400
+        
+        # 3. Execute AI/Git Cycle
+        fix_branch_name = f"miso-fix/{file_to_fix.replace('/', '-')}-{commit_sha[:7]}"
+        
+        # We are *not* running this in the background yet.
+        # The GHA will wait for the AI and Git push to complete.
+        run_ai_fix_cycle(commit_sha, fix_branch_name, error_log, file_to_fix)
         
         logging.info("/miso/trigger execution complete.")
-        return jsonify({"status": "received", "action": "fix_in_progress"}), 200
+        return jsonify({"status": "received", "action": "fix_pushed", "branch": fix_branch_name}), 200
 
     except Exception as e:
         logging.error(f"FATAL ERROR in /miso/trigger: {e}", exc_info=True)
@@ -80,21 +207,7 @@ def handle_ci_webhook():
 # --- MISO SWARM ENDPOINT ---
 @app.route('/miso/swarm_trigger', methods=['POST'])
 def handle_swarm_webhook():
-    """Receives the trigger from the swarm test workflow."""
     logging.info("Endpoint /miso/swarm_trigger HIT.")
-    
     if not check_auth():
         return jsonify({"error": "Unauthorized"}), 401
-
-    try:
-        # --- TODO: PASTE YOUR SWARM LOGIC HERE ---
-        # 1. Parse payload.
-        # 2. Execute swarm/agent logic.
-        # --- END OF LOGIC ---
-
-        logging.info("/miso/swarm_trigger execution complete.")
-        return jsonify({"status": "received", "action": "swarm_task_initiated"}), 200
-
-    except Exception as e:
-        logging.error(f"FATAL ERROR in /miso/swarm_trigger: {e}", exc_info=True)
-        return jsonify({"error": "Internal server error"}), 500
+    return jsonify({"status": "received", "action": "swarm_task_initiated"}), 200
