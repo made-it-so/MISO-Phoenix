@@ -8,12 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # --- THIS IS THE FIX (PART 1) ---
-    # We must explicitly define an output for the job
     outputs:
       pytest_outcome: ${{ steps.pytest.outcome }}
-    # --- END OF FIX (PART 1) ---
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,32 +22,54 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Pytest
-        id: pytest # This ID is read by the 'outputs' block
-        run: pytest
-        continue-on-error: true # This is correct, it keeps the job alive
+      - name: Run Pytest and Capture Log
+        id: pytest
+        # Run pytest, but tee its output to stdout (for the GHA log)
+        # and also to a file (pytest_errors.log) for MISO.
+        # We use '|| true' to ensure the step doesn't stop the job.
+        run: |
+          pytest 2>&1 | tee pytest_errors.log || true
+
+      # This step makes the log file available to the next job
+      - name: Upload pytest log artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-log
+          path: pytest_errors.log
 
   trigger-miso:
-    # This job runs *after* test
     needs: test
-    
-    # --- THIS IS THE FIX (PART 2) ---
-    # We check the *output* of the 'test' job, not its 'failure()' status
     if: needs.test.outputs.pytest_outcome == 'failure'
-    # --- END OF FIX (PART 2) ---
-
     runs-on: ubuntu-latest
+
     steps:
+      # We need the log file from the 'test' job
+      - name: Download pytest log artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pytest-log
+
+      # Install jq to build the JSON payload safely
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: "CRITICAL FAILURE: Triggering MISO Fixer"
         run: |
           ALB_DNS_NAME="miso-alb-345728313.us-east-1.elb.amazonaws.com"
           
+          # Read the error log into a variable
+          ERROR_LOG=$(cat pytest_errors.log)
+
+          # Use jq to build a valid JSON payload
+          JSON_PAYLOAD=$(jq -n \
+            --arg event "pytest_failure" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg commit_sha "${{ github.sha }}" \
+            --arg error_log "$ERROR_LOG" \
+            '{event: $event, branch: $branch, commit_sha: $commit_sha, error_log: $error_log}')
+
           curl --fail-with-body --connect-timeout 60 --max-time 180 \
             -X POST "http://${ALB_DNS_NAME}/miso/trigger" \
             --header "Content-Type: application/json" \
             --header "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
-            --data-raw '{
-              "event": "pytest_failure",
-              "branch": "${{ github.ref_name }}",
-              "commit_sha": "${{ github.sha }}"
-            }'
+            --data-raw "$JSON_PAYLOAD"
