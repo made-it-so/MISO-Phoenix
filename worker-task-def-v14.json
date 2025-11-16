@@ -1,0 +1,50 @@
+{
+    "family": "miso-worker-task",
+    "executionRoleArn": "arn:aws:iam::356206423360:role/miso-fargate-exec-role",
+    "taskRoleArn": "arn:aws:iam::356206423360:role/miso-fargate-exec-role",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "256",
+    "memory": "512",
+    "containerDefinitions": [
+        {
+            "name": "miso-worker",
+            "image": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso-worker:latest",
+            "essential": true,
+            "environment": [
+                {
+                    "name": "MISO_SQS_QUEUE_URL",
+                    "value": "https://queue.amazonaws.com/356206423360/miso_job_queue"
+                },
+                {
+                    "name": "SQS_QUEUE_URL",
+                    "value": "https://queue.amazonaws.com/356206423360/miso_job_queue"
+                }
+            ],
+            "secrets": [
+                {
+                    "name": "GITHUB_PAT",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/github_pat-aCUa8g"
+                },
+                {
+                    "name":V "GEMINI_API_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/gemini_api_key-sJkRuG"
+                },
+                {
+                    "name": "WEBHOOK_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/webhook_secret-lxlx5U"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/miso-worker-task",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
+        }
+    ]
+}

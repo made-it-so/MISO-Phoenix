@@ -1,0 +1,111 @@
+name: Deploy MISO Worker
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'miso-worker/**' # Only run if worker code changes
+      - '.github/workflows/deploy-worker.yml' # Or if this file changes
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # Required for checkout
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: $"{{ secrets.AWS_ACCESS_KEY_ID }}"
+        aws-secret-access-key: $"{{ secrets.AWS_SECRET_ACCESS_KEY }}"
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+      with:
+        registry: "356206423360.dkr.ecr.us-east-1.amazonaws.com"
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: $"{{ steps.login-ecr.outputs.registry }}"
+        ECR_REPOSITORY: miso-worker
+        IMAGE_TAG: $"{{ github.sha }}"
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./miso-worker
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Create new Task Definition JSON
+      id: task-def
+      run: |
+        # This is the "real" task definition our pipeline will use.
+        cat > task-definition.json <<EOF
+        {
+            "family": "miso-worker-task",
+            "executionRoleArn": "arn:aws:iam::356206423360:role/miso-fargate-exec-role-v2",
+            "taskRoleArn": "arn:aws:iam::356206423360:role/miso-fargate-task-role-v2",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "256",
+            "memory": "512",
+            "containerDefinitions": [
+                {
+                    "name": "miso-worker",
+                    "image": "$"{{ steps.build-image.outputs.image }}",
+                    "essential": true,
+                    "environment": [
+                        {
+                            "name": "MISO_SQS_QUEUE_URL",
+                            "value": "https://queue.amazonaws.com/356206423360/miso_job_queue"
+                        },
+                        {
+                            "name": "SQS_QUEUE_URL",
+                            "value": "https://queue.amazonaws.com/356206423360/miso_job_queue"
+                        }
+                    ],
+                    "secrets": [
+                        {
+                            "name": "GITHUB_PAT",
+                            "valueFrom": "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/github_pat-aCUa8g"
+                        },
+                        {
+                            "name": "GEMINI_API_KEY",
+                            "valueFrom": "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/gemini_api_key-sJkRuG"
+                        },
+                        {
+                            "name": "WEBHOOK_SECRET",
+                            "valueFrom": "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/webhook_secret-lxlx5U"
+                        }
+                    ],
+                    "logConfiguration": {
+                        "logDriver": "awslogs",
+                        "options": {
+                            "awslogs-group": "/ecs/miso-worker-task",
+                            "awslogs-region": "us-east-1",
+                            "awslogs-stream-prefix": "ecs"
+                        }
+                    }
+                }
+            ]
+        }
+        EOF
+
+    - name: Register new Task Definition
+      id: register-task
+      run: |
+        NewTaskArn=$(aws ecs register-task-definition --cli-input-json file://task-definition.json | jq -r .taskDefinition.taskDefinitionArn)
+        echo "task_definition_arn=$NewTaskArn" >> $GITHUB_OUTPUT
+
+    - name: Deploy new Task Definition to ECS Service
+      run: |
+        aws ecs update-service \
+          --cluster MISO-Cluster-Elastic \
+          --service miso-worker-service-iac \
+          --task-definition $"{{ steps.register-task.outputs.task_definition_arn }}" \
+          --force-new-deployment
