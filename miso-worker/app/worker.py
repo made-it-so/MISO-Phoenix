@@ -7,8 +7,9 @@ import sys
 import google.generativeai as genai
 
 # --- CONFIGURATION ---
-MODEL_ID_PRIMARY = "gemini-1.5-flash"
-MODEL_ID_FALLBACK = "gemini-pro" # Fallback to the older model if Flash fails
+# Updated based on Diagnostic Logs
+MODEL_ID_PRIMARY = "gemini-2.0-flash"
+MODEL_ID_FALLBACK = "gemini-flash-latest"
 
 logger = logging.getLogger("MISO_Fintech_Worker")
 logger.setLevel(logging.INFO)
@@ -25,15 +26,12 @@ def emit_telemetry(event_type, details):
     }
     logger.info(json.dumps(log_entry))
 
-def list_available_models():
-    """Diagnostics: Print what the worker can actually see."""
-    try:
-        emit_telemetry("DIAGNOSTIC_START", {"message": "Listing available models..."})
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                print(f"AVAILABLE MODEL: {m.name}")
-    except Exception as e:
-         emit_telemetry("DIAGNOSTIC_ERROR", {"error": str(e)})
+def calculate_token_cost(input_tokens, output_tokens):
+    # Pricing for Gemini 2.0 Flash (Approximate / Placeholder)
+    # Input: .10 / 1M, Output: .40 / 1M
+    input_cost = (input_tokens / 1_000_000) * 0.10
+    output_cost = (output_tokens / 1_000_000) * 0.40
+    return input_cost + output_cost
 
 def process_task(payload):
     start_time = time.time()
@@ -44,14 +42,14 @@ def process_task(payload):
     
     genai.configure(api_key=api_key)
 
-    # TRY PRIMARY MODEL (FLASH)
+    # TRY PRIMARY MODEL
     active_model_id = MODEL_ID_PRIMARY
     try:
         model = genai.GenerativeModel(active_model_id)
         prompt = payload.get("payload", {}).get("prompt")
         response = model.generate_content(prompt)
     except Exception as e:
-        # FAILOVER TO LEGACY MODEL
+        # FAILOVER
         emit_telemetry("MODEL_FALLBACK", {"primary_failed": str(e), "switching_to": MODEL_ID_FALLBACK})
         active_model_id = MODEL_ID_FALLBACK
         model = genai.GenerativeModel(active_model_id)
@@ -59,33 +57,33 @@ def process_task(payload):
 
     response_text = response.text
     
-    duration = time.time() - start_time
+    # Metrics
+    usage = response.usage_metadata
+    input_tokens = usage.prompt_token_count
+    output_tokens = usage.candidates_token_count
     
-    # Simple cost calc (placeholder for fallback logic)
-    cost = duration * 0.00001 
+    duration = time.time() - start_time
+    token_cost = calculate_token_cost(input_tokens, output_tokens)
+    
+    # Compute Cost (Fargate Spot)
+    compute_cost = duration * (((0.25 * 0.04048) + (0.5 * 0.004445)) / 3600)
+    total_cost = compute_cost + token_cost
 
     return {
         "status": "SUCCESS",
         "model_used": active_model_id,
         "duration_seconds": round(duration, 4),
-        "total_cost_usd": round(cost, 8),
+        "total_cost_usd": round(total_cost, 8),
         "response_snippet": response_text[:100] + "..." 
     }
 
 def main():
-    # --- CRITICAL DIAGNOSTICS ---
     emit_telemetry("WORKER_INIT", {
-        "status": "booting",
-        "google_sdk_version": genai.__version__,
-        "python_version": sys.version
+        "status": "booting", 
+        "target_model": MODEL_ID_PRIMARY,
+        "sdk_version": genai.__version__
     })
     
-    # Initialize API to run diagnostics
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if api_key:
-        genai.configure(api_key=api_key)
-        list_available_models()
-
     sqs = boto3.client('sqs', region_name='us-east-1')
     queue_url = os.environ.get("SQS_QUEUE_URL") or os.environ.get("MISO_SQS_QUEUE_URL")
 
