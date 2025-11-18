@@ -37,10 +37,9 @@ jobs:
         ECR_REPOSITORY: miso-worker
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # Build the image
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./miso-worker
+        # ADDED --no-cache to force library update
+        docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./miso-worker
         
-        # Push both tags
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         
