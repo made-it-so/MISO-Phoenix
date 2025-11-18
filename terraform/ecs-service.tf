@@ -1,8 +1,8 @@
 resource "aws_ecs_service" "worker_service_iac" {
-  name            = "miso-worker-service-iac" # New service name
+  name            = "miso-worker-service-iac"
   cluster         = data.aws_ecs_cluster.main.id
   launch_type     = "FARGATE"
-  desired_count   = 1 # We start with 1 worker
+  desired_count   = 1
 
   task_definition = aws_ecs_task_definition.worker_placeholder.arn
 
@@ -22,24 +22,14 @@ resource "aws_ecs_service" "worker_service_iac" {
   ]
 }
 
-# This defines the auto-scaling policy for the new service
 resource "aws_appautoscaling_target" "worker_scaling_target" {
   max_capacity       = 10
   min_capacity       = 1
-  
-  # --- THIS IS THE FIX ---
-  # Hard-coding the cluster and service name to avoid dependency failure.
   resource_id        = "service/MISO-Cluster-Elastic/miso-worker-service-iac"
-  
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
-  
-  # Explicit dependency to ensure the service is created first.
-  depends_on = [
-    aws_ecs_service.worker_service_iac
-  ]
+  depends_on         = [aws_ecs_service.worker_service_iac]
 }
-# --- END FIX ---
 
 resource "aws_appautoscaling_policy" "worker_scaling_policy" {
   name               = "miso-worker-sqs-scaling"
@@ -49,8 +39,7 @@ resource "aws_appautoscaling_policy" "worker_scaling_policy" {
   service_namespace  = aws_appautoscaling_target.worker_scaling_target.service_namespace
 
   target_tracking_scaling_policy_configuration {
-    target_value = 3.0 # The target: 3 messages per worker
-
+    target_value = 3.0
     customized_metric_specification {
       metric_name = "ApproximateNumberOfMessagesVisible"
       namespace   = "AWS/SQS"
@@ -63,7 +52,7 @@ resource "aws_appautoscaling_policy" "worker_scaling_policy" {
   }
 }
 
-# This is a "placeholder" task def, required by Terraform.
+# --- FIXED TASK DEFINITION ---
 resource "aws_ecs_task_definition" "worker_placeholder" {
   family                   = "miso-worker-task"
   network_mode             = "awsvpc"
@@ -78,6 +67,24 @@ resource "aws_ecs_task_definition" "worker_placeholder" {
       name      = "miso-worker",
       image     = "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso-worker:latest",
       essential = true,
+      # ADDED: Environment Variables for SQS
+      environment = [
+        {
+          name  = "MISO_SQS_QUEUE_URL",
+          value = "https://queue.amazonaws.com/356206423360/miso_job_queue"
+        },
+        {
+          name  = "SQS_QUEUE_URL",
+          value = "https://queue.amazonaws.com/356206423360/miso_job_queue"
+        }
+      ],
+      # ADDED: Secrets for API Keys
+      secrets = [
+        {
+          name      = "GEMINI_API_KEY",
+          valueFrom = "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/gemini_api_key-sJkRuG"
+        }
+      ],
       logConfiguration = {
         logDriver = "awslogs",
         options = {
