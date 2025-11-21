@@ -7,6 +7,13 @@ terraform {
   }
 }
 
+# Default Provider (us-east-1)
 provider "aws" {
   region = "us-east-1"
+}
+
+# Secondary Provider (us-west-2)
+provider "aws" {
+  alias  = "us_west_2"
+  region = "us-west-2"
 }

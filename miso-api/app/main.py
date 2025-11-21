@@ -4,6 +4,7 @@ import time
 import uuid
 import logging
 import os
+import sys
 import google.generativeai as genai
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -11,13 +12,11 @@ from botocore.exceptions import ClientError
 from .models import PersonaContract, RoutingInstructions, CognitiveStep 
 
 # --- CONFIGURATION (Clients and Database) ---
-REGION = "us-east-1"
-QUEUE_NAME = "miso_job_queue"
+REGION = "us-east-1" # Primary management region
 TABLE_NAME = "miso_replay_buffer"
 
-sqs = boto3.resource("sqs", region_name=REGION)
+# Initialize AWS Clients
 dynamodb = boto3.resource("dynamodb", region_name=REGION)
-queue = sqs.get_queue_by_name(QueueName=QUEUE_NAME)
 table = dynamodb.Table(TABLE_NAME)
 
 # Configure Gemini Client
@@ -34,18 +33,25 @@ app = FastAPI()
 class UserRequest(BaseModel):
     prompt: str
 
-SYSTEM_INSTRUCTION = """
-You are the MISO Persona Broker (Layer 1). Your sole job is to analyze a user's task request and generate a complete, optimized execution plan (a Persona contract).
-[Instructions and rules remain the same...]
-"""
-logger = logging.getLogger("MISO_Broker")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter('%(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+# --- PRICING ORACLE (LAYER 2 ROUTER LOGIC) ---
+def get_cheapest_region_and_queue(intent: str):
+    """
+    Simulates checking live spot price data to determine the cheapest region.
+    This logic enables Layer 2 Geo-Compute Arbitrage.
+    """
+    # NOTE: This uses the US-WEST-2 queue.
+    REGION_WEST = "us-west-2"
+    QUEUE_WEST = "miso_job_queue_west"
+    
+    # In V1, we assume West is the preferred, cheapest region for cold starts (The Arbitrage).
+    # The actual implementation would query live Spot Market data here.
+    
+    return {
+        "region": REGION_WEST,
+        "queue": boto3.resource("sqs", region_name=REGION_WEST).get_queue_by_name(QueueName=QUEUE_WEST)
+    }
 
-
+# --- METACOGNITIVE REUSE (CACHE LOOKUP) ---
 def lookup_cache(intent: str):
     try:
         response = table.query(
@@ -60,6 +66,19 @@ def lookup_cache(intent: str):
     except Exception as e:
         print(f"DynamoDB Cache Lookup Failed: {e}")
         return None
+
+# --- REST OF THE API LOGIC ---
+SYSTEM_INSTRUCTION = """
+You are the MISO Persona Broker (Layer 1). Your sole job is to analyze a user's raw task request and generate a complete, optimized execution plan (a Persona contract).
+[Instructions and rules remain the same...]
+"""
+logger = logging.getLogger("MISO_Broker")
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter('%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 
 @app.get("/health")
 def health_check():
@@ -76,7 +95,6 @@ def submit_task(request: UserRequest):
     cached_persona = lookup_cache(task_intent)
     
     if cached_persona:
-        print(f"Cache HIT for intent: {task_intent}. Bypassing LLM generation.")
         persona_data = cached_persona
         source = "CACHE"
     else:
@@ -97,35 +115,37 @@ def submit_task(request: UserRequest):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"LLM Generation Failed: {e}")
 
-    # 3. VALIDATE, MEMORIZE, & ROUTE
+    # 3. ROUTE & MEMORIZE
     try:
+        model_tier = persona_data['routing_instructions']['model_tier']
+        
+        # --- NEW LAYER 2 ARBITRAGE DECISION ---
+        router_result = get_cheapest_region_and_queue(task_intent)
+        target_queue = router_result['queue']
+        target_region = router_result['region']
+        
+        # Validation and Commit
         PersonaContract(**persona_data)
         task_id = str(uuid.uuid4())
 
-        # MEMORIZE (DynamoDB Write)
         table.put_item(Item={
             "task_id": task_id,
             "intent": persona_data['task_intent'],
             "status": "QUEUED",
-            "model_tier_chosen": persona_data['routing_instructions']['model_tier'],
-            "dependency_steps": [s['step_name'] for s in persona_data['dependency_graph']],
+            "model_tier_chosen": model_tier,
+            "target_region": target_region,
+            "source": source,
             "persona_contract_json": json.dumps(persona_data),
             "timestamp": int(time.time())
         })
         
-        # ROUTE (SQS Dispatch)
+        # ROUTE (SQS Dispatch to the cheapest queue)
         persona_to_dispatch = { "task_id": task_id, "persona": persona_data }
-        queue.send_message(MessageBody=json.dumps(persona_to_dispatch))
+        target_queue.send_message(MessageBody=json.dumps(persona_to_dispatch))
         
-        # --- CRITICAL LOGGING ADDED HERE ---
-        logger.info(json.dumps({
-            "event": "PERSONA_DISPATCHED",
-            "task_id": task_id,
-            "source": source
-        }))
-        
-        return {"task_id": task_id, "status": "Persona Dispatched", "source": source}
+        # Final Output
+        return {"task_id": task_id, "status": "Persona Dispatched", "model_chosen": model_tier, "target_region": target_region, "source": source}
         
     except Exception as e:
-        print(f"ERROR: {response.text}")
+        print(f"ERROR: {e}")
         raise HTTPException(status_code=500, detail=f"Internal Broker Error: {e}")
