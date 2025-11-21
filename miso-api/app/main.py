@@ -5,6 +5,7 @@ import uuid
 import logging
 import os
 import sys
+import random # Used for simulation only
 import google.generativeai as genai
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -12,8 +13,14 @@ from botocore.exceptions import ClientError
 from .models import PersonaContract, RoutingInstructions, CognitiveStep 
 
 # --- CONFIGURATION (Clients and Database) ---
-REGION = "us-east-1" # Primary management region
+REGION = "us-east-1"
 TABLE_NAME = "miso_replay_buffer"
+
+# --- AWS RESOURCE NAMES ---
+QUEUE_EAST = "miso_job_queue"
+QUEUE_WEST = "miso_job_queue_west"
+REGION_EAST = "us-east-1"
+REGION_WEST = "us-west-2"
 
 # Initialize AWS Clients
 dynamodb = boto3.resource("dynamodb", region_name=REGION)
@@ -36,19 +43,26 @@ class UserRequest(BaseModel):
 # --- PRICING ORACLE (LAYER 2 ROUTER LOGIC) ---
 def get_cheapest_region_and_queue(intent: str):
     """
-    Simulates checking live spot price data to determine the cheapest region.
-    This logic enables Layer 2 Geo-Compute Arbitrage.
-    """
-    # NOTE: This uses the US-WEST-2 queue.
-    REGION_WEST = "us-west-2"
-    QUEUE_WEST = "miso_job_queue_west"
+    V3 Pricing Oracle: Simulates checking live spot price data to determine the cheapest region.
     
-    # In V1, we assume West is the preferred, cheapest region for cold starts (The Arbitrage).
-    # The actual implementation would query live Spot Market data here.
+    This simulation randomly determines a "cheaper" region to demonstrate the arbitrage decision.
+    """
+    
+    # 1. Simulate Spot Price Check (Actual V3 would call the AWS Pricing API here)
+    regions = [
+        {"name": REGION_EAST, "queue_name": QUEUE_EAST},
+        {"name": REGION_WEST, "queue_name": QUEUE_WEST}
+    ]
+    
+    # 2. Arbitrage Decision: Randomly select the "cheaper" region for demonstration
+    cheapest_region_data = random.choice(regions)
+
+    # 3. Establish SQS Client for the target region
+    sqs_resource = boto3.resource("sqs", region_name=cheapest_region_data['name'])
     
     return {
-        "region": REGION_WEST,
-        "queue": boto3.resource("sqs", region_name=REGION_WEST).get_queue_by_name(QueueName=QUEUE_WEST)
+        "region": cheapest_region_data['name'],
+        "queue": sqs_resource.get_queue_by_name(QueueName=cheapest_region_data['queue_name'])
     }
 
 # --- METACOGNITIVE REUSE (CACHE LOOKUP) ---
@@ -119,7 +133,7 @@ def submit_task(request: UserRequest):
     try:
         model_tier = persona_data['routing_instructions']['model_tier']
         
-        # --- NEW LAYER 2 ARBITRAGE DECISION ---
+        # --- LAYER 2 ARBITRAGE DECISION ---
         router_result = get_cheapest_region_and_queue(task_intent)
         target_queue = router_result['queue']
         target_region = router_result['region']
@@ -133,7 +147,7 @@ def submit_task(request: UserRequest):
             "intent": persona_data['task_intent'],
             "status": "QUEUED",
             "model_tier_chosen": model_tier,
-            "target_region": target_region,
+            "target_region": target_region, # Log the region we chose
             "source": source,
             "persona_contract_json": json.dumps(persona_data),
             "timestamp": int(time.time())
