@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MISO V3: Persona Broker Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #1c4b72; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        textarea { width: 100%; height: 100px; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        .response-box { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; white-space: pre-wrap; font-family: monospace; }
+        .status-success { color: green; font-weight: bold; }
+        .status-failure { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MISO Persona Broker (V3 MVP)</h1>
+        <h2>1. Submit Cognitive Task</h2>
+        <p>This triggers the full system: LLM Reasoning, Arbitrage, and SQS Dispatch.</p>
+        
+        <textarea id="promptInput" placeholder="e.g., Analyze the performance risks of using Python for real-time order matching."></textarea>
+        
+        <button onclick="submitTask()">Generate Persona & Dispatch</button>
+
+        <h2>2. Broker Response</h2>
+        <div class="response-box" id="responseBox">Awaiting submission...</div>
+
+        <h2>3. Live Telemetry Dashboard</h2>
+        <p>Audit the system's cost and speed using the CloudWatch Dashboard.</p>
+        <a id="dashboardLink" href="#" target="_blank"><button>View Real-Time Financial Metrics</button></a>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
