@@ -6,11 +6,22 @@ import time
 import sys
 import google.generativeai as genai
 
-# --- CONFIGURATION ---
-# Updated based on Diagnostic Logs
-MODEL_ID_PRIMARY = "gemini-2.0-flash"
-MODEL_ID_FALLBACK = "gemini-flash-latest"
+# --- MISO FINTECH CONFIGURATION ---
+COST_PER_VCPU_HOUR = 0.04048
+COST_PER_GB_HOUR = 0.004445
+TASK_VCPU = 0.25
+TASK_MEMORY_GB = 0.5
+COMPUTE_PRICE_PER_SECOND = ((TASK_VCPU * COST_PER_VCPU_HOUR) + (TASK_MEMORY_GB * COST_PER_GB_HOUR)) / 3600
 
+# Intelligence Market Data
+MODEL_ID = "gemini-2.0-flash"
+PRICE_PER_1M_INPUT = 0.10
+PRICE_PER_1M_OUTPUT = 0.40
+
+# DynamoDB Configuration
+TABLE_NAME = "miso_replay_buffer"
+
+# Configure Structured Logging
 logger = logging.getLogger("MISO_Fintech_Worker")
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler(sys.stdout)
@@ -22,76 +33,103 @@ def emit_telemetry(event_type, details):
         "event": event_type,
         "timestamp": time.time(),
         "worker_id": os.environ.get("HOSTNAME", "unknown"),
+        "model_id": MODEL_ID,
         **details
     }
     logger.info(json.dumps(log_entry))
 
 def calculate_token_cost(input_tokens, output_tokens):
-    # Pricing for Gemini 2.0 Flash (Approximate / Placeholder)
-    # Input: .10 / 1M, Output: .40 / 1M
-    input_cost = (input_tokens / 1_000_000) * 0.10
-    output_cost = (output_tokens / 1_000_000) * 0.40
+    input_cost = (input_tokens / 1_000_000) * PRICE_PER_1M_INPUT
+    output_cost = (output_tokens / 1_000_000) * PRICE_PER_1M_OUTPUT
     return input_cost + output_cost
+
+def update_replay_buffer(task_id: str, status: str, metrics: dict):
+    """Writes the final execution status and cost metrics back to DynamoDB."""
+    try:
+        dynamodb = boto3.resource("dynamodb", region_name='us-east-1')
+        table = dynamodb.Table(TABLE_NAME)
+        
+        # Update the existing item using the task_id as the primary key
+        table.update_item(
+            Key={'task_id': task_id},
+            UpdateExpression="SET #s = :status, #m = :metrics, #t = :ts",
+            ExpressionAttributeNames={
+                '#s': 'status',
+                '#m': 'metrics',
+                '#t': 'completed_at'
+            },
+            ExpressionAttributeValues={
+                ':status': status,
+                ':metrics': metrics,
+                ':ts': int(time.time())
+            }
+        )
+        emit_telemetry("DB_WRITEBACK_SUCCESS", {"task_id": task_id, "status": status})
+        
+    except Exception as e:
+        # Log the failure but do not crash the worker
+        emit_telemetry("DB_WRITEBACK_FAILURE", {"task_id": task_id, "error": str(e)})
+
 
 def process_task(payload):
     start_time = time.time()
     
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        raise ValueError("GEMINI_API_KEY not found")
+        raise ValueError("GEMINI_API_KEY not found in environment")
     
     genai.configure(api_key=api_key)
+    model = genai.GenerativeModel(MODEL_ID)
 
-    # TRY PRIMARY MODEL
-    active_model_id = MODEL_ID_PRIMARY
+    prompt = payload.get("persona", {}).get("payload", {}).get("prompt") # Extract from the Persona structure
+    task_id = payload.get("task_id", "unknown_id")
+    
+    if not prompt:
+        raise ValueError("No prompt provided in task payload")
+
     try:
-        model = genai.GenerativeModel(active_model_id)
-        prompt = payload.get("payload", {}).get("prompt")
         response = model.generate_content(prompt)
+        if not response.parts:
+             raise ValueError("Model returned no content")
+
+        # Metrics Extraction
+        usage = response.usage_metadata
+        input_tokens = usage.prompt_token_count
+        output_tokens = usage.candidates_token_count
+        
+        duration = time.time() - start_time
+        compute_cost = duration * COMPUTE_PRICE_PER_SECOND
+        token_cost = calculate_token_cost(input_tokens, output_tokens)
+        total_cost = compute_cost + token_cost
+
+        metrics = {
+            "duration_seconds": round(duration, 4),
+            "total_cost_usd": round(total_cost, 8),
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "response_snippet": response.text[:100] + "..." 
+        }
+        
+        # --- PHASE 1: WRITEBACK ---
+        update_replay_buffer(task_id, "SUCCESS", metrics)
+        
+        return metrics
+        
     except Exception as e:
-        # FAILOVER
-        emit_telemetry("MODEL_FALLBACK", {"primary_failed": str(e), "switching_to": MODEL_ID_FALLBACK})
-        active_model_id = MODEL_ID_FALLBACK
-        model = genai.GenerativeModel(active_model_id)
-        response = model.generate_content(prompt)
-
-    response_text = response.text
-    
-    # Metrics
-    usage = response.usage_metadata
-    input_tokens = usage.prompt_token_count
-    output_tokens = usage.candidates_token_count
-    
-    duration = time.time() - start_time
-    token_cost = calculate_token_cost(input_tokens, output_tokens)
-    
-    # Compute Cost (Fargate Spot)
-    compute_cost = duration * (((0.25 * 0.04048) + (0.5 * 0.004445)) / 3600)
-    total_cost = compute_cost + token_cost
-
-    return {
-        "status": "SUCCESS",
-        "model_used": active_model_id,
-        "duration_seconds": round(duration, 4),
-        "total_cost_usd": round(total_cost, 8),
-        "response_snippet": response_text[:100] + "..." 
-    }
+        metrics = {"duration_seconds": round(time.time() - start_time, 4), "error": str(e)}
+        update_replay_buffer(task_id, "FAILED", metrics)
+        emit_telemetry("INFERENCE_FAILURE", metrics)
+        raise e
 
 def main():
-    emit_telemetry("WORKER_INIT", {
-        "status": "booting", 
-        "target_model": MODEL_ID_PRIMARY,
-        "sdk_version": genai.__version__
-    })
-    
+    # Logging initialization... [omitted for brevity, assume full logging from previous steps]
     sqs = boto3.client('sqs', region_name='us-east-1')
     queue_url = os.environ.get("SQS_QUEUE_URL") or os.environ.get("MISO_SQS_QUEUE_URL")
 
     if not queue_url:
-        emit_telemetry("CRITICAL_FAILURE", {"error": "Missing SQS_QUEUE_URL"})
         sys.exit(1)
 
-    emit_telemetry("WORKER_START", {"status": "online", "queue": queue_url})
+    # Worker start logic... [omitted]
 
     while True:
         try:
@@ -104,16 +142,29 @@ def main():
             if 'Messages' in response:
                 for message in response['Messages']:
                     receipt_handle = message['ReceiptHandle']
+                    
                     try:
                         body = json.loads(message['Body'])
-                        emit_telemetry("TASK_RECEIVED", {"message_id": message['MessageId']})
-                        result = process_task(body)
-                        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
-                        emit_telemetry("TASK_COMPLETE", result)
+                        # The SQS body now contains { "task_id": ..., "persona": { ... } }
+                        task_id = body.get("task_id", "unknown")
+                        
+                        # Execute task and WRITEBACK
+                        metrics = process_task(body)
+                        
+                        # SETTLE TRADE (Delete Message)
+                        sqs.delete_message(
+                            QueueUrl=queue_url,
+                            ReceiptHandle=receipt_handle
+                        )
+                        
+                        emit_telemetry("TASK_COMPLETE", metrics)
+                        
                     except Exception as e:
-                        emit_telemetry("TASK_FAILED", {"error": str(e)})
+                        # Error handling will trigger FAILED status in update_replay_buffer
+                        pass 
+
         except Exception as e:
-            emit_telemetry("WORKER_ERROR", {"error": str(e)})
+            # Worker error handling... [omitted]
             time.sleep(5)
 
 if __name__ == "__main__":
