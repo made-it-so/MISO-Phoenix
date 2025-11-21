@@ -44,7 +44,10 @@ def calculate_token_cost(input_tokens, output_tokens):
     return input_cost + output_cost
 
 def update_replay_buffer(task_id: str, status: str, metrics: dict):
-    """Writes the final execution status and cost metrics back to DynamoDB."""
+    """
+    Writes the final execution status and cost metrics back to DynamoDB.
+    This closes the Metacognitive Reuse loop, allowing MISO to learn.
+    """
     try:
         dynamodb = boto3.resource("dynamodb", region_name='us-east-1')
         table = dynamodb.Table(TABLE_NAME)
@@ -72,8 +75,13 @@ def update_replay_buffer(task_id: str, status: str, metrics: dict):
 
 
 def process_task(payload):
+    """
+    Executes the task, calculates cost, and triggers the writeback.
+    """
     start_time = time.time()
+    task_id = payload.get("task_id", "unknown_id") # Task ID is at the top level
     
+    # 1. API KEY CONFIGURATION
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY not found in environment")
@@ -81,9 +89,8 @@ def process_task(payload):
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel(MODEL_ID)
 
-    prompt = payload.get("persona", {}).get("payload", {}).get("prompt") # Extract from the Persona structure
-    task_id = payload.get("task_id", "unknown_id")
-    
+    # 2. EXTRACT PROMPT AND EXECUTE
+    prompt = payload.get("persona", {}).get("payload", {}).get("prompt")
     if not prompt:
         raise ValueError("No prompt provided in task payload")
 
@@ -92,44 +99,41 @@ def process_task(payload):
         if not response.parts:
              raise ValueError("Model returned no content")
 
-        # Metrics Extraction
+        # 3. CALCULATE METRICS
         usage = response.usage_metadata
-        input_tokens = usage.prompt_token_count
-        output_tokens = usage.candidates_token_count
-        
         duration = time.time() - start_time
-        compute_cost = duration * COMPUTE_PRICE_PER_SECOND
-        token_cost = calculate_token_cost(input_tokens, output_tokens)
-        total_cost = compute_cost + token_cost
+        token_cost = calculate_token_cost(usage.prompt_token_count, usage.candidates_token_count)
+        total_cost = (duration * COMPUTE_PRICE_PER_SECOND) + token_cost
 
         metrics = {
             "duration_seconds": round(duration, 4),
             "total_cost_usd": round(total_cost, 8),
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
+            "input_tokens": usage.prompt_token_count,
+            "output_tokens": usage.candidates_token_count,
             "response_snippet": response.text[:100] + "..." 
         }
         
-        # --- PHASE 1: WRITEBACK ---
+        # 4. WRITEBACK SUCCESS
         update_replay_buffer(task_id, "SUCCESS", metrics)
         
         return metrics
         
     except Exception as e:
+        # 4b. WRITEBACK FAILURE
         metrics = {"duration_seconds": round(time.time() - start_time, 4), "error": str(e)}
         update_replay_buffer(task_id, "FAILED", metrics)
         emit_telemetry("INFERENCE_FAILURE", metrics)
         raise e
 
 def main():
-    # Logging initialization... [omitted for brevity, assume full logging from previous steps]
+    # Logging initialization...
     sqs = boto3.client('sqs', region_name='us-east-1')
     queue_url = os.environ.get("SQS_QUEUE_URL") or os.environ.get("MISO_SQS_QUEUE_URL")
 
     if not queue_url:
         sys.exit(1)
 
-    # Worker start logic... [omitted]
+    # Worker startup logic...
 
     while True:
         try:
@@ -145,11 +149,8 @@ def main():
                     
                     try:
                         body = json.loads(message['Body'])
-                        # The SQS body now contains { "task_id": ..., "persona": { ... } }
-                        task_id = body.get("task_id", "unknown")
-                        
                         # Execute task and WRITEBACK
-                        metrics = process_task(body)
+                        metrics = process_task(body) # Process_task handles DDB writeback
                         
                         # SETTLE TRADE (Delete Message)
                         sqs.delete_message(
@@ -160,11 +161,11 @@ def main():
                         emit_telemetry("TASK_COMPLETE", metrics)
                         
                     except Exception as e:
-                        # Error handling will trigger FAILED status in update_replay_buffer
+                        # Error is logged in process_task; simply continue loop (message will retry)
                         pass 
 
         except Exception as e:
-            # Worker error handling... [omitted]
+            # Worker error handling...
             time.sleep(5)
 
 if __name__ == "__main__":
