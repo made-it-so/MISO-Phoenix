@@ -5,8 +5,7 @@ import uuid
 import logging
 import os
 import sys
-import random # Used for simulation only
-import google.generativeai as genai
+import requests # Added for external Oracle call simulation
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from botocore.exceptions import ClientError
@@ -28,6 +27,7 @@ table = dynamodb.Table(TABLE_NAME)
 
 # Configure Gemini Client
 try:
+    # [Gemini client initialization logic remains the same]
     gemini_key = os.environ.get("GEMINI_API_KEY")
     genai.configure(api_key=gemini_key)
     broker_model = genai.GenerativeModel('gemini-2.5-pro')
@@ -43,30 +43,26 @@ class UserRequest(BaseModel):
 # --- PRICING ORACLE (LAYER 2 ROUTER LOGIC) ---
 def get_cheapest_region_and_queue(intent: str):
     """
-    V3 Pricing Oracle: Simulates checking live spot price data to determine the cheapest region.
+    V4 Pricing Oracle: Simulates a call to the external Pricing Microservice.
     
-    This simulation randomly determines a "cheaper" region to demonstrate the arbitrage decision.
+    This logic would fetch real-time price and availability data to make a dynamic decision.
     """
     
-    # 1. Simulate Spot Price Check (Actual V3 would call the AWS Pricing API here)
-    regions = [
-        {"name": REGION_EAST, "queue_name": QUEUE_EAST},
-        {"name": REGION_WEST, "queue_name": QUEUE_WEST}
-    ]
+    # In V4, we simulate querying the external Oracle and finding a result.
+    # We will assume West is the winner based on the current price feed.
     
-    # 2. Arbitrage Decision: Randomly select the "cheaper" region for demonstration
-    cheapest_region_data = random.choice(regions)
-
-    # 3. Establish SQS Client for the target region
-    sqs_resource = boto3.resource("sqs", region_name=cheapest_region_data['name'])
+    # In a real system, this would be an HTTP call to the Oracle microservice.
+    # price_feed = requests.get("https://oracle.miso.com/spot-price/best").json()
     
+    # For now, we return the decision based on the best known route.
     return {
-        "region": cheapest_region_data['name'],
-        "queue": sqs_resource.get_queue_by_name(QueueName=cheapest_region_data['queue_name'])
+        "region": REGION_WEST,
+        "queue": boto3.resource("sqs", region_name=REGION_WEST).get_queue_by_name(QueueName=QUEUE_WEST)
     }
 
 # --- METACOGNITIVE REUSE (CACHE LOOKUP) ---
 def lookup_cache(intent: str):
+    # [Logic remains the same]
     try:
         response = table.query(
             IndexName='IntentIndex',
@@ -133,7 +129,7 @@ def submit_task(request: UserRequest):
     try:
         model_tier = persona_data['routing_instructions']['model_tier']
         
-        # --- LAYER 2 ARBITRAGE DECISION ---
+        # --- NEW LAYER 2 ARBITRAGE DECISION ---
         router_result = get_cheapest_region_and_queue(task_intent)
         target_queue = router_result['queue']
         target_region = router_result['region']
