@@ -5,24 +5,26 @@ import uuid
 import logging
 import os
 import sys
-import requests
-import random
+import random 
 import google.generativeai as genai
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from botocore.exceptions import ClientError
 from .models import PersonaContract, RoutingInstructions, CognitiveStep 
-from typing import Optional
 
 # --- CONFIGURATION (Clients and Database) ---
 REGION = "us-east-1"
 TABLE_NAME = "miso_replay_buffer"
 
-# AWS RESOURCE NAMES
-REGION_EAST = "us-east-1"
-REGION_WEST = "us-west-2"
-QUEUE_EAST = "miso_job_queue"
-QUEUE_WEST = "miso_job_queue_west"
+# --- V8: GLOBAL ARBITRAGE POOL DEFINITION ---
+# This dictionary simulates the current live pricing feed from external Oracles.
+# The Broker uses this list to find the best market.
+GLOBAL_COMPUTE_POOL = [
+    {"vendor": "AWS", "region": "us-east-1", "queue_name": "miso_job_queue"},
+    {"vendor": "AWS", "region": "us-west-2", "queue_name": "miso_job_queue_west"},
+    {"vendor": "GCP", "region": "us-central1", "queue_endpoint": "https://gcp-sqs-sim/us-central1"}, # Placeholder for GCP/Azure
+    {"vendor": "AZURE", "region": "eastus", "queue_endpoint": "https://azure-sqs-sim/eastus"} 
+]
 
 # Initialize AWS Clients
 dynamodb = boto3.resource("dynamodb", region_name=REGION)
@@ -32,11 +34,9 @@ table = dynamodb.Table(TABLE_NAME)
 try:
     gemini_key = os.environ.get("GEMINI_API_KEY")
     genai.configure(api_key=gemini_key)
-    LIZARD_BRAIN = genai.GenerativeModel('gemini-2.0-flash') 
-    CRITIC_BRAIN = genai.GenerativeModel('gemini-2.5-pro')
+    broker_model = genai.GenerativeModel('gemini-2.5-pro')
 except Exception as e:
-    LIZARD_BRAIN = None
-    CRITIC_BRAIN = None
+    broker_model = None
     print(f"FATAL: Gemini client failed to initialize: {e}")
 
 app = FastAPI()
@@ -44,35 +44,37 @@ app = FastAPI()
 class UserRequest(BaseModel):
     prompt: str
 
-# --- V7: GEOMETRIC SUFFICIENCY CHECK (Placeholder for complex matrix math) ---
-def is_dataset_sufficient(task_data: dict, dataset_span: list):
-    """
-    Checks if the available dataset spans the 'relevant extreme directions' 
-    (dir(X*(C))) needed for an optimal decision. [cite: 91, 210, 255]
-
-    In V7, this simulates the complex matrix math and returns True if the task 
-    is recognized as solvable with current data.
-    """
-    # NOTE: Actual implementation requires solving a Mixed-Integer Linear Program (MILP)
-    # as described in Algorithm 2 of the paper. [cite: 288, 290]
-    
-    # We will simulate a positive result for simplicity.
-    if 'minimal' in task_data['prompt'].lower() or 'sufficient' in task_data['prompt'].lower():
-        return True # Simulate successful sufficiency check
-    return False
-
 # --- PRICING ORACLE (LAYER 2 ROUTER LOGIC) ---
 def get_cheapest_region_and_queue(intent: str):
-    # [Logic remains the same - West is the cheapest assumption for arbitrage]
-    sqs_resource = boto3.resource("sqs", region_name=REGION_WEST)
+    """
+    V8 Global Arbitrage: Selects the best performing and cheapest provider/region.
+    
+    This simulation randomly selects a target from the GLOBAL_COMPUTE_POOL.
+    """
+    # 1. Simulate Oracle Query (Find current cheapest provider)
+    cheapest_route = random.choice(GLOBAL_COMPUTE_POOL)
+    
+    # 2. Handle Routing based on Vendor
+    if cheapest_route['vendor'] == "AWS":
+        # Use Boto3 for internal AWS queues
+        sqs_resource = boto3.resource("sqs", region_name=cheapest_route['region'])
+        target_queue = sqs_resource.get_queue_by_name(QueueName=cheapest_route['queue_name'])
+    else:
+        # For external clouds (GCP/Azure), we would use an external HTTP client or vendor SDK
+        # We simulate the queue object for consistent logging
+        class ExternalQueue:
+            def send_message(self, MessageBody):
+                print(f"Simulating send to {cheapest_route['vendor']} at {cheapest_route['region']}")
+        target_queue = ExternalQueue()
+
     return {
-        "region": REGION_WEST,
-        "queue": sqs_resource.get_queue_by_name(QueueName=QUEUE_WEST)
+        "region": cheapest_route['region'],
+        "queue": target_queue,
+        "vendor": cheapest_route['vendor']
     }
 
 # --- METACOGNITIVE REUSE (CACHE LOOKUP) ---
 def lookup_cache(intent: str):
-    # [Logic remains the same]
     try:
         response = table.query(
             IndexName='IntentIndex',
@@ -106,7 +108,7 @@ def health_check():
 
 @app.post("/task")
 def submit_task(request: UserRequest):
-    if not CRITIC_BRAIN:
+    if not broker_model:
         raise HTTPException(status_code=503, detail="Broker model not initialized.")
 
     task_id = str(uuid.uuid4())
@@ -119,16 +121,9 @@ def submit_task(request: UserRequest):
         persona_data = cached_persona
         source = "CACHE"
     else:
-        # --- V7: SUFFICIENCY CHECK INTEGRATION ---
-        current_dataset_span = ["resume_data", "historical_hiring"] # Simulate current data
-        if is_dataset_sufficient({"prompt": request.prompt}, current_dataset_span):
-             print("DATA SUFFICIENCY CHECK PASSED. Proceeding to optimal decision.")
-        else:
-             print("DATA SUFFICIENCY CHECK FAILED. Requiring LLM generation.")
-
         # 2. COGNITIVE TRIAGE & GENERATE PERSONA
         try:
-            # [Logic remains the same - Model Cascade execution]
+            # [Logic remains the same - uses LIZARD_BRAIN for complexity check]
             complexity_check = LIZARD_BRAIN.generate_content(
                 f"Analyze the complexity of this task '{request.prompt}'. Respond ONLY with 'SIMPLE' or 'COMPLEX'."
             )
@@ -153,12 +148,13 @@ def submit_task(request: UserRequest):
 
     # 3. ROUTE & MEMORIZE
     try:
-        # [Remaining logic for DDB write and SQS dispatch remains the same]
         model_tier = persona_data['routing_instructions']['model_tier']
         
+        # --- NEW LAYER 2 ARBITRAGE DECISION ---
         router_result = get_cheapest_region_and_queue(task_intent)
         target_queue = router_result['queue']
         target_region = router_result['region']
+        target_vendor = router_result['vendor']
         
         # Validation and Commit
         PersonaContract(**persona_data)
@@ -170,6 +166,7 @@ def submit_task(request: UserRequest):
             "status": "QUEUED",
             "model_tier_chosen": model_tier,
             "target_region": target_region, 
+            "target_vendor": target_vendor, # Log the vendor (New V8 Metric)
             "source": source,
             "persona_contract_json": json.dumps(persona_data),
             "timestamp": int(time.time())
@@ -180,7 +177,7 @@ def submit_task(request: UserRequest):
         target_queue.send_message(MessageBody=json.dumps(persona_to_dispatch))
         
         # Final Output
-        return {"task_id": task_id, "status": "Persona Dispatched", "model_chosen": model_tier, "target_region": target_region, "source": source}
+        return {"task_id": task_id, "status": "Persona Dispatched", "model_chosen": model_tier, "target_vendor": target_vendor, "target_region": target_region, "source": source}
         
     except Exception as e:
         print(f"ERROR: {e}")
