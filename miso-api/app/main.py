@@ -5,21 +5,24 @@ import uuid
 import logging
 import os
 import sys
-import requests # Added for external Oracle call simulation
+import requests
+import random
+import google.generativeai as genai
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from botocore.exceptions import ClientError
 from .models import PersonaContract, RoutingInstructions, CognitiveStep 
+from typing import Optional
 
 # --- CONFIGURATION (Clients and Database) ---
 REGION = "us-east-1"
 TABLE_NAME = "miso_replay_buffer"
 
-# --- AWS RESOURCE NAMES ---
-QUEUE_EAST = "miso_job_queue"
-QUEUE_WEST = "miso_job_queue_west"
+# AWS RESOURCE NAMES
 REGION_EAST = "us-east-1"
 REGION_WEST = "us-west-2"
+QUEUE_EAST = "miso_job_queue"
+QUEUE_WEST = "miso_job_queue_west"
 
 # Initialize AWS Clients
 dynamodb = boto3.resource("dynamodb", region_name=REGION)
@@ -29,9 +32,11 @@ table = dynamodb.Table(TABLE_NAME)
 try:
     gemini_key = os.environ.get("GEMINI_API_KEY")
     genai.configure(api_key=gemini_key)
-    broker_model = genai.GenerativeModel('gemini-2.5-pro')
+    LIZARD_BRAIN = genai.GenerativeModel('gemini-2.0-flash') 
+    CRITIC_BRAIN = genai.GenerativeModel('gemini-2.5-pro')
 except Exception as e:
-    broker_model = None
+    LIZARD_BRAIN = None
+    CRITIC_BRAIN = None
     print(f"FATAL: Gemini client failed to initialize: {e}")
 
 app = FastAPI()
@@ -39,23 +44,30 @@ app = FastAPI()
 class UserRequest(BaseModel):
     prompt: str
 
+# --- V7: GEOMETRIC SUFFICIENCY CHECK (Placeholder for complex matrix math) ---
+def is_dataset_sufficient(task_data: dict, dataset_span: list):
+    """
+    Checks if the available dataset spans the 'relevant extreme directions' 
+    (dir(X*(C))) needed for an optimal decision. [cite: 91, 210, 255]
+
+    In V7, this simulates the complex matrix math and returns True if the task 
+    is recognized as solvable with current data.
+    """
+    # NOTE: Actual implementation requires solving a Mixed-Integer Linear Program (MILP)
+    # as described in Algorithm 2 of the paper. [cite: 288, 290]
+    
+    # We will simulate a positive result for simplicity.
+    if 'minimal' in task_data['prompt'].lower() or 'sufficient' in task_data['prompt'].lower():
+        return True # Simulate successful sufficiency check
+    return False
+
 # --- PRICING ORACLE (LAYER 2 ROUTER LOGIC) ---
 def get_cheapest_region_and_queue(intent: str):
-    """
-    V4 Pricing Oracle: Simulates a call to the external Pricing Microservice.
-    
-    This function now assumes there is an external Oracle service providing
-    the current cheapest region based on live Spot Price feeds (including non-AWS).
-    """
-    
-    # 1. Simulate external call to Pricing Oracle (HTTP Endpoint)
-    # In V4, we assume the Oracle has determined that West is the most cost-effective region.
-    # In a real system, this would be a requests.get("https://oracle.miso.com/spot-price/best") call.
-    
-    # For now, we return the decision based on the best known route.
+    # [Logic remains the same - West is the cheapest assumption for arbitrage]
+    sqs_resource = boto3.resource("sqs", region_name=REGION_WEST)
     return {
         "region": REGION_WEST,
-        "queue": boto3.resource("sqs", region_name=REGION_WEST).get_queue_by_name(QueueName=QUEUE_WEST)
+        "queue": sqs_resource.get_queue_by_name(QueueName=QUEUE_WEST)
     }
 
 # --- METACOGNITIVE REUSE (CACHE LOOKUP) ---
@@ -77,7 +89,7 @@ def lookup_cache(intent: str):
 
 # --- REST OF THE API LOGIC ---
 SYSTEM_INSTRUCTION = """
-You are the MISO Persona Broker (Layer 1). Your sole job is to analyze a user's raw task request and generate a complete, optimized execution plan (a Persona contract).
+You are the MISO Persona Broker (Layer 1). Your sole job is to analyze a user's task request and generate a complete, optimized execution plan (a Persona contract).
 [Instructions and rules remain the same...]
 """
 logger = logging.getLogger("MISO_Broker")
@@ -94,9 +106,10 @@ def health_check():
 
 @app.post("/task")
 def submit_task(request: UserRequest):
-    if not broker_model:
+    if not CRITIC_BRAIN:
         raise HTTPException(status_code=503, detail="Broker model not initialized.")
 
+    task_id = str(uuid.uuid4())
     task_intent = " ".join(request.prompt.lower().split()[:2])
     
     # 1. METACOGNITIVE REUSE (CACHE CHECK)
@@ -106,9 +119,24 @@ def submit_task(request: UserRequest):
         persona_data = cached_persona
         source = "CACHE"
     else:
-        # 2. ANALYZE & GENERATE PERSONA (CRITIC LOGIC)
+        # --- V7: SUFFICIENCY CHECK INTEGRATION ---
+        current_dataset_span = ["resume_data", "historical_hiring"] # Simulate current data
+        if is_dataset_sufficient({"prompt": request.prompt}, current_dataset_span):
+             print("DATA SUFFICIENCY CHECK PASSED. Proceeding to optimal decision.")
+        else:
+             print("DATA SUFFICIENCY CHECK FAILED. Requiring LLM generation.")
+
+        # 2. COGNITIVE TRIAGE & GENERATE PERSONA
         try:
-            response = broker_model.generate_content(
+            # [Logic remains the same - Model Cascade execution]
+            complexity_check = LIZARD_BRAIN.generate_content(
+                f"Analyze the complexity of this task '{request.prompt}'. Respond ONLY with 'SIMPLE' or 'COMPLEX'."
+            )
+            complexity = complexity_check.text.strip().upper()
+            
+            active_model = LIZARD_BRAIN if complexity == "SIMPLE" else CRITIC_BRAIN
+
+            response = active_model.generate_content(
                 contents=f"User Task: {request.prompt}",
                 config=genai.types.GenerateContentConfig(
                     system_instruction=SYSTEM_INSTRUCTION,
@@ -121,27 +149,27 @@ def submit_task(request: UserRequest):
             source = "LLM_GEN"
             
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"LLM Generation Failed: {e}")
+            raise HTTPException(status_code=500, detail=f"LLM Generation Failed during Triage: {e}")
 
     # 3. ROUTE & MEMORIZE
     try:
+        # [Remaining logic for DDB write and SQS dispatch remains the same]
         model_tier = persona_data['routing_instructions']['model_tier']
         
-        # --- LAYER 2 ARBITRAGE DECISION (ORACLE INTEGRATION) ---
         router_result = get_cheapest_region_and_queue(task_intent)
         target_queue = router_result['queue']
         target_region = router_result['region']
         
         # Validation and Commit
         PersonaContract(**persona_data)
-        task_id = str(uuid.uuid4())
 
+        # DTL FINAL COMMIT (Audit Record)
         table.put_item(Item={
             "task_id": task_id,
             "intent": persona_data['task_intent'],
             "status": "QUEUED",
             "model_tier_chosen": model_tier,
-            "target_region": target_region, # Log the region we chose
+            "target_region": target_region, 
             "source": source,
             "persona_contract_json": json.dumps(persona_data),
             "timestamp": int(time.time())
