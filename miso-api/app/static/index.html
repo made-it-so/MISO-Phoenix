@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MISO V8 Market Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-white font-mono">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function App() {
+            const [data, setData] = React.useState([]);
+            const [lastUpdate, setLastUpdate] = React.useState(Date.now());
+
+            // Polling Logic (Real-Time)
+            React.useEffect(() => {
+                const fetchData = async () => {
+                    try {
+                        const res = await fetch('/decisions');
+                        const json = await res.json();
+                        setData(json);
+                        setLastUpdate(Date.now());
+                    } catch (err) {
+                        console.error("API Error:", err);
+                    }
+                };
+                fetchData();
+                const interval = setInterval(fetchData, 2000); // 2-second heartbeat
+                return () => clearInterval(interval);
+            }, []);
+
+            const latest = data[0] || {};
+            
+            // Calculate Stats
+            const stats = data.reduce((acc, curr) => {
+                acc[curr.vendor_target] = (acc[curr.vendor_target] || 0) + 1;
+                return acc;
+            }, {});
+
+            return (
+                <div class="p-6 max-w-6xl mx-auto">
+                    <header class="mb-8 border-b border-gray-700 pb-4 flex justify-between items-center">
+                        <div>
+                            <h1 class="text-3xl font-bold text-green-400">MISO V8 <span class="text-white">MARKET MAKER</span></h1>
+                            <p class="text-gray-400 text-sm">Provably Optimal Arbitrage Engine</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-gray-500">SYSTEM STATUS</div>
+                            <div class="text-green-500 font-bold animate-pulse">● LIVE OPERATIONAL</div>
+                        </div>
+                    </header>
+
+                    {/* KPI CARDS */}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                            <div class="text-gray-400 text-xs uppercase">Latest Target</div>
+                            <div class="text-2xl font-bold text-blue-400 mt-1">{latest.vendor_target || "WAITING..."}</div>
+                            <div class="text-xs text-gray-500 mt-2 truncate">{latest.task_id}</div>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                            <div class="text-gray-400 text-xs uppercase">Total Decisions</div>
+                            <div class="text-2xl font-bold text-white mt-1">{data.length}</div>
+                            <div class="text-xs text-gray-500 mt-2">Cached & Computed</div>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                            <div class="text-gray-400 text-xs uppercase">Market Spread</div>
+                            <div class="flex gap-4 mt-2">
+                                <span class="text-blue-400">GCP: {stats.GCP || 0}</span>
+                                <span class="text-purple-400">AZURE: {stats.AZURE || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* DATA GRID */}
+                    <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-900 text-gray-400 text-xs uppercase">
+                                <tr>
+                                    <th class="p-4">Timestamp</th>
+                                    <th class="p-4">Task ID</th>
+                                    <th class="p-4">Vector Hash</th>
+                                    <th class="p-4">Decision</th>
+                                    <th class="p-4">Target</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700 text-sm">
+                                {data.map((row) => (
+                                    <tr key={row.task_id} class="hover:bg-gray-750 transition">
+                                        <td class="p-4 text-gray-500">{new Date(row.decision_timestamp * 1000).toLocaleTimeString()}</td>
+                                        <td class="p-4 font-mono text-yellow-500">{row.task_id}</td>
+                                        <td class="p-4 font-mono text-xs text-gray-600">{row.feature_vector_hash}</td>
+                                        <td class="p-4 text-gray-300 truncate max-w-xs" title={row.optimal_decision}>
+                                            {row.optimal_decision}
+                                        </td>
+                                        <td class="p-4">
+                                            <span class={`px-2 py-1 rounded text-xs font-bold ${
+                                                row.vendor_target === 'GCP' ? 'bg-blue-900 text-blue-300' : 
+                                                row.vendor_target === 'AZURE' ? 'bg-purple-900 text-purple-300' : 'bg-gray-700'
+                                            }`}>
+                                                {row.vendor_target}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
