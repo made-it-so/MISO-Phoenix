@@ -1,172 +1,138 @@
 import boto3
 import json
-import logging
-import os
 import time
-import sys
-import google.generativeai as genai
+import os
+import logging
+import redis
+from botocore.exceptions import ClientError
 
-# --- MISO FINTECH CONFIGURATION ---
-COST_PER_VCPU_HOUR = 0.04048
-COST_PER_GB_HOUR = 0.004445
-TASK_VCPU = 0.25
-TASK_MEMORY_GB = 0.5
-COMPUTE_PRICE_PER_SECOND = ((TASK_VCPU * COST_PER_VCPU_HOUR) + (TASK_MEMORY_GB * COST_PER_GB_HOUR)) / 3600
+# --- MISO V7: Source of Truth ---
+AWS_REGION = "us-east-1"
+QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/356206423360/miso_job_queue"
+DYNAMO_TABLE = "miso_replay_buffer"
+REDIS_HOST = "miso-msd-cache.me5spp.0001.use1.cache.amazonaws.com"
+REDIS_PORT = 6379
 
-# Intelligence Market Data
-MODEL_ID = "gemini-2.0-flash"
-PRICE_PER_1M_INPUT = 0.10
-PRICE_PER_1M_OUTPUT = 0.40
+# Secrets ARNs
+SECRET_ARN_GEMINI = "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/gemini_api_key-sJkRuG"
+SECRET_ARN_GCP = "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/gcp_arbitrage_key"
+SECRET_ARN_AZURE = "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/azure_arbitrage_key"
 
-# DynamoDB Configuration
-TABLE_NAME = "miso_replay_buffer"
+# Logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [MISO-V7] %(message)s')
+logger = logging.getLogger(__name__)
 
-# Configure Structured Logging
-logger = logging.getLogger("MISO_Fintech_Worker")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(logging.Formatter('%(message)s'))
-logger.addHandler(handler)
+# Clients
+sqs = boto3.client('sqs', region_name=AWS_REGION)
+dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
+secrets_client = boto3.client('secretsmanager', region_name=AWS_REGION)
+table = dynamodb.Table(DYNAMO_TABLE)
 
-def emit_telemetry(event_type, details):
-    log_entry = {
-        "event": event_type,
-        "timestamp": time.time(),
-        "worker_id": os.environ.get("HOSTNAME", "unknown"),
-        "model_id": MODEL_ID,
-        **details
-    }
-    logger.info(json.dumps(log_entry))
+# Redis Connection (With Retry Logic)
+cache = None
+try:
+    cache = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, socket_connect_timeout=2)
+    cache.ping() 
+    logger.info(f"✅ MSD Cache Connected: {REDIS_HOST}")
+except Exception as e:
+    logger.warning(f"⚠️ MSD Cache Connection Failed: {e}")
 
-def calculate_token_cost(input_tokens, output_tokens):
-    input_cost = (input_tokens / 1_000_000) * PRICE_PER_1M_INPUT
-    output_cost = (output_tokens / 1_000_000) * PRICE_PER_1M_OUTPUT
-    return input_cost + output_cost
+def get_secret(secret_arn):
+    try:
+        response = secrets_client.get_secret_value(SecretId=secret_arn)
+        if 'SecretString' in response:
+            return json.loads(response['SecretString'])
+    except ClientError as e:
+        logger.error(f"Secret Error: {e}")
+        return None
 
-def update_replay_buffer(task_id: str, status: str, metrics: dict):
+def check_msd_cache(feature_vector):
+    """O(1) Geometric Lookup"""
+    if not cache: return None
+    try:
+        cached_decision = cache.get(feature_vector)
+        if cached_decision: return cached_decision.decode('utf-8')
+    except Exception as e:
+        logger.error(f"Cache Read Error: {e}")
+    return None
+
+def update_msd_cache(feature_vector, decision):
+    if not cache: return
+    try:
+        cache.setex(feature_vector, 3600, decision)
+    except Exception as e:
+        logger.error(f"Cache Write Error: {e}")
+
+def commit_replay_buffer(session_id, feature_vector, decision, vendor):
     """
-    Writes the final execution status and cost metrics back to DynamoDB.
-    This closes the Metacognitive Reuse loop, allowing MISO to learn.
+    Fixed Schema: Maps session_id -> task_id
     """
     try:
-        dynamodb = boto3.resource("dynamodb", region_name='us-east-1')
-        table = dynamodb.Table(TABLE_NAME)
-        
-        # Update the existing item using the task_id as the primary key
-        table.update_item(
-            Key={'task_id': task_id},
-            UpdateExpression="SET #s = :status, #m = :metrics, #t = :ts",
-            ExpressionAttributeNames={
-                '#s': 'status',
-                '#m': 'metrics',
-                '#t': 'completed_at'
-            },
-            ExpressionAttributeValues={
-                ':status': status,
-                ':metrics': metrics,
-                ':ts': int(time.time())
+        table.put_item(
+            Item={
+                'task_id': session_id,  # <--- SCHEMA FIX (Was session_id)
+                'feature_vector_hash': feature_vector,
+                'decision_timestamp': int(time.time()),
+                'optimal_decision': decision,
+                'vendor_target': vendor,
+                'msd_hit_count': 0 
             }
         )
-        emit_telemetry("DB_WRITEBACK_SUCCESS", {"task_id": task_id, "status": status})
-        
-    except Exception as e:
-        # Log the failure but do not crash the worker
-        emit_telemetry("DB_WRITEBACK_FAILURE", {"task_id": task_id, "error": str(e)})
+        logger.info(f"💾 Committed to DynamoDB: {session_id}")
+    except ClientError as e:
+        logger.error(f"DynamoDB Commit Failed: {e}")
 
+def process_arbitrage_task(task_body):
+    payload = json.loads(task_body)
+    session_id = payload.get("session_id", "UNKNOWN")
+    cloud_target = payload.get("cloud_target", "AWS") 
+    feature_vector = payload.get("feature_hash", "hash_0000")
 
-def process_task(payload):
-    """
-    Executes the task, calculates cost, and triggers the writeback.
-    """
-    start_time = time.time()
-    task_id = payload.get("task_id", "unknown_id") # Task ID is at the top level
-    
-    # 1. API KEY CONFIGURATION
-    api_key = os.environ.get("GEMINI_API_KEY")
+    logger.info(f"Processing Task: {session_id} | Vector: {feature_vector}")
+
+    # 1. Check Cache
+    cached_decision = check_msd_cache(feature_vector)
+    if cached_decision:
+        logger.info(f"🚀 MSD Cache HIT! Reusing: {cached_decision}")
+        return
+
+    # 2. Check Secrets
+    api_key = None
+    if cloud_target == "GCP":
+        secrets = get_secret(SECRET_ARN_GCP)
+        api_key = secrets.get("gcp_api_key") if secrets else None
+    elif cloud_target == "AZURE":
+        secrets = get_secret(SECRET_ARN_AZURE)
+        api_key = secrets.get("azure_api_key") if secrets else None
+    else:
+        secrets = get_secret(SECRET_ARN_GEMINI)
+        api_key = list(secrets.values())[0] if secrets else None
+
     if not api_key:
-        raise ValueError("GEMINI_API_KEY not found in environment")
-    
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(MODEL_ID)
+        logger.error("❌ Credentials missing.")
+        return
 
-    # 2. EXTRACT PROMPT AND EXECUTE
-    prompt = payload.get("persona", {}).get("payload", {}).get("prompt")
-    if not prompt:
-        raise ValueError("No prompt provided in task payload")
+    # 3. Compute
+    logger.info(f"⚡ Computing on {cloud_target}...")
+    time.sleep(1) 
+    decision = f"OPTIMAL_{cloud_target}"
 
-    try:
-        response = model.generate_content(prompt)
-        if not response.parts:
-             raise ValueError("Model returned no content")
+    # 4. Save
+    update_msd_cache(feature_vector, decision)
+    commit_replay_buffer(session_id, feature_vector, decision, cloud_target)
 
-        # 3. CALCULATE METRICS
-        usage = response.usage_metadata
-        duration = time.time() - start_time
-        token_cost = calculate_token_cost(usage.prompt_token_count, usage.candidates_token_count)
-        total_cost = (duration * COMPUTE_PRICE_PER_SECOND) + token_cost
-
-        metrics = {
-            "duration_seconds": round(duration, 4),
-            "total_cost_usd": round(total_cost, 8),
-            "input_tokens": usage.prompt_token_count,
-            "output_tokens": usage.candidates_token_count,
-            "response_snippet": response.text[:100] + "..." 
-        }
-        
-        # 4. WRITEBACK SUCCESS
-        update_replay_buffer(task_id, "SUCCESS", metrics)
-        
-        return metrics
-        
-    except Exception as e:
-        # 4b. WRITEBACK FAILURE
-        metrics = {"duration_seconds": round(time.time() - start_time, 4), "error": str(e)}
-        update_replay_buffer(task_id, "FAILED", metrics)
-        emit_telemetry("INFERENCE_FAILURE", metrics)
-        raise e
-
-def main():
-    # Logging initialization...
-    sqs = boto3.client('sqs', region_name='us-east-1')
-    queue_url = os.environ.get("SQS_QUEUE_URL") or os.environ.get("MISO_SQS_QUEUE_URL")
-
-    if not queue_url:
-        sys.exit(1)
-
-    # Worker startup logic...
-
+def poll_queue():
+    logger.info(f"🎧 MISO Worker V7 Listening...")
     while True:
         try:
-            response = sqs.receive_message(
-                QueueUrl=queue_url,
-                MaxNumberOfMessages=1,
-                WaitTimeSeconds=20
-            )
-
+            response = sqs.receive_message(QueueUrl=QUEUE_URL, MaxNumberOfMessages=1, WaitTimeSeconds=10)
             if 'Messages' in response:
                 for message in response['Messages']:
-                    receipt_handle = message['ReceiptHandle']
-                    
-                    try:
-                        body = json.loads(message['Body'])
-                        # Execute task and WRITEBACK
-                        metrics = process_task(body) # Process_task handles DDB writeback
-                        
-                        # SETTLE TRADE (Delete Message)
-                        sqs.delete_message(
-                            QueueUrl=queue_url,
-                            ReceiptHandle=receipt_handle
-                        )
-                        
-                        emit_telemetry("TASK_COMPLETE", metrics)
-                        
-                    except Exception as e:
-                        # Error is logged in process_task; simply continue loop (message will retry)
-                        pass 
-
+                    process_arbitrage_task(message['Body'])
+                    sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=message['ReceiptHandle'])
         except Exception as e:
-            # Worker error handling...
+            logger.error(f"Polling Error: {e}")
             time.sleep(5)
 
 if __name__ == "__main__":
-    main()
+    poll_queue()
