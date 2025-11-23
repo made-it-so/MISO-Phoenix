@@ -1,0 +1,28 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetSecretValue"
+            ],
+            "Resource": [
+                "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/github_pat-*",
+                "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/gemini_api_key-*",
+                "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/webhook_secret-*"
+            ]
+        }
+    ]
+}
