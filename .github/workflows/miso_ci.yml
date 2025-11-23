@@ -1,78 +1,54 @@
 name: "MISO CI: Pytest Failure Trigger"
-
 on:
   push:
     branches:
-      - main # Or your primary branch
-
+      - main
 jobs:
   test:
     runs-on: ubuntu-latest
     outputs:
       pytest_outcome: ${{ steps.pytest.outcome }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
+      - run: pip install -r requirements.txt
       - name: Run Pytest and Capture Log
         id: pytest
-        # --- THIS IS THE FIX ---
-        # We set 'pipefail' so that if 'pytest' fails,
-        # its non-zero exit code is used for the whole step.
         run: |
           set -o pipefail
           pytest 2>&1 | tee pytest_errors.log
-        # --- END OF FIX ---
-        
-        # 'continue-on-error' will now catch the 'failure'
-        # and set the step 'outcome' to 'failure'.
         continue-on-error: true
-
       - name: Upload pytest log artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pytest-log
           path: pytest_errors.log
-
   trigger-miso:
     needs: test
-    # This 'if' condition will now correctly see 'failure'
     if: needs.test.outputs.pytest_outcome == 'failure'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Download pytest log artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: pytest-log
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
+      - run: sudo apt-get update && sudo apt-get install -y jq
       - name: "CRITICAL FAILURE: Triggering MISO Fixer"
         run: |
-          ALB_DNS_NAME="miso-alb-345728313.us-east-1.elb.amazonaws.com"
+          MISO_API_ENDPOINT="https://miso.stemcultivation.com/miso/trigger"
           
           ERROR_LOG=$(cat pytest_errors.log)
-
           JSON_PAYLOAD=$(jq -n \
             --arg event "pytest_failure" \
             --arg branch "${{ github.ref_name }}" \
             --arg commit_sha "${{ github.sha }}" \
             --arg error_log "$ERROR_LOG" \
             '{event: $event, branch: $branch, commit_sha: $commit_sha, error_log: $error_log}')
-
+          
           curl --fail-with-body --connect-timeout 60 --max-time 180 \
-            -X POST "http://${ALB_DNS_NAME}/miso/trigger" \
+            -X POST "$MISO_API_ENDPOINT" \
             --header "Content-Type: application/json" \
             --header "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
             --data-raw "$JSON_PAYLOAD"

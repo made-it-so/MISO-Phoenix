@@ -1,0 +1,26 @@
+name: "MISO PR Validation"
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR Code
+        uses: actions/checkout@v4
+        with:
+          # This fetches the code from the Pull Request, not the main branch
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Pytest Validation
+        id: pytest
+        run: pytest

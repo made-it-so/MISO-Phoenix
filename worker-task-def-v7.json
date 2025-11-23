@@ -1,0 +1,8 @@
+﻿{
+    "family":  "miso-worker-task",
+    "networkMode":  null,
+    "cpu":  null,
+    "memory":  null,
+    "requiresCompatibilities":  null,
+    "containerDefinitions":  null
+}

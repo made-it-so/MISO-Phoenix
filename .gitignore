@@ -1,9 +1,7 @@
-.venv/
-venv/
-__pycache__/
-*.pyc
-*/*/__pycache__/
-*/*/*/__pycache__/
-*.egg-info/
-*/*/.egg-info/
+# Local Terraform files
+**/.terraform/
+**/.terraform.lock.hcl
 
+# Local Python cache
+**/__pycache__/
+**/*.pyc

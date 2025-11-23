@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+boto3
+pydantic
+google-generativeai>=0.8.3
