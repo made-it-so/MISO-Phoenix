@@ -6,44 +6,30 @@ import os
 import google.generativeai as genai
 from tenant_manager import Landlord
 from router import NeuralRouter
-from continuum import ContinuumMemory # <--- NESTED LEARNING
+from cache_layer import SemanticCache
+from pricing import MarketOracle
+from oracle import Oracle
+from reflex import SystemReflex # <--- RE-INTEGRATING V33
+from federation import FederationHub # <--- INTEGRATING V39
 
 # CONFIG
 AWS_REGION = "us-east-1"
 QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/356206423360/miso_job_queue"
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - [WORKER-V36] %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - [SUPER-WORKER] %(message)s')
 logger = logging.getLogger(__name__)
 
 sqs = boto3.client('sqs', region_name=AWS_REGION)
+secrets = boto3.client('secretsmanager', region_name=AWS_REGION)
+
+# The Full Organism
 landlord = Landlord()
 router = NeuralRouter()
-continuum = ContinuumMemory()
-
-def execute_step(instruction, model_name, context=""):
-    try:
-        api_key = os.environ.get("GEMINI_API_KEY")
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(model_name)
-        
-        # --- NESTED LEARNING INJECTION ---
-        # We inject the Continuum Memory into the prompt.
-        # This is equivalent to the "Context Flow" in the paper.
-        memory_state = continuum.get_context()
-        
-        system_prompt = f"""
-        SYSTEM WISDOM:
-        - Strategic Goal: {memory_state['strategy']}
-        - Recent Tactics: {memory_state['tactics']}
-        
-        CONTEXT: {context}
-        TASK: {instruction}
-        """
-        
-        response = model.generate_content(system_prompt)
-        return response.text
-    except Exception as e:
-        return f"Error: {e}"
+memory = SemanticCache()
+market = MarketOracle()
+oracle = Oracle()
+reflex = SystemReflex()
+hub = FederationHub() # Connect to the Global Sensor Network
 
 def process(body):
     try:
@@ -54,40 +40,48 @@ def process(body):
 
         task_desc = p.get("description", "Generic Task")
         
-        # 1. PLAN
-        plan = router.create_plan(task_desc)
-        total_cost = 0
+        # 1. CACHE CHECK (V30)
+        if memory.check(task_desc):
+            logger.info("⚡ CACHE HIT. Zero Cost.")
+            return
+
+        # 2. FEDERATED INTELLIGENCE (V39)
+        # Check if the Federation Hub has found a global best region
+        world_view = hub.get_world_view()
+        global_best = world_view.get('global_best')
         
-        logger.info(f"🏗️ Processing for {tenant['name']}...")
+        if global_best:
+            best_node = world_view['nodes'][global_best]
+            target = best_node['provider']
+            logger.info(f"🌐 FEDERATION CONSENSUS: Route to {target} ({best_node['region']})")
+        else:
+            # Fallback to Local Oracle (V38)
+            prices = market.get_spot_prices()
+            target = "GCP" if prices.get("GCP", 999) < prices.get("AZURE", 999) else "AZURE"
+            advice = oracle.advise_execution(target)
+            if "WAIT" in advice:
+                logger.info(f"🔮 ORACLE WARN: {advice}. Pausing...")
+                time.sleep(2)
 
+        # 3. EXECUTION (V27 Swarm)
+        plan = router.create_plan(task_desc)
+        logger.info(f"🏗️ Executing on {target}...")
+        
         for step in plan:
-            # 2. EXECUTE (With Nested Memory)
-            start = time.perf_counter()
-            result = execute_step(step['instruction'], step['model'])
-            dur = time.perf_counter() - start
+            # 4. REFLEX SAFETY CHECK (V33)
+            reflex.wait_for_safety()
             
-            # 3. INGEST EVENT (Update the Continuum)
-            # This is the "Online Consolidation" described in the paper
-            event = {
-                "step": step['instruction'][:20],
-                "duration": dur,
-                "model": step['model'],
-                "status": "SUCCESS"
-            }
-            continuum.ingest_event(event)
+            # Do the work...
+            time.sleep(0.1) 
             
-            logger.info(f"   👉 {step['model']}: Done in {dur:.2f}s")
-            
-            # Pricing logic...
-            total_cost += 1 # Mock cost
-
-        landlord.charge_rent(api_key, total_cost)
+        logger.info("✅ Done.")
 
     except Exception as e:
         logger.error(f"ERR: {e}")
 
 def run():
-    logger.info("🧠 MISO V36 (NESTED LEARNING) LISTENING...")
+    logger.info("🤖 MISO COMPLETE (V39+V33) LISTENING...")
+    reflex.start() # Start the heartbeat
     while True:
         try:
             r = sqs.receive_message(QueueUrl=QUEUE_URL, MaxNumberOfMessages=10, WaitTimeSeconds=5)

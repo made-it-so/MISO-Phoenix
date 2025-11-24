@@ -1,5 +1,23 @@
 nohup: ignoring input
 /home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
   warnings.warn(message, FutureWarning)
-2025-11-24 16:23:38,507 - [LANDLORD] Found credentials from IAM Role: MISO-EC2-Role-Elastic
-2025-11-24 16:23:38,704 - [LANDLORD] 🧠 MISO V36 (NESTED LEARNING) LISTENING...
+2025-11-24 19:35:57,385 - [LANDLORD] Found credentials from IAM Role: MISO-EC2-Role-Elastic
+2025-11-24 19:35:57,675 - [LANDLORD] ✅ Redis Memory Bank Connected.
+2025-11-24 19:35:57,767 - [LANDLORD] 🤖 MISO COMPLETE (V39+V33) LISTENING...
+2025-11-24 19:35:57,767 - [LANDLORD] 🛡️ Reflex Sensors Activated.
+2025-11-24 19:35:58,095 - [LANDLORD] 🌐 FEDERATION CONSENSUS: Route to AWS (us-east-1)
+2025-11-24 19:36:03,623 - [LANDLORD] 🧩 Decomposed Task into 4 steps.
+2025-11-24 19:36:03,623 - [LANDLORD] 🏗️ Executing on AWS...
+2025-11-24 19:36:04,024 - [LANDLORD] ✅ Done.
+2025-11-24 19:36:04,475 - [LANDLORD] 🌐 FEDERATION CONSENSUS: Route to AWS (us-east-1)
+2025-11-24 19:36:10,188 - [LANDLORD] 🧩 Decomposed Task into 3 steps.
+2025-11-24 19:36:10,188 - [LANDLORD] 🏗️ Executing on AWS...
+2025-11-24 19:36:10,488 - [LANDLORD] ✅ Done.
+2025-11-24 19:36:35,819 - [LANDLORD] 🌐 FEDERATION CONSENSUS: Route to AWS (us-east-1)
+2025-11-24 19:36:40,219 - [LANDLORD] 🧩 Decomposed Task into 3 steps.
+2025-11-24 19:36:40,219 - [LANDLORD] 🏗️ Executing on AWS...
+2025-11-24 19:36:40,520 - [LANDLORD] ✅ Done.
+2025-11-24 19:37:08,099 - [LANDLORD] 🌐 FEDERATION CONSENSUS: Route to GCP (us-west-1)
+2025-11-24 19:37:12,421 - [LANDLORD] 🧩 Decomposed Task into 3 steps.
+2025-11-24 19:37:12,421 - [LANDLORD] 🏗️ Executing on GCP...
+2025-11-24 19:37:12,722 - [LANDLORD] ✅ Done.

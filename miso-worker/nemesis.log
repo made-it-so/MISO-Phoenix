@@ -1,0 +1,53 @@
+nohup: ignoring input
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+2025-11-24 19:20:48,698 - [NEMESIS-FIX] Found credentials from IAM Role: MISO-EC2-Role-Elastic
+2025-11-24 19:20:48,944 - [NEMESIS-FIX] 😈 Nemesis armed with: models/gemini-pro-latest
+2025-11-24 19:20:48,944 - [NEMESIS-FIX] 👹 NEMESIS ONLINE. Target Key: miso_sk_351cdf71f05f6a8c
+2025-11-24 19:21:25,376 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Adversarial Cache Collision
+2025-11-24 19:22:30,336 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Forced Cache Hit via Prompt Injection
+2025-11-24 19:23:37,427 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Malformed Plan
+2025-11-24 19:24:26,709 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Semantic Cache Bypass
+2025-11-24 19:25:36,703 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Malformed Plan
+2025-11-24 19:27:14,049 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Malformed Plan
+2025-11-24 19:28:06,628 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Semantic Split
+2025-11-24 19:29:04,073 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Malformed Plan
+2025-11-24 19:30:09,861 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Stale Price Execution
+2025-11-24 19:31:12,793 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Oracle Deception
+2025-11-24 19:33:04,624 - [NEMESIS-FIX] Analysis Failed: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+2025-11-24 19:33:59,463 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Malformed Plan
+2025-11-24 19:35:06,830 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Semantic Cache Poisoning
+2025-11-24 19:36:04,229 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Malformed Plan
+2025-11-24 19:36:35,587 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution
+2025-11-24 19:37:07,855 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Silent No-Op
+2025-11-24 19:37:58,934 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution Bypass
+2025-11-24 19:38:32,737 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution via Prompt Injection
+2025-11-24 19:39:12,986 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution
+2025-11-24 19:39:50,865 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Task Bypass
+2025-11-24 19:40:19,287 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution
+2025-11-24 19:40:50,219 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Injection
+2025-11-24 19:41:27,021 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Malformed Plan
+2025-11-24 19:42:11,610 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution Bypass
+2025-11-24 19:42:50,262 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Silent Task Failure via Empty Plan
+2025-11-24 19:43:39,976 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Malformed Plan
+2025-11-24 19:44:29,743 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Execution Bypass via Empty Plan
+2025-11-24 19:44:58,309 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution
+2025-11-24 19:45:32,287 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution
+2025-11-24 19:46:06,114 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Bypass
+2025-11-24 19:46:42,454 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution
+2025-11-24 19:47:11,366 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Silent Task Failure via Empty Plan
+2025-11-24 19:47:41,927 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Bypass
+2025-11-24 19:48:12,381 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution
+2025-11-24 19:48:52,899 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Logic Error via Empty Plan
+2025-11-24 19:49:22,786 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution
+2025-11-24 19:49:53,756 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Injection
+2025-11-24 19:50:28,598 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: No-Op Task Execution
+2025-11-24 19:51:18,123 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Malformed Plan
+2025-11-24 19:51:47,964 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution
+2025-11-24 19:52:23,836 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Silent Failure via Empty Plan
+2025-11-24 19:53:03,009 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution Bypass
+2025-11-24 19:53:38,399 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Injection
+2025-11-24 19:54:20,834 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution
+2025-11-24 19:55:03,249 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: No-Op Task Injection
+2025-11-24 19:55:52,818 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Malformed Plan
+2025-11-24 19:56:25,782 - [NEMESIS-FIX] 🔥 LAUNCHING ATTACK: Empty Plan Execution

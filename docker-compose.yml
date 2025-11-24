@@ -1,31 +1,41 @@
+version: '3.8'
+
 services:
-  nginx:
-    image: nginx:latest
-    ports:
-      - "8888:80"
+  # 1. THE BRAIN (MISO Worker)
+  worker:
+    build: .
+    command: python3 -u miso-worker/app/worker.py
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./miso-worker/app:/app/miso-worker/app # Live code reloading
+    environment:
+      - AWS_REGION=us-east-1
+      - REDIS_HOST=redis
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     depends_on:
-      - backend
+      - redis
 
-  backend:
-    build:
-      context: ./backend
-    # --- THIS IS THE FIX ---
-    # This block tells Docker to load the .env file from the project root
-    # and make its variables available to the backend service.
-    env_file:
-      - .env
-    # -----------------------
-    depends_on:
-      - chromadb
-
-  chromadb:
-    image: ghcr.io/chroma-core/chroma:0.4.24
-    volumes:
-      - chroma_data:/chroma
+  # 2. THE MEMORY (Local Redis)
+  redis:
+    image: redis:alpine
     ports:
-      - "8000:8000"
+      - "6379:6379"
 
-volumes:
-  chroma_data:
+  # 3. THE INTERFACE (Dashboard)
+  dashboard:
+    build: .
+    command: python3 -m streamlit run miso-worker/app/admin_console.py --server.port 8501 --server.address 0.0.0.0
+    volumes:
+      - ./miso-worker/app:/app/miso-worker/app
+    ports:
+      - "8501:8501"
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+
+  # 4. THE SENSES (Mock Pricing API)
+  # (Optional: In local mode, we can run a mock pricing server if needed, 
+  # or just let the worker hit real AWS APIs since that is free for pricing)
+
