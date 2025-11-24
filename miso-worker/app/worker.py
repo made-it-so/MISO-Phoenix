@@ -6,31 +6,41 @@ import os
 import google.generativeai as genai
 from tenant_manager import Landlord
 from router import NeuralRouter
-from cache_layer import SemanticCache
-from reflex import SystemReflex # <--- THE UPGRADE
+from continuum import ContinuumMemory # <--- NESTED LEARNING
 
 # CONFIG
 AWS_REGION = "us-east-1"
 QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/356206423360/miso_job_queue"
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - [WORKER-V33] %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - [WORKER-V36] %(message)s')
 logger = logging.getLogger(__name__)
 
 sqs = boto3.client('sqs', region_name=AWS_REGION)
-secrets = boto3.client('secretsmanager', region_name=AWS_REGION)
-
 landlord = Landlord()
 router = NeuralRouter()
-memory = SemanticCache()
-reflex = SystemReflex() # <--- INSTANTIATE
+continuum = ContinuumMemory()
 
 def execute_step(instruction, model_name, context=""):
     try:
         api_key = os.environ.get("GEMINI_API_KEY")
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(model_name)
-        prompt = f"CONTEXT: {context}\nTASK: {instruction}\nOUTPUT: Perform task."
-        response = model.generate_content(prompt)
+        
+        # --- NESTED LEARNING INJECTION ---
+        # We inject the Continuum Memory into the prompt.
+        # This is equivalent to the "Context Flow" in the paper.
+        memory_state = continuum.get_context()
+        
+        system_prompt = f"""
+        SYSTEM WISDOM:
+        - Strategic Goal: {memory_state['strategy']}
+        - Recent Tactics: {memory_state['tactics']}
+        
+        CONTEXT: {context}
+        TASK: {instruction}
+        """
+        
+        response = model.generate_content(system_prompt)
         return response.text
     except Exception as e:
         return f"Error: {e}"
@@ -44,56 +54,42 @@ def process(body):
 
         task_desc = p.get("description", "Generic Task")
         
-        # CHECK INTENT CACHE
-        cached = memory.check(task_desc)
-        if cached:
-            logger.info("⚡ CACHE HIT. Skipping logic.")
-            return
-
-        # DELIBERATIVE LAYER (Planning)
+        # 1. PLAN
         plan = router.create_plan(task_desc)
         total_cost = 0
-        accumulated_context = ""
         
-        logger.info(f"🏗️ Executing {len(plan)}-Step Workflow...")
+        logger.info(f"🏗️ Processing for {tenant['name']}...")
 
-        # EXECUTIVE LAYER (Sequencing)
         for step in plan:
-            # --- REACTIVE LAYER CHECK ---
-            # Before every step, we check the Reflex.
-            # If CPU is high, this line BLOCKS until it drops.
-            reflex.wait_for_safety()
-            # ----------------------------
-
-            instruction = step['instruction']
-            brain = step['model']
-            
+            # 2. EXECUTE (With Nested Memory)
             start = time.perf_counter()
-            result = execute_step(instruction, brain, accumulated_context)
+            result = execute_step(step['instruction'], step['model'])
             dur = time.perf_counter() - start
             
-            logger.info(f"   👉 {brain}: {instruction[:30]}... ({dur:.2f}s)")
-            accumulated_context += f"\nResult: {result}\n"
+            # 3. INGEST EVENT (Update the Continuum)
+            # This is the "Online Consolidation" described in the paper
+            event = {
+                "step": step['instruction'][:20],
+                "duration": dur,
+                "model": step['model'],
+                "status": "SUCCESS"
+            }
+            continuum.ingest_event(event)
             
-            base_price = 10 if "pro" in brain else 1
-            total_cost += (base_price * dur * 10)
+            logger.info(f"   👉 {step['model']}: Done in {dur:.2f}s")
+            
+            # Pricing logic...
+            total_cost += 1 # Mock cost
 
-        memory.store(task_desc, accumulated_context)
         landlord.charge_rent(api_key, total_cost)
-        logger.info(f"✅ Done. Cost: {int(total_cost)}.")
 
     except Exception as e:
         logger.error(f"ERR: {e}")
 
 def run():
-    logger.info("🛡️ MISO V33 (HIERARCHICAL CONTROL) STARTING...")
-    
-    # START THE REFLEX DAEMON
-    reflex.start()
-    
+    logger.info("🧠 MISO V36 (NESTED LEARNING) LISTENING...")
     while True:
         try:
-            # Reflex check logic handles the pause, so we just poll normally
             r = sqs.receive_message(QueueUrl=QUEUE_URL, MaxNumberOfMessages=10, WaitTimeSeconds=5)
             for m in r.get('Messages', []):
                 process(m['Body'])
