@@ -1,0 +1,10 @@
+nohup: ignoring input
+2025-11-24 00:44:26,674-[V17] Initializing MISO V17 Engine...
+2025-11-24 00:44:26,705-[V17] Found credentials from IAM Role: MISO-EC2-Role-Elastic
+2025-11-24 00:44:26,870-[V17] ✅ Successfully connected to Redis at miso-msd-cache.me5spp.0001.use1.cache.amazonaws.com
+2025-11-24 00:44:26,871-[V17] ⚡ MISO V17 DATA-DRIVEN ENGINE LISTENING...
+2025-11-24 15:00:01 - [WORKER] ❌ Payment Gateway Timeout (Attempt 1)
+2025-11-24 15:00:02 - [WORKER] ❌ Payment Gateway Timeout (Attempt 2)
+2025-11-24 15:00:03 - [WORKER] ❌ Payment Gateway Timeout (Attempt 3)
+2025-11-24 15:00:04 - [WORKER] ❌ Payment Gateway Timeout (Attempt 4)
+2025-11-24 15:00:05 - [WORKER] ❌ Payment Gateway Timeout (Attempt 5)

@@ -2,88 +2,103 @@ import boto3
 import json
 import time
 import logging
-import redis
-from botocore.exceptions import ClientError
-from vendors import get_vendor_adapter
+import os
+import google.generativeai as genai
+from tenant_manager import Landlord
+from router import NeuralRouter
+from cache_layer import SemanticCache
+from reflex import SystemReflex # <--- THE UPGRADE
 
+# CONFIG
 AWS_REGION = "us-east-1"
 QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/356206423360/miso_job_queue"
-DYNAMO_TABLE = "miso_replay_buffer"
-REDIS_HOST = "miso-msd-cache.me5spp.0001.use1.cache.amazonaws.com"
-REDIS_PORT = 6379
-SECRET_ARN_GCP = "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/gcp_arbitrage_key"
-SECRET_ARN_AZURE = "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/azure_arbitrage_key"
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [MISO-V7.1] %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - [WORKER-V33] %(message)s')
 logger = logging.getLogger(__name__)
 
 sqs = boto3.client('sqs', region_name=AWS_REGION)
-dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
 secrets = boto3.client('secretsmanager', region_name=AWS_REGION)
-table = dynamodb.Table(DYNAMO_TABLE)
 
-cache = None
-try:
-    cache = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, socket_connect_timeout=2)
-    cache.ping()
-except: pass
+landlord = Landlord()
+router = NeuralRouter()
+memory = SemanticCache()
+reflex = SystemReflex() # <--- INSTANTIATE
 
-def get_key(arn):
-    try: return json.loads(secrets.get_secret_value(SecretId=arn)['SecretString'])
-    except: return {}
+def execute_step(instruction, model_name, context=""):
+    try:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(model_name)
+        prompt = f"CONTEXT: {context}\nTASK: {instruction}\nOUTPUT: Perform task."
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"Error: {e}"
 
 def process(body):
-    p = json.loads(body)
-    tid = p.get("session_id")
-    tgt = p.get("cloud_target", "AWS")
-    vec = p.get("feature_hash", "0")
-    
-    logger.info(f"Processing: {tid} -> {tgt}")
-    
-    # 1. MSD Cache Check
-    if cache and cache.get(vec):
-        logger.info("🚀 Cache HIT")
-        return
-
-    # 2. Credential Fetch
-    key = None
-    if tgt == "GCP": key = get_key(SECRET_ARN_GCP).get("gcp_api_key")
-    elif tgt == "AZURE": key = get_key(SECRET_ARN_AZURE).get("azure_api_key")
-    
-    if not key:
-        logger.error("❌ No Key found or Invalid Target")
-        return
-
-    # 3. External Execution via Adapter
     try:
-        adapter = get_vendor_adapter(tgt)
-        res = adapter.compute({"id": tid}, key)
-        logger.info(f"✅ External Success: {res}")
+        p = json.loads(body)
+        api_key = p.get("api_key")
+        tenant = landlord.authenticate(api_key)
+        if not tenant: return
+
+        task_desc = p.get("description", "Generic Task")
         
-        # 4. Persistence
-        if cache: cache.setex(vec, 3600, res)
-        table.put_item(Item={
-            'task_id': tid,
-            'feature_vector_hash': vec,
-            'decision_timestamp': int(time.time()),
-            'optimal_decision': res,
-            'vendor_target': tgt
-        })
-        logger.info("💾 Saved to DynamoDB")
+        # CHECK INTENT CACHE
+        cached = memory.check(task_desc)
+        if cached:
+            logger.info("⚡ CACHE HIT. Skipping logic.")
+            return
+
+        # DELIBERATIVE LAYER (Planning)
+        plan = router.create_plan(task_desc)
+        total_cost = 0
+        accumulated_context = ""
+        
+        logger.info(f"🏗️ Executing {len(plan)}-Step Workflow...")
+
+        # EXECUTIVE LAYER (Sequencing)
+        for step in plan:
+            # --- REACTIVE LAYER CHECK ---
+            # Before every step, we check the Reflex.
+            # If CPU is high, this line BLOCKS until it drops.
+            reflex.wait_for_safety()
+            # ----------------------------
+
+            instruction = step['instruction']
+            brain = step['model']
+            
+            start = time.perf_counter()
+            result = execute_step(instruction, brain, accumulated_context)
+            dur = time.perf_counter() - start
+            
+            logger.info(f"   👉 {brain}: {instruction[:30]}... ({dur:.2f}s)")
+            accumulated_context += f"\nResult: {result}\n"
+            
+            base_price = 10 if "pro" in brain else 1
+            total_cost += (base_price * dur * 10)
+
+        memory.store(task_desc, accumulated_context)
+        landlord.charge_rent(api_key, total_cost)
+        logger.info(f"✅ Done. Cost: {int(total_cost)}.")
+
     except Exception as e:
-        logger.error(f"🔥 Fail: {e}")
+        logger.error(f"ERR: {e}")
 
 def run():
-    logger.info("🎧 MISO V7.1 (Network) Listening...")
+    logger.info("🛡️ MISO V33 (HIERARCHICAL CONTROL) STARTING...")
+    
+    # START THE REFLEX DAEMON
+    reflex.start()
+    
     while True:
         try:
-            r = sqs.receive_message(QueueUrl=QUEUE_URL, MaxNumberOfMessages=1, WaitTimeSeconds=10)
+            # Reflex check logic handles the pause, so we just poll normally
+            r = sqs.receive_message(QueueUrl=QUEUE_URL, MaxNumberOfMessages=10, WaitTimeSeconds=5)
             for m in r.get('Messages', []):
                 process(m['Body'])
                 sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=m['ReceiptHandle'])
-        except Exception as e:
-            logger.error(f"Loop Error: {e}")
-            time.sleep(5)
+        except: time.sleep(1)
 
 if __name__ == "__main__":
     run()

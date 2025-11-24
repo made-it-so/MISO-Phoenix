@@ -1,0 +1,33 @@
+{
+    "generated_at_utc": "2025-11-24T01:11:04.185031+00:00",
+    "report_id": "mrkt_1763946664",
+    "market_summary": {
+        "market": "Global AI-Powered Automation",
+        "market_size_usd": "15.7 Trillion by 2030",
+        "cagr": "22.5%",
+        "key_players": [
+            "MISO-Phoenix",
+            "Google AI",
+            "OpenAI",
+            "NVIDIA",
+            "Microsoft Azure"
+        ]
+    },
+    "emerging_trends": [
+        "Hyper-automation in enterprise workflows",
+        "Generative AI for content creation and data synthesis",
+        "Edge AI for real-time processing",
+        "AI-driven cybersecurity threats and defenses"
+    ],
+    "competitor_analysis": {
+        "competitor_a": {
+            "strategy": "Focus on large language models",
+            "risk": "High computational cost"
+        },
+        "competitor_b": {
+            "strategy": "Vertical integration with cloud services",
+            "risk": "Potential for vendor lock-in"
+        }
+    },
+    "investment_outlook": "Strongly positive, with significant venture capital inflow into AI startups."
+}

@@ -1,0 +1,10 @@
+nohup: ignoring input
+INFO:botocore.credentials:Found credentials from IAM Role: MISO-EC2-Role-Elastic
+/home/ubuntu/MISO-Phoenix/miso-api/app/main.py:38: PydanticDeprecatedSince20: Pydantic V1 style `@validator` validators are deprecated. You should migrate to Pydantic V2 style `@field_validator` validators, see the migration guide for more details. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  @validator('*', pre=True)
+Traceback (most recent call last):
+  File "/home/ubuntu/MISO-Phoenix/miso-api/app/main.py", line 84, in <module>
+    app.mount("/static", StaticFiles(directory="app/static"), name="static")
+  File "/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/starlette/staticfiles.py", line 56, in __init__
+    raise RuntimeError(f"Directory '{directory}' does not exist")
+RuntimeError: Directory 'app/static' does not exist

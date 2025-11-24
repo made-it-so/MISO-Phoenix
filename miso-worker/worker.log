@@ -1,0 +1,7 @@
+nohup: ignoring input
+2025-11-24 15:25:20,918 - [LANDLORD] Found credentials from IAM Role: MISO-EC2-Role-Elastic
+2025-11-24 15:25:21,315 - [LANDLORD] ✅ Redis Memory Bank Connected.
+2025-11-24 15:25:21,315 - [LANDLORD] 🛡️ MISO V33 (HIERARCHICAL CONTROL) STARTING...
+2025-11-24 15:25:21,315 - [LANDLORD] 🛡️ Reflex Sensors Activated.
+2025-11-24 15:25:21,820 - [LANDLORD] ⚠️ DANGER DETECTED: CPU 100.0% | RAM 39.7%
+2025-11-24 15:25:24,324 - [LANDLORD] ✅ Conditions Normalized: CPU 0.0% | RAM 21.2%
