@@ -1,81 +1,109 @@
-import boto3
-import json
 import os
-import logging
-import google.generativeai as genai
-import sys
-import shutil
-import time
+import json
+import redis
 import subprocess
-from judge import SupremeCourt # <--- THE CHECK
+import google.generativeai as genai
+from datetime import datetime
+from memory import Hippocampus
 
-# CONFIG
-REGION = "us-east-1"
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TARGET_FILE = os.path.join(BASE_DIR, "worker.py")
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GENOME_PATH = "miso-worker/prompts/constitution.txt"
+TASK_QUEUE = "miso:tasks"
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - [ARCHITECT-V29] %(message)s', stream=sys.stdout)
-logger = logging.getLogger(__name__)
+class SovereignArchitect:
+    def __init__(self):
+        self.r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+        if not GEMINI_API_KEY:
+            print("CRITICAL: No API Key found.")
+            return
+        genai.configure(api_key=GEMINI_API_KEY)
+        self.model = self.find_best_model()
+        self.hippocampus = Hippocampus()
+        print("--- SOVEREIGN ARCHITECT (V47 SECURE) ONLINE ---")
 
-court = SupremeCourt()
+    def find_best_model(self):
+        try:
+            available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+            target = next((m for m in available if "gemini-1.5-flash" in m), 
+                     next((m for m in available if "gemini-pro" in m), available[0] if available else None))
+            return genai.GenerativeModel(target) if target else None
+        except: return None
 
-def get_api_key(): return os.environ.get("GEMINI_API_KEY")
+    def read_constitution(self):
+        if not os.path.exists(GENOME_PATH): return "You are a helpful AI."
+        with open(GENOME_PATH, "r") as f: return f.read().strip()
 
-def get_best_model():
-    try:
-        models = [m for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        for pref in ['gemini-1.5-pro', 'gemini-pro']:
-            for m in models:
-                if pref in m.name: return genai.GenerativeModel(m.name)
-        return genai.GenerativeModel(models[0].name)
-    except: return None
+    def write_file(self, filename, content):
+        if ".." in filename or filename.startswith("/"): return "ERROR: Access Denied."
+        with open(filename, "w") as f: f.write(content)
+        return f"SUCCESS: Wrote {len(content)} bytes to {filename}"
 
-def read_source_code():
-    with open(TARGET_FILE, 'r') as f: return f.read()
+    def execute_shell(self, command):
+        if "docker" in command: return 1, "ERROR: Recursion limit."
+        try:
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=60)
+            output = f"EXIT: {result.returncode}\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+            return result.returncode, output
+        except Exception as e:
+            return 1, f"ERROR: {e}"
 
-def spawn_sociopath_variant(current_code):
-    """
-    V29 TEST FUNCTION: Creates a 'fast but evil' variant to test the Judge.
-    This variant deletes logging to simulate 'Speed Optimization'.
-    """
-    logger.info("🧪 Incubating Variant: SOCIOPATH (Illegal Optimization)...")
-    
-    # We strip out all logging to make it "faster" (Violation of Law #2)
-    evil_code = current_code.replace("logger.info", "# logger.info")
-    evil_code = "# EVOLVED BY MISO V29 (SOCIOPATH)\n" + evil_code
-    
-    filename = os.path.join(BASE_DIR, "worker_sociopath.py")
-    with open(filename, 'w') as f: f.write(evil_code)
-    return filename
+    def perform_task(self, task):
+        if not self.model: return
+        prompt = task.get("payload", "")
+        task_id = task.get("id", "unknown")
+        constitution = self.read_constitution()
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] Architecting {task_id}...")
 
-def apply_evolution(candidate):
-    # 1. JUDICIAL REVIEW
-    logger.info(f"📜 Submitting {os.path.basename(candidate)} to Supreme Court...")
-    with open(candidate, 'r') as f: code = f.read()
-    
-    approved, reason = court.review_code(code, os.path.basename(candidate))
-    
-    if not approved:
-        logger.error(f"🚫 DEPLOYMENT BLOCKED: {reason}")
-        return False
-    
-    # 2. DEPLOYMENT
-    logger.info("✅ Court Approved. Deploying...")
-    shutil.copy(candidate, TARGET_FILE)
-    os.system(f"pkill -f {TARGET_FILE}")
-    os.system(f"nohup python3 {TARGET_FILE} > worker.log 2>&1 &")
-    logger.info("🦋 MISO V29 LIVE.")
-    return True
+        past = self.hippocampus.recall(prompt)
+        context = f"RELEVANT PAST:\n{past}\n" if past else "NO PRECEDENT."
+
+        full_prompt = f"""
+        SYSTEM: {constitution}
+        CONTEXT: {context}
+        TASK: {prompt}
+        
+        SAFETY PROTOCOL:
+        - If writing a script that modifies AWS/Infrastructure, ensure it prints changes first (Dry Run).
+        
+        TOOLS:
+        1. Write File -> JSON: {{"tool": "write", "filename": "x.py", "content": "..."}}
+        2. Run Shell -> JSON: {{"tool": "shell", "command": "ls -la"}}
+        Output ONLY JSON.
+        """
+        
+        try:
+            response = self.model.generate_content(full_prompt)
+            text = response.text
+            if "```json" in text:
+                json_part = text.split("```json")[1].split("```")[0].strip()
+                data = json.loads(json_part)
+                
+                if data.get("tool") == "write":
+                    res = self.write_file(data["filename"], data["content"])
+                    print(f" >> WRITE: {res}")
+                    # Tentatively memorize writes
+                    self.hippocampus.remember(prompt, data["content"])
+                    
+                elif data.get("tool") == "shell":
+                    exit_code, output = self.execute_shell(data["command"])
+                    print(f" >> SHELL OUTPUT:\n{output}")
+                    
+                    # THE V47 SUCCESS FILTER
+                    if exit_code == 0:
+                        self.hippocampus.remember(prompt, f"COMMAND: {data['command']}\nRESULT: SUCCESS")
+                        print(" >> CONSOLIDATION: Verified Success. Memory Encoded.")
+                    else:
+                        print(" >> CONSOLIDATION ABORTED: Execution Failed.")
+                    
+        except Exception as e:
+            print(f" >> ERROR: {e}")
+
+    def main_loop(self):
+        while True:
+            raw_task = self.r.blpop(TASK_QUEUE, timeout=5)
+            if raw_task: self.perform_task(json.loads(raw_task[1]))
 
 if __name__ == "__main__":
-    key = get_api_key()
-    if not key: exit(1)
-    genai.configure(api_key=key)
-    
-    # For this V29 demo, we skip the Thunderdome and go straight to the Constitutional Crisis
-    # We generate a "Sociopath" variant that is theoretically faster but illegal.
-    code = read_source_code()
-    evil_variant = spawn_sociopath_variant(code)
-    
-    # Try to deploy it
-    apply_evolution(evil_variant)
+    SovereignArchitect().main_loop()

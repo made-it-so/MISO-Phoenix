@@ -1,14 +1,14 @@
 {
-  "miso_sk_351cdf71f05f6a8c": {
-    "name": "CLIENT_ALPHA",
+  "miso_sk_5a2faa08081b1f0e": {
+    "name": "BETA_V42",
     "tier": "GOLD",
-    "balance": -56990.34364886418,
-    "usage": 57090.34364886418
+    "balance": 47.0,
+    "total_spend": 3.0
   },
-  "miso_sk_3c764bf1710a36c4": {
-    "name": "CLIENT_BETA",
-    "tier": "SILVER",
-    "balance": -4905.049929022789,
-    "usage": 5005.049929022789
+  "miso_sk_643e33b2ff09b2c8": {
+    "name": "RECOVERY_USER",
+    "tier": "GOLD",
+    "balance": -62.0,
+    "total_spend": 72.0
   }
 }

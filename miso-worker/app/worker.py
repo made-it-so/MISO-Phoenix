@@ -1,94 +1,84 @@
-import boto3
-import json
-import time
-import logging
 import os
+import json
+import redis
 import google.generativeai as genai
-from tenant_manager import Landlord
-from router import NeuralRouter
-from cache_layer import SemanticCache
-from pricing import MarketOracle
-from oracle import Oracle
-from reflex import SystemReflex # <--- RE-INTEGRATING V33
-from federation import FederationHub # <--- INTEGRATING V39
+from datetime import datetime
 
-# CONFIG
-AWS_REGION = "us-east-1"
-QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/356206423360/miso_job_queue"
+# --- CONFIGURATION ---
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GENOME_PATH = "miso-worker/prompts/constitution.txt"
+TASK_QUEUE = "miso:tasks"
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - [SUPER-WORKER] %(message)s')
-logger = logging.getLogger(__name__)
+class SovereignWorker:
+    def __init__(self):
+        self.r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+        genai.configure(api_key=GEMINI_API_KEY)
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        print("--- SOVEREIGN WORKER (WITH HANDS) ONLINE ---")
 
-sqs = boto3.client('sqs', region_name=AWS_REGION)
-secrets = boto3.client('secretsmanager', region_name=AWS_REGION)
+    def read_constitution(self):
+        if not os.path.exists(GENOME_PATH): return "You are a helpful AI."
+        with open(GENOME_PATH, "r") as f: return f.read().strip()
 
-# The Full Organism
-landlord = Landlord()
-router = NeuralRouter()
-memory = SemanticCache()
-market = MarketOracle()
-oracle = Oracle()
-reflex = SystemReflex()
-hub = FederationHub() # Connect to the Global Sensor Network
-
-def process(body):
-    try:
-        p = json.loads(body)
-        api_key = p.get("api_key")
-        tenant = landlord.authenticate(api_key)
-        if not tenant: return
-
-        task_desc = p.get("description", "Generic Task")
-        
-        # 1. CACHE CHECK (V30)
-        if memory.check(task_desc):
-            logger.info("⚡ CACHE HIT. Zero Cost.")
-            return
-
-        # 2. FEDERATED INTELLIGENCE (V39)
-        # Check if the Federation Hub has found a global best region
-        world_view = hub.get_world_view()
-        global_best = world_view.get('global_best')
-        
-        if global_best:
-            best_node = world_view['nodes'][global_best]
-            target = best_node['provider']
-            logger.info(f"🌐 FEDERATION CONSENSUS: Route to {target} ({best_node['region']})")
-        else:
-            # Fallback to Local Oracle (V38)
-            prices = market.get_spot_prices()
-            target = "GCP" if prices.get("GCP", 999) < prices.get("AZURE", 999) else "AZURE"
-            advice = oracle.advise_execution(target)
-            if "WAIT" in advice:
-                logger.info(f"🔮 ORACLE WARN: {advice}. Pausing...")
-                time.sleep(2)
-
-        # 3. EXECUTION (V27 Swarm)
-        plan = router.create_plan(task_desc)
-        logger.info(f"🏗️ Executing on {target}...")
-        
-        for step in plan:
-            # 4. REFLEX SAFETY CHECK (V33)
-            reflex.wait_for_safety()
-            
-            # Do the work...
-            time.sleep(0.1) 
-            
-        logger.info("✅ Done.")
-
-    except Exception as e:
-        logger.error(f"ERR: {e}")
-
-def run():
-    logger.info("🤖 MISO COMPLETE (V39+V33) LISTENING...")
-    reflex.start() # Start the heartbeat
-    while True:
+    def write_file(self, filename, content):
+        """The Hand: Allows the agent to alter reality (Filesystem)."""
         try:
-            r = sqs.receive_message(QueueUrl=QUEUE_URL, MaxNumberOfMessages=10, WaitTimeSeconds=5)
-            for m in r.get('Messages', []):
-                process(m['Body'])
-                sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=m['ReceiptHandle'])
-        except: time.sleep(1)
+            # Security: Prevent escaping the directory
+            if ".." in filename or filename.startswith("/"):
+                return "ERROR: Access Denied. Stay in local directory."
+            
+            with open(filename, "w") as f:
+                f.write(content)
+            return f"SUCCESS: Wrote {len(content)} bytes to {filename}"
+        except Exception as e:
+            return f"ERROR: {e}"
+
+    def perform_task(self, task):
+        prompt = task.get("payload", "")
+        task_id = task.get("id", "unknown")
+        constitution = self.read_constitution()
+        
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] Processing {task_id}...")
+
+        # COGNITIVE STEP: GENERATE CODE
+        full_prompt = f"""
+        SYSTEM: {constitution}
+        TASK: {prompt}
+        
+        If the task requires creating a file, output the code inside a JSON block like this:
+        ```json
+        {{"filename": "example.py", "content": "print('hello')"}}
+        ```
+        Otherwise, just answer.
+        """
+        
+        try:
+            response = self.model.generate_content(full_prompt)
+            raw_text = response.text
+            
+            # ACTUATION STEP: PARSE AND WRITE
+            if "```json" in raw_text:
+                json_part = raw_text.split("```json")[1].split("```")[0].strip()
+                try:
+                    file_data = json.loads(json_part)
+                    result = self.write_file(file_data["filename"], file_data["content"])
+                    print(f" >> ACTUATION: {result}")
+                except json.JSONDecodeError:
+                    print(" >> ERROR: Failed to parse JSON act.")
+            else:
+                print(f" >> THOUGHT: {raw_text[:100]}...")
+
+        except Exception as e:
+            print(f" >> ERROR: {e}")
+
+    def main_loop(self):
+        while True:
+            raw_task = self.r.blpop(TASK_QUEUE, timeout=5)
+            if raw_task:
+                self.perform_task(json.loads(raw_task[1]))
 
 if __name__ == "__main__":
-    run()
+    worker = SovereignWorker()
+    worker.main_loop()

@@ -5,19 +5,22 @@ import json
 import re
 import sys
 
-# LOGGING TO STDOUT
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - [PLANNER] %(message)s', stream=sys.stdout)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - [ROUTER-FIX] %(message)s', stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 class NeuralRouter:
     def __init__(self):
         self.api_key = os.environ.get("GEMINI_API_KEY")
+        self.model = None # <--- FIX: Initialize default value
+        
         if self.api_key:
-            genai.configure(api_key=self.api_key)
-            self.model = self._get_best_model()
+            try:
+                genai.configure(api_key=self.api_key)
+                self.model = self._get_best_model()
+            except Exception as e:
+                logger.error(f"Router Init Failed: {e}")
 
     def _get_best_model(self):
-        # We use Flash for planning because it is fast and cheap
         try:
             models = [m for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
             preferences = ['gemini-1.5-flash', 'gemini-flash', 'gemini-pro']
@@ -28,44 +31,33 @@ class NeuralRouter:
         except: return None
 
     def create_plan(self, task):
-        """
-        The Persona Broker Logic.
-        Breaks 1 big task into N small subtasks with assigned models.
-        """
+        if not self.model:
+            logger.error("❌ Router is Brain Dead (No Model). Defaulting to Single Step.")
+            return [{"step": 1, "instruction": task, "tool": "LLM-PRO", "model": "gemini-1.5-pro"}]
+
         prompt = f"""
-        You are a Project Manager AI.
-        GOAL: Break this task into 3-5 logical steps.
+        You are a Systems Architect.
+        Break this task into steps.
+        
         TASK: "{task[:1000]}"
         
-        FOR EACH STEP:
-        - Assign a "model": "gemini-1.5-flash" (if easy/formatting/boilerplate) OR "gemini-1.5-pro" (if complex reasoning/security).
-        - Assign a "cloud": "GCP" (default) or "AZURE" (if backup needed).
+        FOR EACH STEP ASSIGN A TOOL:
+        - "INTERPRETER": Math, counting, logic.
+        - "LLM-FLASH": Simple text.
+        - "LLM-PRO": Complex reasoning.
         
-        OUTPUT JSON ONLY (List of objects):
+        OUTPUT JSON:
         [
-            {{"step": 1, "instruction": "Define the struct", "model": "gemini-1.5-flash", "cloud": "GCP"}},
-            {{"step": 2, "instruction": "Implement thread-safe logic", "model": "gemini-1.5-pro", "cloud": "AZURE"}}
+            {{"step": 1, "instruction": "Calculate...", "tool": "INTERPRETER"}},
+            {{"step": 2, "instruction": "Explain...", "tool": "LLM-PRO"}}
         ]
         """
-        
         try:
             response = self.model.generate_content(prompt)
-            text = response.text
+            text = response.text.replace('```json', '').replace('```', '').strip()
             match = re.search(r'\[.*\]', text, re.DOTALL)
-            
-            if match:
-                plan = json.loads(match.group(0))
-                logger.info(f"🧩 Decomposed Task into {len(plan)} steps.")
-                return plan
-            else:
-                # Fallback: Treat as single step
-                return [{"step": 1, "instruction": task, "model": "gemini-1.5-pro", "cloud": "GCP"}]
-                
+            if match: return json.loads(match.group(0))
+            return [{"step": 1, "instruction": task, "tool": "LLM-PRO"}]
         except Exception as e:
-            logger.error(f"Planning Failed: {e}")
-            return [{"step": 1, "instruction": task, "model": "gemini-1.5-pro", "cloud": "GCP"}]
-
-if __name__ == "__main__":
-    r = NeuralRouter()
-    plan = r.create_plan("Write a secure banking ledger in Rust")
-    print(json.dumps(plan, indent=2))
+            logger.error(f"Planning Error: {e}")
+            return [{"step": 1, "instruction": task, "tool": "LLM-PRO"}]
