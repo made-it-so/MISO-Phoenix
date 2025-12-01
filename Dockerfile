@@ -1,18 +1,29 @@
-# Base Image
 FROM python:3.11-slim
 
-# Set Working Directory
+# 1. INSTALL SYSTEM DEPENDENCIES
+RUN apt-get update && apt-get install -y \
+    docker.io \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Install Dependencies (Biological Requirements)
-# Added 'requests' and others just in case
-RUN pip install --no-cache-dir redis google-generativeai chromadb web3 requests
+# 2. INSTALL PYTHON DEPENDENCIES
+RUN pip install --no-cache-dir \
+    redis \
+    google-generativeai \
+    chromadb \
+    web3 \
+    requests \
+    numpy
 
-# Copy the Organism (Source Code)
-COPY miso-worker ./miso-worker
+# 3. COPY SOURCE CODE
+COPY . /app
 
-# Environment Variables
+# 4. CONFIGURATION
 ENV PYTHONUNBUFFERED=1
+# CRITICAL FIX: Allow imports from the root /app folder
+ENV PYTHONPATH=/app
 
-# THE V45 ENTRYPOINT: The Unified Organism
+# 5. ENTRYPOINT
 CMD ["python3", "miso-worker/app/organism.py"]
