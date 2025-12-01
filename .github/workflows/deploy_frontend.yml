@@ -25,4 +25,3 @@ jobs:
       - name: Deploy to S3
         run: |
           aws s3 sync ./ui s3://miso-application-forge-ui-oxvkhfa8 --delete --acl public-read
-# Trigger Fix
