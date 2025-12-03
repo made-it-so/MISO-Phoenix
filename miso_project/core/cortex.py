@@ -4,28 +4,30 @@ import logging
 import random
 import time
 import re
+import base64
+import io
 from typing import Dict, Any
+from PIL import Image
 
 import openai
 from anthropic import Anthropic
 import google.generativeai as genai
 
-# Organs
 from miso_project.utils.sandbox import DockerSandbox
 from miso_project.core.ouroboros import GitManager
 from miso_project.core.logger import InteractionLogger
 from miso_project.core.research import ResearchScout
 from miso_project.core.vector import VectorHippocampus
 from miso_project.core.critic import HypercriticalLobe
-from miso_project.core.accountant import CloudAccountant # <--- NEW ORGAN
+from miso_project.core.accountant import CloudAccountant
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("miso.core.cortex")
 
 class Cortex:
     """
-    The High-Frequency Processor (V85 - Profitable).
-    Tracks costs and audits infrastructure.
+    The High-Frequency Processor (V87 - Multimodal).
+    Now capable of processing Visual Input via Gemini.
     """
     def __init__(self):
         self.sandbox = DockerSandbox()
@@ -34,16 +36,17 @@ class Cortex:
         self.scout = ResearchScout()
         self.vector_memory = VectorHippocampus()
         self.critic = HypercriticalLobe()
-        self.cfo = CloudAccountant() # <--- INIT CFO
+        self.cfo = CloudAccountant()
         
         self.weights_path = "miso_project/config/routing_weights.json"
         self.active_weights = self._load_synaptic_weights()
         
         self.system_instruction = """
-You are MISO V85. You have a PHYSICAL BODY (DockerSandbox) and GIT ACCESS.
+You are MISO V87. You have a PHYSICAL BODY (DockerSandbox) and VISION.
 PROTOCOL:
-1. If asked to act, WRITE PYTHON CODE.
-2. If asked to save/push work, output: GIT_PUSH: "Commit Message"
+1. If shown an image, analyze it for technical or architectural details.
+2. If asked to act, WRITE PYTHON CODE.
+3. If asked to save/push work, output: GIT_PUSH: "Commit Message"
 """
         # Clients (Lazy Load)
         self.openai_key = os.getenv("OPENAI_API_KEY")
@@ -70,6 +73,19 @@ PROTOCOL:
         probs = list(self.active_weights.values())
         return random.choices(models, weights=probs, k=1)[0]
 
+    def _call_vision(self, prompt: str, image_b64: str) -> str:
+        """The Visual Processing Center."""
+        if not self.has_gemini: return "ERR: Vision requires Gemini Lobe."
+        try:
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            image_data = base64.b64decode(image_b64)
+            image = Image.open(io.BytesIO(image_data))
+            
+            response = model.generate_content([prompt, image])
+            return response.text
+        except Exception as e:
+            return f"Vision Failure: {e}"
+
     def _call_llm(self, model: str, prompt: str) -> str:
         full_prompt = f"{self.system_instruction}\n\nUSER REQUEST: {prompt}"
         try:
@@ -93,22 +109,18 @@ PROTOCOL:
         match = re.search(r"```python\n(.*?)```", text, re.DOTALL)
         return match.group(1) if match else None
 
-    def process_task(self, task_type: str, payload: str) -> Dict[str, Any]:
+    def process_task(self, task_type: str, payload: str, image_data: str = None) -> Dict[str, Any]:
         start_time = time.time()
         model = self.select_model()
         result = {}
         success = True
         
         try:
-            if task_type == "audit_aws": # NEW DIRECTIVE
+            if task_type == "audit_aws":
                 logger.info("CFO Arc: Auditing Infrastructure")
                 report = self.cfo.audit_infrastructure()
                 tf_code = self.cfo.generate_terraform_migration()
-                result = {
-                    "audit": report,
-                    "migration_plan": tf_code,
-                    "msg": "Audit Complete. Waste detected."
-                }
+                result = {"audit": report, "migration_plan": tf_code, "msg": "Audit Complete."}
 
             elif task_type == "execute_code":
                 COMPLIANT_FILENAME = "miso_project/utils/transient_action.py"
@@ -120,10 +132,16 @@ PROTOCOL:
 
             elif task_type == "chat":
                 logger.info(f"Reasoning Arc: Firing {model}")
-                memories = self.vector_memory.recall(payload)
-                if memories: payload = f"Context: {memories}\nQuery: {payload}"
                 
-                response_text = self._call_llm(model, payload)
+                # OPTIC NERVE ACTIVATION
+                if image_data:
+                    logger.info("Visual Signal Detected. Rerouting to Vision Lobe.")
+                    response_text = self._call_vision(payload, image_data)
+                else:
+                    # Normal Text Path
+                    memories = self.vector_memory.recall(payload)
+                    if memories: payload = f"Context: {memories}\nQuery: {payload}"
+                    response_text = self._call_llm(model, payload)
                 
                 code_to_run = self._extract_code(response_text)
                 if code_to_run:
@@ -154,10 +172,9 @@ PROTOCOL:
             result = {"error": str(e)}
             logger.error(f"Cortex Failure: {e}")
 
-        # FINANCIAL LEDGER (The new bottom line)
         latency = int((time.time() - start_time) * 1000)
         cost = self.cfo.estimate_request_cost(model, len(payload)//4, len(str(result))//4)
-        result["cost"] = f"${cost:.6f}" # Attach bill
+        result["cost"] = f"${cost:.6f}"
         
         self.hippocampus.log_synapse(task_type, model, success, latency, 0, payload, result)
         return result
