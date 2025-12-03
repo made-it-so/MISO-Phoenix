@@ -1,0 +1,63 @@
+import os
+import shutil
+import tempfile
+import subprocess
+
+class Sandbox:
+    """
+    Creates a safe, temporary copy of the workspace to test
+    a plan without polluting the real filesystem.
+    """
+    def __init__(self, base_workspace_path="workspace"):
+        self.base_path = os.path.abspath(base_workspace_path)
+        self.temp_dir = tempfile.mkdtemp()
+        self.sandbox_path = os.path.join(self.temp_dir, "workspace")
+
+    def __enter__(self):
+        try:
+            shutil.copytree(self.base_path, self.sandbox_path)
+        except FileNotFoundError:
+            os.makedirs(self.sandbox_path)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        shutil.rmtree(self.temp_dir)
+
+    def apply_plan(self, plan: list):
+        """
+        Executes an atomic list of file operations *inside* the sandbox.
+        """
+        for step in plan:
+            op = step.get('op')
+            
+            # (PATCHED: Handles 'analysis' op to prevent crash)
+            if op == 'analysis':
+                continue
+            
+            path = os.path.join(self.sandbox_path, step.get('path'))
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+
+            if op == 'create_file' or op == 'modify_file':
+                with open(path, 'w', encoding='utf-8') as f:
+                    f.write(step.get('content', ''))
+            elif op == 'delete_file':
+                if os.path.exists(path):
+                    os.remove(path)
+            else:
+                raise ValueError(f"Invalid plan operation: {op}")
+
+    def run_command(self, command: str):
+        try:
+            result = subprocess.run(
+                command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                cwd=self.temp_dir 
+            )
+            full_output = result.stdout + result.stderr
+            return result.returncode, full_output
+        
+        except Exception as e:
+            return -1, f"Command execution failed: {e}"

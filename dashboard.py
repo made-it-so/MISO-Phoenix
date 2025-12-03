@@ -1,95 +1,141 @@
 import streamlit as st
-import json
-import os
-import time
+import requests
 import pandas as pd
+import plotly.express as px
+import time
 
-# CONFIG PATHS
-BASE_DIR = os.path.join(os.getcwd(), "miso-worker", "app")
-CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
-SECRETS_FILE = os.path.join(BASE_DIR, "secrets.json") # New secure storage
-LOG_FILE = "miso-worker/worker.log"
+# --- CONFIGURATION ---
+MISO_API = "http://localhost:8000"
+st.set_page_config(
+    page_title="MISO V71: Ouroboros",
+    page_icon="🧬",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# PAGE SETUP
-st.set_page_config(page_title="MISO Command", layout="wide", page_icon="🧠")
+# --- STYLES ---
+st.markdown("""
+<style>
+    .stProgress > div > div > div > div { background-color: #00ff00; }
+    div[data-testid="stMetricValue"] { font-size: 1.2rem; }
+</style>
+""", unsafe_allow_html=True)
 
-# --- HELPER FUNCTIONS ---
-def load_config():
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as f: return json.load(f)
-    return {"EPSILON": 0.15, "MODE": "STATIC", "HURDLE_RATE": 0.05}
+# --- SIDEBAR: SYSTEM VITALS ---
+st.sidebar.title("🧬 MISO V71")
+st.sidebar.markdown("**Codename:** Ouroboros")
+st.sidebar.markdown("---")
 
-def save_config(new_config):
-    with open(CONFIG_FILE, 'w') as f: json.dump(new_config, f, indent=2)
-    st.toast("✅ Configuration Saved!", icon="💾")
-
-def save_secrets(gemini_key, aws_key, aws_secret):
-    # In prod, use Vault. Here, we save to a local JSON for agents to read.
-    data = {
-        "GEMINI_API_KEY": gemini_key,
-        "AWS_ACCESS_KEY_ID": aws_key,
-        "AWS_SECRET_ACCESS_KEY": aws_secret
-    }
-    with open(SECRETS_FILE, 'w') as f: json.dump(data, f)
-    st.toast("✅ Secrets Updated. Restarting Agents...", icon="🔐")
-    # Trigger a restart (Simulated)
-    time.sleep(1)
-    st.rerun()
-
-# --- UI LAYOUT ---
-st.title("🧠 MISO: Enterprise Control Plane")
-
-tabs = st.tabs(["📊 Monitor", "⚙️ Settings", "🧬 Evolution"])
-
-# TAB 1: MONITOR (The existing view)
-with tabs[0]:
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("System Health", "NOMINAL", "CPU < 20%")
-    with col2:
-        st.metric("Cost Savings", "$4,250", "+5 today")
-    with col3:
-        config = load_config()
-        st.metric("Learning Rate", f"{config.get('EPSILON', 0.15)*100:.0f}%")
-
-    st.subheader("Live Telemetry")
-    try:
-        if os.path.exists(LOG_FILE):
-            with open(LOG_FILE, "r") as f:
-                lines = f.readlines()[-15:]
-                for line in lines:
-                    st.text(line.strip())
-        else:
-            st.warning("Waiting for logs...")
-    except: st.error("Log Access Failed")
-
-# TAB 2: SETTINGS (The new feature)
-with tabs[1]:
-    st.header("🔧 System Configuration")
+# Fetch System Stats
+try:
+    stats = requests.get(f"{MISO_API}/system/stats", timeout=2).json()
+    status = "🟢 ONLINE"
     
-    with st.expander("🔑 API Credentials (Secrets)", expanded=True):
-        st.caption("These keys power the Intelligence Engine.")
-        with st.form("secrets_form"):
-            g_key = st.text_input("Google Gemini API Key", type="password")
-            aws_id = st.text_input("AWS Access Key ID", type="password")
-            aws_sec = st.text_input("AWS Secret Access Key", type="password")
-            if st.form_submit_button("Update Credentials"):
-                save_secrets(g_key, aws_id, aws_sec)
+    # 1. Routing Weights (The Deep Optimizer's Work)
+    st.sidebar.subheader("🧠 Synaptic Weights")
+    weights = stats.get("active_weights", {})
+    if weights:
+        df_weights = pd.DataFrame(list(weights.items()), columns=["Model", "Weight"])
+        fig = px.pie(df_weights, values="Weight", names="Model", hole=0.4)
+        fig.update_layout(margin=dict(t=0, b=0, l=0, r=0), height=200, showlegend=False)
+        st.sidebar.plotly_chart(fig, use_container_width=True)
+    
+    # 2. Organ Status
+    st.sidebar.subheader("🛡️ Immune System")
+    st.sidebar.success(stats.get("immune_system", "Unknown"))
+    st.sidebar.subheader("🦴 Backbone")
+    st.sidebar.info(stats.get("backbone_status", "Unknown"))
 
-    with st.expander("🎛️ Operational Parameters"):
-        config = load_config()
-        new_epsilon = st.slider("Exploration Rate (Creativity)", 0.0, 1.0, config.get("EPSILON", 0.15))
-        new_hurdle = st.number_input("ROI Hurdle Rate (%)", 1.0, 50.0, config.get("HURDLE_RATE", 0.05)*100)
+except Exception:
+    status = "🔴 OFFLINE"
+    st.sidebar.error("Connection Lost to Cortex")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown(f"**System Status:** {status}")
+
+# --- MAIN INTERFACE: INTERACTION LOOP ---
+st.title("Auto-Didactic Enterprise Intelligence")
+
+tab1, tab2 = st.tabs(["💬 Cortex Chat", "🧬 Evolution Trigger"])
+
+# TAB 1: CHAT
+with tab1:
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # Display History
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # User Input
+    if prompt := st.chat_input("Direct command to Cortex..."):
+        # Add User Message
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        # Get Response
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            message_placeholder.markdown("Thinking...")
+            
+            try:
+                payload = {"type": "chat", "payload": prompt}
+                # Check if it looks like code execution
+                if prompt.startswith("/run"):
+                    payload["type"] = "execute_code"
+                    payload["payload"] = prompt.replace("/run ", "")
+                
+                response = requests.post(f"{MISO_API}/process", json=payload).json()
+                
+                if response["status"] == "success":
+                    data = response["data"]
+                    if "response" in data:
+                        bot_reply = data["response"]
+                    elif "output" in data:
+                        bot_reply = f"```\n{data['output']}\n```"
+                    else:
+                        bot_reply = str(data)
+                else:
+                    bot_reply = f"❌ Error: {response}"
+                
+                message_placeholder.markdown(bot_reply)
+                st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+            
+            except Exception as e:
+                message_placeholder.error(f"Synapse Failure: {e}")
+
+# TAB 2: EVOLUTION
+with tab2:
+    st.header("🧬 Direct Genetic Modification")
+    st.warning("Warning: Direct manipulation of source code. The Immune System will reject fatal mutations.")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        target_file = st.text_input("Target File Path", "miso_project/utils/new_tool.py")
+    with col2:
+        test_file = st.text_input("Validation Test Path (Optional)", "tests/test_new_tool.py")
         
-        if st.button("Save Parameters"):
-            config["EPSILON"] = new_epsilon
-            config["HURDLE_RATE"] = new_hurdle / 100.0
-            save_config(config)
-
-# TAB 3: EVOLUTION
-with tabs[2]:
-    st.header("🧬 Genetic Engineering")
-    st.info("Current Species: MISO V34")
-    if st.button("Force Evolution (Trigger Architect)"):
-        st.warning("Command Sent: Architect will attempt self-refactor.")
+    code_content = st.text_area("Python Source Code", height=300)
+    
+    if st.button("Inject Mutation"):
+        if not code_content:
+            st.error("Code payload empty.")
+        else:
+            with st.spinner("Injecting DNA..."):
+                # We pack the file and code using our ||| protocol
+                payload_str = f"{target_file}|||{code_content}"
+                try:
+                    res = requests.post(f"{MISO_API}/process", json={
+                        "type": "evolve", 
+                        "payload": payload_str
+                    }).json()
+                    
+                    if "Mutation Integrated" in str(res):
+                        st.success(f"Mutation Successful: {res}")
+                    else:
+                        st.error(f"Mutation Rejected: {res}")
+                except Exception as e:
+                    st.error(f"Injection Failed: {e}")
 
