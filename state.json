@@ -1,0 +1,3414 @@
+{
+  "version": 4,
+  "terraform_version": "1.9.0",
+  "serial": 168,
+  "lineage": "ac1bc513-e3fb-ba7b-5a68-358bd6b4a74f",
+  "outputs": {
+    "alb_dns_name": {
+      "value": "miso-alb-1849267894.us-east-1.elb.amazonaws.com",
+      "type": "string"
+    },
+    "api_gateway_invoke_url": {
+      "value": "https://x48v33nix7.execute-api.us-east-1.amazonaws.com/",
+      "type": "string"
+    },
+    "cognito_user_pool_client_id": {
+      "value": "7rkm36bfk9gpd59qhm4pjati3q",
+      "type": "string"
+    },
+    "cognito_user_pool_id": {
+      "value": "us-east-1_Gc7t4M4J7",
+      "type": "string"
+    },
+    "ecr_repository_urls": {
+      "value": {
+        "analyst-disparity": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/analyst-disparity",
+        "architect-agent": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/architect-agent",
+        "engineer-troubleshooter": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/engineer-troubleshooter",
+        "goal-kernel": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/goal-kernel",
+        "inquisitor-refiner": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/inquisitor-refiner",
+        "resource-broker": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/resource-broker"
+      },
+      "type": [
+        "object",
+        {
+          "analyst-disparity": "string",
+          "architect-agent": "string",
+          "engineer-troubleshooter": "string",
+          "goal-kernel": "string",
+          "inquisitor-refiner": "string",
+          "resource-broker": "string"
+        }
+      ]
+    },
+    "ecs_task_execution_role_arn": {
+      "value": "arn:aws:iam::356206423360:role/miso-ecs-task-execution-role",
+      "type": "string"
+    },
+    "miso_analysis_requests_queue_url": {
+      "value": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-analysis-requests.fifo",
+      "type": "string"
+    },
+    "miso_council_proposals_queue_url": {
+      "value": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-council-proposals.fifo",
+      "type": "string"
+    },
+    "miso_failures_queue_url": {
+      "value": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-failures.fifo",
+      "type": "string"
+    },
+    "miso_specialization_requests_queue_url": {
+      "value": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-specialization-requests.fifo",
+      "type": "string"
+    },
+    "miso_task_role_arn": {
+      "value": "arn:aws:iam::356206423360:role/miso-application-task-role",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "data",
+      "type": "aws_availability_zones",
+      "name": "available",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "all_availability_zones": null,
+            "exclude_names": null,
+            "exclude_zone_ids": null,
+            "filter": null,
+            "group_names": [
+              "us-east-1-zg-1"
+            ],
+            "id": "us-east-1",
+            "names": [
+              "us-east-1a",
+              "us-east-1b",
+              "us-east-1c",
+              "us-east-1d",
+              "us-east-1e",
+              "us-east-1f"
+            ],
+            "state": "available",
+            "timeouts": null,
+            "zone_ids": [
+              "use1-az4",
+              "use1-az6",
+              "use1-az1",
+              "use1-az2",
+              "use1-az3",
+              "use1-az5"
+            ]
+          },
+          "sensitive_attributes": []
+        }
+      ]
+    },
+    {
+      "mode": "data",
+      "type": "aws_caller_identity",
+      "name": "current",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "account_id": "356206423360",
+            "arn": "arn:aws:iam::356206423360:user/admin-user",
+            "id": "356206423360",
+            "user_id": "AIDAVF34OVVAIFESH3LD5"
+          },
+          "sensitive_attributes": []
+        }
+      ]
+    },
+    {
+      "mode": "data",
+      "type": "aws_region",
+      "name": "current",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "description": "US East (N. Virginia)",
+            "endpoint": "ec2.us-east-1.amazonaws.com",
+            "id": "us-east-1",
+            "name": "us-east-1"
+          },
+          "sensitive_attributes": []
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_api",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "api_endpoint": "https://x48v33nix7.execute-api.us-east-1.amazonaws.com",
+            "api_key_selection_expression": "$request.header.x-api-key",
+            "arn": "arn:aws:apigateway:us-east-1::/apis/x48v33nix7",
+            "body": null,
+            "cors_configuration": [
+              {
+                "allow_credentials": false,
+                "allow_headers": [
+                  "*"
+                ],
+                "allow_methods": [
+                  "*"
+                ],
+                "allow_origins": [
+                  "*"
+                ],
+                "expose_headers": [],
+                "max_age": 0
+              }
+            ],
+            "credentials_arn": null,
+            "description": "",
+            "disable_execute_api_endpoint": false,
+            "execution_arn": "arn:aws:execute-api:us-east-1:356206423360:x48v33nix7",
+            "fail_on_warnings": null,
+            "id": "x48v33nix7",
+            "ip_address_type": "ipv4",
+            "name": "miso-factory-http-api",
+            "protocol_type": "HTTP",
+            "route_key": null,
+            "route_selection_expression": "$request.method $request.path",
+            "tags": {
+              "Name": "miso-api-gateway",
+              "Project": "MISO Factory"
+            },
+            "tags_all": {
+              "Name": "miso-api-gateway",
+              "Project": "MISO Factory"
+            },
+            "target": null,
+            "version": ""
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_authorizer",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "api_id": "x48v33nix7",
+            "authorizer_credentials_arn": "",
+            "authorizer_payload_format_version": "",
+            "authorizer_result_ttl_in_seconds": 0,
+            "authorizer_type": "JWT",
+            "authorizer_uri": "",
+            "enable_simple_responses": false,
+            "id": "rrzqhn",
+            "identity_sources": [
+              "$request.header.Authorization"
+            ],
+            "jwt_configuration": [
+              {
+                "audience": [
+                  "7rkm36bfk9gpd59qhm4pjati3q"
+                ],
+                "issuer": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Gc7t4M4J7"
+              }
+            ],
+            "name": "miso-cognito-authorizer",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxODAwMDAwMDAwMDAwfX0=",
+          "dependencies": [
+            "aws_apigatewayv2_api.main",
+            "aws_cognito_user_pool.main",
+            "aws_cognito_user_pool_client.main",
+            "aws_ses_domain_identity.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_integration",
+      "name": "refine",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "api_id": "x48v33nix7",
+            "connection_id": "1oyetf",
+            "connection_type": "VPC_LINK",
+            "content_handling_strategy": "",
+            "credentials_arn": "",
+            "description": "",
+            "id": "2tfnw4v",
+            "integration_method": "ANY",
+            "integration_response_selection_expression": "",
+            "integration_subtype": "",
+            "integration_type": "HTTP_PROXY",
+            "integration_uri": "arn:aws:elasticloadbalancing:us-east-1:356206423360:listener/app/miso-alb/09063f3e345b9850/c72b7fe4ac0de767",
+            "passthrough_behavior": "",
+            "payload_format_version": "1.0",
+            "request_parameters": {},
+            "request_templates": {},
+            "response_parameters": [],
+            "template_selection_expression": "",
+            "timeout_milliseconds": 30000,
+            "tls_config": []
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_apigatewayv2_api.main",
+            "aws_apigatewayv2_vpc_link.main",
+            "aws_lb.main",
+            "aws_lb_listener.http",
+            "aws_lb_target_group.main",
+            "aws_security_group.alb",
+            "aws_security_group.vpc_link",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_route",
+      "name": "refine",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "api_id": "x48v33nix7",
+            "api_key_required": false,
+            "authorization_scopes": null,
+            "authorization_type": "JWT",
+            "authorizer_id": "rrzqhn",
+            "id": "ij5zffo",
+            "model_selection_expression": "",
+            "operation_name": "",
+            "request_models": null,
+            "request_parameter": [],
+            "route_key": "POST /refine",
+            "route_response_selection_expression": "",
+            "target": "integrations/2tfnw4v"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_apigatewayv2_api.main",
+            "aws_apigatewayv2_authorizer.main",
+            "aws_apigatewayv2_integration.refine",
+            "aws_apigatewayv2_vpc_link.main",
+            "aws_cognito_user_pool.main",
+            "aws_cognito_user_pool_client.main",
+            "aws_lb.main",
+            "aws_lb_listener.http",
+            "aws_lb_target_group.main",
+            "aws_security_group.alb",
+            "aws_security_group.vpc_link",
+            "aws_ses_domain_identity.main",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_stage",
+      "name": "default",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "access_log_settings": [],
+            "api_id": "x48v33nix7",
+            "arn": "arn:aws:apigateway:us-east-1::/apis/x48v33nix7/stages/$default",
+            "auto_deploy": true,
+            "client_certificate_id": "",
+            "default_route_settings": [
+              {
+                "data_trace_enabled": false,
+                "detailed_metrics_enabled": false,
+                "logging_level": "",
+                "throttling_burst_limit": 0,
+                "throttling_rate_limit": 0
+              }
+            ],
+            "deployment_id": "",
+            "description": "",
+            "execution_arn": "arn:aws:execute-api:us-east-1:356206423360:x48v33nix7/$default",
+            "id": "$default",
+            "invoke_url": "https://x48v33nix7.execute-api.us-east-1.amazonaws.com/",
+            "name": "$default",
+            "route_settings": [],
+            "stage_variables": {},
+            "tags": {},
+            "tags_all": {}
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_apigatewayv2_api.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_vpc_link",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:apigateway:us-east-1::/vpclinks/1oyetf",
+            "id": "1oyetf",
+            "name": "miso-vpc-link",
+            "security_group_ids": [
+              "sg-03b05c0eec56f8823"
+            ],
+            "subnet_ids": [
+              "subnet-0d13969305c12d5e3",
+              "subnet-0e2ce73f1e8ef87fc"
+            ],
+            "tags": {
+              "Name": "miso-vpc-link",
+              "Project": "MISO Factory"
+            },
+            "tags_all": {
+              "Name": "miso-vpc-link",
+              "Project": "MISO Factory"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_security_group.vpc_link",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_cloudwatch_log_group",
+      "name": "agents",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": "analyst-disparity",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:logs:us-east-1:356206423360:log-group:/ecs/analyst-disparity",
+            "id": "/ecs/analyst-disparity",
+            "kms_key_id": "",
+            "log_group_class": "STANDARD",
+            "name": "/ecs/analyst-disparity",
+            "name_prefix": "",
+            "retention_in_days": 0,
+            "skip_destroy": false,
+            "tags": {
+              "Name": "miso-analyst-disparity-logs"
+            },
+            "tags_all": {
+              "Name": "miso-analyst-disparity-logs"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        },
+        {
+          "index_key": "architect-agent",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:logs:us-east-1:356206423360:log-group:/ecs/architect-agent",
+            "id": "/ecs/architect-agent",
+            "kms_key_id": "",
+            "log_group_class": "STANDARD",
+            "name": "/ecs/architect-agent",
+            "name_prefix": "",
+            "retention_in_days": 0,
+            "skip_destroy": false,
+            "tags": {
+              "Name": "miso-architect-agent-logs"
+            },
+            "tags_all": {
+              "Name": "miso-architect-agent-logs"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        },
+        {
+          "index_key": "engineer-troubleshooter",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:logs:us-east-1:356206423360:log-group:/ecs/engineer-troubleshooter",
+            "id": "/ecs/engineer-troubleshooter",
+            "kms_key_id": "",
+            "log_group_class": "STANDARD",
+            "name": "/ecs/engineer-troubleshooter",
+            "name_prefix": "",
+            "retention_in_days": 0,
+            "skip_destroy": false,
+            "tags": {
+              "Name": "miso-engineer-troubleshooter-logs"
+            },
+            "tags_all": {
+              "Name": "miso-engineer-troubleshooter-logs"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        },
+        {
+          "index_key": "goal-kernel",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:logs:us-east-1:356206423360:log-group:/ecs/goal-kernel",
+            "id": "/ecs/goal-kernel",
+            "kms_key_id": "",
+            "log_group_class": "STANDARD",
+            "name": "/ecs/goal-kernel",
+            "name_prefix": "",
+            "retention_in_days": 0,
+            "skip_destroy": false,
+            "tags": {
+              "Name": "miso-goal-kernel-logs"
+            },
+            "tags_all": {
+              "Name": "miso-goal-kernel-logs"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        },
+        {
+          "index_key": "inquisitor-refiner",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:logs:us-east-1:356206423360:log-group:/ecs/inquisitor-refiner",
+            "id": "/ecs/inquisitor-refiner",
+            "kms_key_id": "",
+            "log_group_class": "STANDARD",
+            "name": "/ecs/inquisitor-refiner",
+            "name_prefix": "",
+            "retention_in_days": 0,
+            "skip_destroy": false,
+            "tags": {
+              "Name": "miso-inquisitor-refiner-logs"
+            },
+            "tags_all": {
+              "Name": "miso-inquisitor-refiner-logs"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        },
+        {
+          "index_key": "resource-broker",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:logs:us-east-1:356206423360:log-group:/ecs/resource-broker",
+            "id": "/ecs/resource-broker",
+            "kms_key_id": "",
+            "log_group_class": "STANDARD",
+            "name": "/ecs/resource-broker",
+            "name_prefix": "",
+            "retention_in_days": 0,
+            "skip_destroy": false,
+            "tags": {
+              "Name": "miso-resource-broker-logs"
+            },
+            "tags_all": {
+              "Name": "miso-resource-broker-logs"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_cognito_user_group",
+      "name": "admins",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "description": "Group for MISO Factory administrators",
+            "id": "us-east-1_Gc7t4M4J7/Admins",
+            "name": "Admins",
+            "precedence": 0,
+            "role_arn": "",
+            "user_pool_id": "us-east-1_Gc7t4M4J7"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_cognito_user_pool.main",
+            "aws_ses_domain_identity.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_cognito_user_pool",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "account_recovery_setting": [
+              {
+                "recovery_mechanism": [
+                  {
+                    "name": "verified_email",
+                    "priority": 1
+                  }
+                ]
+              }
+            ],
+            "admin_create_user_config": [
+              {
+                "allow_admin_create_user_only": false,
+                "invite_message_template": []
+              }
+            ],
+            "alias_attributes": null,
+            "arn": "arn:aws:cognito-idp:us-east-1:356206423360:userpool/us-east-1_Gc7t4M4J7",
+            "auto_verified_attributes": [
+              "email"
+            ],
+            "creation_date": "2025-08-12T22:35:27Z",
+            "custom_domain": "",
+            "deletion_protection": "INACTIVE",
+            "device_configuration": [],
+            "domain": "",
+            "email_configuration": [
+              {
+                "configuration_set": "",
+                "email_sending_account": "DEVELOPER",
+                "from_email_address": "noreply@stemcultivation.com",
+                "reply_to_email_address": "",
+                "source_arn": "arn:aws:ses:us-east-1:356206423360:identity/stemcultivation.com"
+              }
+            ],
+            "email_mfa_configuration": [],
+            "email_verification_message": "",
+            "email_verification_subject": "",
+            "endpoint": "cognito-idp.us-east-1.amazonaws.com/us-east-1_Gc7t4M4J7",
+            "estimated_number_of_users": 0,
+            "id": "us-east-1_Gc7t4M4J7",
+            "lambda_config": [],
+            "last_modified_date": "2025-08-12T22:35:27Z",
+            "mfa_configuration": "OFF",
+            "name": "miso-factory-user-pool",
+            "password_policy": [
+              {
+                "minimum_length": 8,
+                "password_history_size": 0,
+                "require_lowercase": true,
+                "require_numbers": true,
+                "require_symbols": true,
+                "require_uppercase": true,
+                "temporary_password_validity_days": 7
+              }
+            ],
+            "schema": [
+              {
+                "attribute_data_type": "String",
+                "developer_only_attribute": null,
+                "mutable": true,
+                "name": "email",
+                "number_attribute_constraints": [],
+                "required": true,
+                "string_attribute_constraints": []
+              }
+            ],
+            "sign_in_policy": [
+              {
+                "allowed_first_auth_factors": [
+                  "PASSWORD"
+                ]
+              }
+            ],
+            "sms_authentication_message": "",
+            "sms_configuration": [],
+            "sms_verification_message": "",
+            "software_token_mfa_configuration": [],
+            "tags": {
+              "Name": "miso-user-pool",
+              "Project": "MISO Factory"
+            },
+            "tags_all": {
+              "Name": "miso-user-pool",
+              "Project": "MISO Factory"
+            },
+            "user_attribute_update_settings": [],
+            "user_pool_add_ons": [],
+            "user_pool_tier": "ESSENTIALS",
+            "username_attributes": null,
+            "username_configuration": [],
+            "verification_message_template": [
+              {
+                "default_email_option": "CONFIRM_WITH_CODE",
+                "email_message": "",
+                "email_message_by_link": "",
+                "email_subject": "",
+                "email_subject_by_link": "",
+                "sms_message": ""
+              }
+            ],
+            "web_authn_configuration": []
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_ses_domain_identity.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_cognito_user_pool_client",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "access_token_validity": 0,
+            "allowed_oauth_flows": [],
+            "allowed_oauth_flows_user_pool_client": false,
+            "allowed_oauth_scopes": [],
+            "analytics_configuration": [],
+            "auth_session_validity": 3,
+            "callback_urls": [],
+            "client_secret": "",
+            "default_redirect_uri": "",
+            "enable_propagate_additional_user_context_data": false,
+            "enable_token_revocation": true,
+            "explicit_auth_flows": [
+              "ALLOW_REFRESH_TOKEN_AUTH",
+              "ALLOW_USER_PASSWORD_AUTH",
+              "ALLOW_USER_SRP_AUTH"
+            ],
+            "generate_secret": false,
+            "id": "7rkm36bfk9gpd59qhm4pjati3q",
+            "id_token_validity": 0,
+            "logout_urls": [],
+            "name": "miso-frontend-client",
+            "prevent_user_existence_errors": "ENABLED",
+            "read_attributes": [],
+            "refresh_token_rotation": [],
+            "refresh_token_validity": 30,
+            "supported_identity_providers": [],
+            "token_validity_units": [],
+            "user_pool_id": "us-east-1_Gc7t4M4J7",
+            "write_attributes": []
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "client_secret"
+              }
+            ]
+          ],
+          "dependencies": [
+            "aws_cognito_user_pool.main",
+            "aws_ses_domain_identity.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecr_repository",
+      "name": "miso",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": "analyst-disparity",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:356206423360:repository/miso/analyst-disparity",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "miso/analyst-disparity",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "miso/analyst-disparity",
+            "registry_id": "356206423360",
+            "repository_url": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/analyst-disparity",
+            "tags": {
+              "Project": "MISO Factory",
+              "Service": "analyst-disparity"
+            },
+            "tags_all": {
+              "Project": "MISO Factory",
+              "Service": "analyst-disparity"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        },
+        {
+          "index_key": "architect-agent",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:356206423360:repository/miso/architect-agent",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "miso/architect-agent",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "miso/architect-agent",
+            "registry_id": "356206423360",
+            "repository_url": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/architect-agent",
+            "tags": {
+              "Project": "MISO Factory",
+              "Service": "architect-agent"
+            },
+            "tags_all": {
+              "Project": "MISO Factory",
+              "Service": "architect-agent"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        },
+        {
+          "index_key": "engineer-troubleshooter",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:356206423360:repository/miso/engineer-troubleshooter",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "miso/engineer-troubleshooter",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "miso/engineer-troubleshooter",
+            "registry_id": "356206423360",
+            "repository_url": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/engineer-troubleshooter",
+            "tags": {
+              "Project": "MISO Factory",
+              "Service": "engineer-troubleshooter"
+            },
+            "tags_all": {
+              "Project": "MISO Factory",
+              "Service": "engineer-troubleshooter"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        },
+        {
+          "index_key": "goal-kernel",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:356206423360:repository/miso/goal-kernel",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "miso/goal-kernel",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "miso/goal-kernel",
+            "registry_id": "356206423360",
+            "repository_url": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/goal-kernel",
+            "tags": {
+              "Project": "MISO Factory",
+              "Service": "goal-kernel"
+            },
+            "tags_all": {
+              "Project": "MISO Factory",
+              "Service": "goal-kernel"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        },
+        {
+          "index_key": "inquisitor-refiner",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:356206423360:repository/miso/inquisitor-refiner",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "miso/inquisitor-refiner",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "miso/inquisitor-refiner",
+            "registry_id": "356206423360",
+            "repository_url": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/inquisitor-refiner",
+            "tags": {
+              "Project": "MISO Factory",
+              "Service": "inquisitor-refiner"
+            },
+            "tags_all": {
+              "Project": "MISO Factory",
+              "Service": "inquisitor-refiner"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        },
+        {
+          "index_key": "resource-broker",
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:356206423360:repository/miso/resource-broker",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "miso/resource-broker",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "miso/resource-broker",
+            "registry_id": "356206423360",
+            "repository_url": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/resource-broker",
+            "tags": {
+              "Project": "MISO Factory",
+              "Service": "resource-broker"
+            },
+            "tags_all": {
+              "Project": "MISO Factory",
+              "Service": "resource-broker"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_cluster",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecs:us-east-1:356206423360:cluster/miso-cluster",
+            "configuration": [],
+            "id": "arn:aws:ecs:us-east-1:356206423360:cluster/miso-cluster",
+            "name": "miso-cluster",
+            "service_connect_defaults": [],
+            "setting": [
+              {
+                "name": "containerInsights",
+                "value": "disabled"
+              }
+            ],
+            "tags": {
+              "Name": "miso-cluster"
+            },
+            "tags_all": {
+              "Name": "miso-cluster"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_service",
+      "name": "analyst",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "alarms": [],
+            "availability_zone_rebalancing": "DISABLED",
+            "capacity_provider_strategy": [],
+            "cluster": "arn:aws:ecs:us-east-1:356206423360:cluster/miso-cluster",
+            "deployment_circuit_breaker": [
+              {
+                "enable": false,
+                "rollback": false
+              }
+            ],
+            "deployment_controller": [
+              {
+                "type": "ECS"
+              }
+            ],
+            "deployment_maximum_percent": 200,
+            "deployment_minimum_healthy_percent": 100,
+            "desired_count": 1,
+            "enable_ecs_managed_tags": false,
+            "enable_execute_command": false,
+            "force_delete": null,
+            "force_new_deployment": null,
+            "health_check_grace_period_seconds": 0,
+            "iam_role": "/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS",
+            "id": "arn:aws:ecs:us-east-1:356206423360:service/miso-cluster/analyst-disparity-service",
+            "launch_type": "FARGATE",
+            "load_balancer": [],
+            "name": "analyst-disparity-service",
+            "network_configuration": [
+              {
+                "assign_public_ip": false,
+                "security_groups": [
+                  "sg-00bc19e7e1843f720"
+                ],
+                "subnets": [
+                  "subnet-014dd2bfa6d7cf485",
+                  "subnet-067415c3cf6a405d5"
+                ]
+              }
+            ],
+            "ordered_placement_strategy": [],
+            "placement_constraints": [],
+            "platform_version": "LATEST",
+            "propagate_tags": "NONE",
+            "scheduling_strategy": "REPLICA",
+            "service_connect_configuration": [],
+            "service_registries": [],
+            "tags": {},
+            "tags_all": {},
+            "task_definition": "arn:aws:ecs:us-east-1:356206423360:task-definition/analyst-disparity:11",
+            "timeouts": null,
+            "triggers": {},
+            "volume_configuration": [],
+            "vpc_lattice_configurations": [],
+            "wait_for_steady_state": false
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "aws_cloudwatch_log_group.agents",
+            "aws_ecr_repository.miso",
+            "aws_ecs_cluster.main",
+            "aws_ecs_task_definition.analyst",
+            "aws_iam_role.ecs_task_execution_role",
+            "aws_iam_role.miso_task_role",
+            "aws_security_group.ecs_service",
+            "aws_sqs_queue.miso_analysis_requests",
+            "aws_subnet.private",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_service",
+      "name": "architect",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "alarms": [],
+            "availability_zone_rebalancing": "DISABLED",
+            "capacity_provider_strategy": [],
+            "cluster": "arn:aws:ecs:us-east-1:356206423360:cluster/miso-cluster",
+            "deployment_circuit_breaker": [
+              {
+                "enable": false,
+                "rollback": false
+              }
+            ],
+            "deployment_controller": [
+              {
+                "type": "ECS"
+              }
+            ],
+            "deployment_maximum_percent": 200,
+            "deployment_minimum_healthy_percent": 100,
+            "desired_count": 1,
+            "enable_ecs_managed_tags": false,
+            "enable_execute_command": false,
+            "force_delete": null,
+            "force_new_deployment": null,
+            "health_check_grace_period_seconds": 0,
+            "iam_role": "/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS",
+            "id": "arn:aws:ecs:us-east-1:356206423360:service/miso-cluster/architect-agent-service",
+            "launch_type": "FARGATE",
+            "load_balancer": [],
+            "name": "architect-agent-service",
+            "network_configuration": [
+              {
+                "assign_public_ip": false,
+                "security_groups": [
+                  "sg-00bc19e7e1843f720"
+                ],
+                "subnets": [
+                  "subnet-014dd2bfa6d7cf485",
+                  "subnet-067415c3cf6a405d5"
+                ]
+              }
+            ],
+            "ordered_placement_strategy": [],
+            "placement_constraints": [],
+            "platform_version": "LATEST",
+            "propagate_tags": "NONE",
+            "scheduling_strategy": "REPLICA",
+            "service_connect_configuration": [],
+            "service_registries": [],
+            "tags": {},
+            "tags_all": {},
+            "task_definition": "arn:aws:ecs:us-east-1:356206423360:task-definition/architect-agent:15",
+            "timeouts": null,
+            "triggers": {},
+            "volume_configuration": [],
+            "vpc_lattice_configurations": [],
+            "wait_for_steady_state": false
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "aws_cloudwatch_log_group.agents",
+            "aws_ecr_repository.miso",
+            "aws_ecs_cluster.main",
+            "aws_ecs_task_definition.architect",
+            "aws_iam_role.ecs_task_execution_role",
+            "aws_iam_role.miso_task_role",
+            "aws_security_group.ecs_service",
+            "aws_sqs_queue.miso_specialization_requests",
+            "aws_subnet.private",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_service",
+      "name": "inquisitor",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "alarms": [],
+            "availability_zone_rebalancing": "DISABLED",
+            "capacity_provider_strategy": [],
+            "cluster": "arn:aws:ecs:us-east-1:356206423360:cluster/miso-cluster",
+            "deployment_circuit_breaker": [
+              {
+                "enable": false,
+                "rollback": false
+              }
+            ],
+            "deployment_controller": [
+              {
+                "type": "ECS"
+              }
+            ],
+            "deployment_maximum_percent": 200,
+            "deployment_minimum_healthy_percent": 100,
+            "desired_count": 2,
+            "enable_ecs_managed_tags": false,
+            "enable_execute_command": false,
+            "force_delete": null,
+            "force_new_deployment": null,
+            "health_check_grace_period_seconds": 0,
+            "iam_role": "/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS",
+            "id": "arn:aws:ecs:us-east-1:356206423360:service/miso-cluster/inquisitor-refiner-service",
+            "launch_type": "FARGATE",
+            "load_balancer": [
+              {
+                "container_name": "inquisitor-refiner-container",
+                "container_port": 8080,
+                "elb_name": "",
+                "target_group_arn": "arn:aws:elasticloadbalancing:us-east-1:356206423360:targetgroup/miso-default-tg/f1f066508473c0f6"
+              }
+            ],
+            "name": "inquisitor-refiner-service",
+            "network_configuration": [
+              {
+                "assign_public_ip": false,
+                "security_groups": [
+                  "sg-00bc19e7e1843f720"
+                ],
+                "subnets": [
+                  "subnet-014dd2bfa6d7cf485",
+                  "subnet-067415c3cf6a405d5"
+                ]
+              }
+            ],
+            "ordered_placement_strategy": [],
+            "placement_constraints": [],
+            "platform_version": "LATEST",
+            "propagate_tags": "NONE",
+            "scheduling_strategy": "REPLICA",
+            "service_connect_configuration": [],
+            "service_registries": [],
+            "tags": {},
+            "tags_all": {},
+            "task_definition": "arn:aws:ecs:us-east-1:356206423360:task-definition/inquisitor-refiner:15",
+            "timeouts": null,
+            "triggers": {},
+            "volume_configuration": [],
+            "vpc_lattice_configurations": [],
+            "wait_for_steady_state": false
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "aws_cloudwatch_log_group.agents",
+            "aws_ecr_repository.miso",
+            "aws_ecs_cluster.main",
+            "aws_ecs_task_definition.inquisitor",
+            "aws_iam_role.ecs_task_execution_role",
+            "aws_iam_role.miso_task_role",
+            "aws_lb.main",
+            "aws_lb_listener.http",
+            "aws_lb_target_group.main",
+            "aws_security_group.alb",
+            "aws_security_group.ecs_service",
+            "aws_sqs_queue.miso_failures",
+            "aws_subnet.private",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_service",
+      "name": "troubleshooter",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "alarms": [],
+            "availability_zone_rebalancing": "DISABLED",
+            "capacity_provider_strategy": [],
+            "cluster": "arn:aws:ecs:us-east-1:356206423360:cluster/miso-cluster",
+            "deployment_circuit_breaker": [
+              {
+                "enable": false,
+                "rollback": false
+              }
+            ],
+            "deployment_controller": [
+              {
+                "type": "ECS"
+              }
+            ],
+            "deployment_maximum_percent": 200,
+            "deployment_minimum_healthy_percent": 100,
+            "desired_count": 1,
+            "enable_ecs_managed_tags": false,
+            "enable_execute_command": false,
+            "force_delete": null,
+            "force_new_deployment": null,
+            "health_check_grace_period_seconds": 0,
+            "iam_role": "/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS",
+            "id": "arn:aws:ecs:us-east-1:356206423360:service/miso-cluster/engineer-troubleshooter-service",
+            "launch_type": "FARGATE",
+            "load_balancer": [],
+            "name": "engineer-troubleshooter-service",
+            "network_configuration": [
+              {
+                "assign_public_ip": false,
+                "security_groups": [
+                  "sg-00bc19e7e1843f720"
+                ],
+                "subnets": [
+                  "subnet-014dd2bfa6d7cf485",
+                  "subnet-067415c3cf6a405d5"
+                ]
+              }
+            ],
+            "ordered_placement_strategy": [],
+            "placement_constraints": [],
+            "platform_version": "LATEST",
+            "propagate_tags": "NONE",
+            "scheduling_strategy": "REPLICA",
+            "service_connect_configuration": [],
+            "service_registries": [],
+            "tags": {},
+            "tags_all": {},
+            "task_definition": "arn:aws:ecs:us-east-1:356206423360:task-definition/engineer-troubleshooter:11",
+            "timeouts": null,
+            "triggers": {},
+            "volume_configuration": [],
+            "vpc_lattice_configurations": [],
+            "wait_for_steady_state": false
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "aws_cloudwatch_log_group.agents",
+            "aws_ecr_repository.miso",
+            "aws_ecs_cluster.main",
+            "aws_ecs_task_definition.troubleshooter",
+            "aws_iam_role.ecs_task_execution_role",
+            "aws_iam_role.miso_task_role",
+            "aws_security_group.ecs_service",
+            "aws_sqs_queue.miso_council_proposals",
+            "aws_sqs_queue.miso_failures",
+            "aws_subnet.private",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_task_definition",
+      "name": "analyst",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ecs:us-east-1:356206423360:task-definition/analyst-disparity:11",
+            "arn_without_revision": "arn:aws:ecs:us-east-1:356206423360:task-definition/analyst-disparity",
+            "container_definitions": "[{\"environment\":[{\"name\":\"ANALYSIS_REQUESTS_QUEUE_URL\",\"value\":\"https://sqs.us-east-1.amazonaws.com/356206423360/miso-analysis-requests.fifo\"}],\"essential\":true,\"image\":\"356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/analyst-disparity:latest\",\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"/ecs/analyst-disparity\",\"awslogs-region\":\"us-east-1\",\"awslogs-stream-prefix\":\"ecs\"}},\"mountPoints\":[],\"name\":\"analyst-disparity-container\",\"portMappings\":[],\"systemControls\":[],\"volumesFrom\":[]}]",
+            "cpu": "256",
+            "enable_fault_injection": false,
+            "ephemeral_storage": [],
+            "execution_role_arn": "arn:aws:iam::356206423360:role/miso-ecs-task-execution-role",
+            "family": "analyst-disparity",
+            "id": "analyst-disparity",
+            "inference_accelerator": [],
+            "ipc_mode": "",
+            "memory": "512",
+            "network_mode": "awsvpc",
+            "pid_mode": "",
+            "placement_constraints": [],
+            "proxy_configuration": [],
+            "requires_compatibilities": [
+              "FARGATE"
+            ],
+            "revision": 11,
+            "runtime_platform": [],
+            "skip_destroy": false,
+            "tags": {},
+            "tags_all": {},
+            "task_role_arn": "arn:aws:iam::356206423360:role/miso-application-task-role",
+            "track_latest": false,
+            "volume": []
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "aws_cloudwatch_log_group.agents",
+            "aws_ecr_repository.miso",
+            "aws_iam_role.ecs_task_execution_role",
+            "aws_iam_role.miso_task_role",
+            "aws_sqs_queue.miso_analysis_requests",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_task_definition",
+      "name": "architect",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ecs:us-east-1:356206423360:task-definition/architect-agent:15",
+            "arn_without_revision": "arn:aws:ecs:us-east-1:356206423360:task-definition/architect-agent",
+            "container_definitions": "[{\"environment\":[{\"name\":\"SPECIALIZATION_REQUESTS_QUEUE_URL\",\"value\":\"https://sqs.us-east-1.amazonaws.com/356206423360/miso-specialization-requests.fifo\"}],\"essential\":true,\"image\":\"356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/architect-agent:latest\",\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"/ecs/architect-agent\",\"awslogs-region\":\"us-east-1\",\"awslogs-stream-prefix\":\"ecs\"}},\"mountPoints\":[],\"name\":\"architect-agent-container\",\"portMappings\":[],\"systemControls\":[],\"volumesFrom\":[]}]",
+            "cpu": "256",
+            "enable_fault_injection": false,
+            "ephemeral_storage": [],
+            "execution_role_arn": "arn:aws:iam::356206423360:role/miso-ecs-task-execution-role",
+            "family": "architect-agent",
+            "id": "architect-agent",
+            "inference_accelerator": [],
+            "ipc_mode": "",
+            "memory": "512",
+            "network_mode": "awsvpc",
+            "pid_mode": "",
+            "placement_constraints": [],
+            "proxy_configuration": [],
+            "requires_compatibilities": [
+              "FARGATE"
+            ],
+            "revision": 15,
+            "runtime_platform": [],
+            "skip_destroy": false,
+            "tags": {},
+            "tags_all": {},
+            "task_role_arn": "arn:aws:iam::356206423360:role/miso-application-task-role",
+            "track_latest": false,
+            "volume": []
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "aws_cloudwatch_log_group.agents",
+            "aws_ecr_repository.miso",
+            "aws_iam_role.ecs_task_execution_role",
+            "aws_iam_role.miso_task_role",
+            "aws_sqs_queue.miso_specialization_requests",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_task_definition",
+      "name": "inquisitor",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ecs:us-east-1:356206423360:task-definition/inquisitor-refiner:15",
+            "arn_without_revision": "arn:aws:ecs:us-east-1:356206423360:task-definition/inquisitor-refiner",
+            "container_definitions": "[{\"environment\":[{\"name\":\"FAILURES_QUEUE_URL\",\"value\":\"https://sqs.us-east-1.amazonaws.com/356206423360/miso-failures.fifo\"}],\"essential\":true,\"image\":\"356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/inquisitor-refiner:latest\",\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-region\":\"us-east-1\",\"awslogs-stream-prefix\":\"ecs\",\"awslogs-group\":\"/ecs/inquisitor-refiner\"}},\"mountPoints\":[],\"name\":\"inquisitor-refiner-container\",\"portMappings\":[{\"containerPort\":8080,\"hostPort\":8080,\"protocol\":\"tcp\"}],\"systemControls\":[],\"volumesFrom\":[]}]",
+            "cpu": "256",
+            "enable_fault_injection": false,
+            "ephemeral_storage": [],
+            "execution_role_arn": "arn:aws:iam::356206423360:role/miso-ecs-task-execution-role",
+            "family": "inquisitor-refiner",
+            "id": "inquisitor-refiner",
+            "inference_accelerator": [],
+            "ipc_mode": "",
+            "memory": "512",
+            "network_mode": "awsvpc",
+            "pid_mode": "",
+            "placement_constraints": [],
+            "proxy_configuration": [],
+            "requires_compatibilities": [
+              "FARGATE"
+            ],
+            "revision": 15,
+            "runtime_platform": [],
+            "skip_destroy": false,
+            "tags": {},
+            "tags_all": {},
+            "task_role_arn": "arn:aws:iam::356206423360:role/miso-application-task-role",
+            "track_latest": false,
+            "volume": []
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "aws_cloudwatch_log_group.agents",
+            "aws_ecr_repository.miso",
+            "aws_iam_role.ecs_task_execution_role",
+            "aws_iam_role.miso_task_role",
+            "aws_sqs_queue.miso_failures",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_task_definition",
+      "name": "troubleshooter",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ecs:us-east-1:356206423360:task-definition/engineer-troubleshooter:11",
+            "arn_without_revision": "arn:aws:ecs:us-east-1:356206423360:task-definition/engineer-troubleshooter",
+            "container_definitions": "[{\"environment\":[{\"name\":\"FAILURES_QUEUE_URL\",\"value\":\"https://sqs.us-east-1.amazonaws.com/356206423360/miso-failures.fifo\"},{\"name\":\"PROPOSALS_QUEUE_URL\",\"value\":\"https://sqs.us-east-1.amazonaws.com/356206423360/miso-council-proposals.fifo\"}],\"essential\":true,\"image\":\"356206423360.dkr.ecr.us-east-1.amazonaws.com/miso/engineer-troubleshooter:latest\",\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"/ecs/engineer-troubleshooter\",\"awslogs-region\":\"us-east-1\",\"awslogs-stream-prefix\":\"ecs\"}},\"mountPoints\":[],\"name\":\"engineer-troubleshooter-container\",\"portMappings\":[],\"systemControls\":[],\"volumesFrom\":[]}]",
+            "cpu": "256",
+            "enable_fault_injection": false,
+            "ephemeral_storage": [],
+            "execution_role_arn": "arn:aws:iam::356206423360:role/miso-ecs-task-execution-role",
+            "family": "engineer-troubleshooter",
+            "id": "engineer-troubleshooter",
+            "inference_accelerator": [],
+            "ipc_mode": "",
+            "memory": "512",
+            "network_mode": "awsvpc",
+            "pid_mode": "",
+            "placement_constraints": [],
+            "proxy_configuration": [],
+            "requires_compatibilities": [
+              "FARGATE"
+            ],
+            "revision": 11,
+            "runtime_platform": [],
+            "skip_destroy": false,
+            "tags": {},
+            "tags_all": {},
+            "task_role_arn": "arn:aws:iam::356206423360:role/miso-application-task-role",
+            "track_latest": false,
+            "volume": []
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "aws_cloudwatch_log_group.agents",
+            "aws_ecr_repository.miso",
+            "aws_iam_role.ecs_task_execution_role",
+            "aws_iam_role.miso_task_role",
+            "aws_sqs_queue.miso_council_proposals",
+            "aws_sqs_queue.miso_failures",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_eip",
+      "name": "nat",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "address": null,
+            "allocation_id": "eipalloc-02c72e7bd41ddb8cf",
+            "arn": "arn:aws:ec2:us-east-1:356206423360:elastic-ip/eipalloc-02c72e7bd41ddb8cf",
+            "associate_with_private_ip": null,
+            "association_id": "eipassoc-07ac69eb9992a4c41",
+            "carrier_ip": "",
+            "customer_owned_ip": "",
+            "customer_owned_ipv4_pool": "",
+            "domain": "vpc",
+            "id": "eipalloc-02c72e7bd41ddb8cf",
+            "instance": "",
+            "ipam_pool_id": null,
+            "network_border_group": "us-east-1",
+            "network_interface": "eni-0b9d2861dc50cd5f1",
+            "private_dns": "ip-10-0-1-170.ec2.internal",
+            "private_ip": "10.0.1.170",
+            "ptr_record": "",
+            "public_dns": "ec2-52-7-67-219.compute-1.amazonaws.com",
+            "public_ip": "52.7.67.219",
+            "public_ipv4_pool": "amazon",
+            "tags": {
+              "Name": "miso-nat-eip"
+            },
+            "tags_all": {
+              "Name": "miso-nat-eip"
+            },
+            "timeouts": null,
+            "vpc": true
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxODAwMDAwMDAwMDAsInJlYWQiOjkwMDAwMDAwMDAwMCwidXBkYXRlIjozMDAwMDAwMDAwMDB9fQ=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "cognito_ses_role",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::356206423360:role/cognito-ses-sender-role",
+            "assume_role_policy": "{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cognito-idp.amazonaws.com\"}}],\"Version\":\"2012-10-17\"}",
+            "create_date": "2025-08-10T17:14:37Z",
+            "description": "",
+            "force_detach_policies": false,
+            "id": "cognito-ses-sender-role",
+            "inline_policy": [
+              {
+                "name": "cognito-ses-sender-policy",
+                "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":\"ses:SendEmail\",\"Effect\":\"Allow\",\"Resource\":\"*\"}]}"
+              }
+            ],
+            "managed_policy_arns": [],
+            "max_session_duration": 3600,
+            "name": "cognito-ses-sender-role",
+            "name_prefix": "",
+            "path": "/",
+            "permissions_boundary": "",
+            "tags": {},
+            "tags_all": {},
+            "unique_id": "AROAVF34OVVAIPJAGFJLH"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "ecs_task_execution_role",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::356206423360:role/miso-ecs-task-execution-role",
+            "assume_role_policy": "{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"}}],\"Version\":\"2012-10-17\"}",
+            "create_date": "2025-08-10T17:14:37Z",
+            "description": "",
+            "force_detach_policies": false,
+            "id": "miso-ecs-task-execution-role",
+            "inline_policy": [],
+            "managed_policy_arns": [
+              "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+            ],
+            "max_session_duration": 3600,
+            "name": "miso-ecs-task-execution-role",
+            "name_prefix": "",
+            "path": "/",
+            "permissions_boundary": "",
+            "tags": {
+              "Name": "miso-ecs-task-execution-role"
+            },
+            "tags_all": {
+              "Name": "miso-ecs-task-execution-role"
+            },
+            "unique_id": "AROAVF34OVVAEPOOFI73Z"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "miso_task_role",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::356206423360:role/miso-application-task-role",
+            "assume_role_policy": "{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"}}],\"Version\":\"2012-10-17\"}",
+            "create_date": "2025-08-10T17:14:37Z",
+            "description": "",
+            "force_detach_policies": false,
+            "id": "miso-application-task-role",
+            "inline_policy": [
+              {
+                "name": "miso-application-task-policy",
+                "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"sqs:SendMessage\",\"sqs:ReceiveMessage\",\"sqs:DeleteMessage\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:sqs:us-east-1:356206423360:miso-*\"}]}"
+              }
+            ],
+            "managed_policy_arns": [],
+            "max_session_duration": 3600,
+            "name": "miso-application-task-role",
+            "name_prefix": "",
+            "path": "/",
+            "permissions_boundary": "",
+            "tags": {
+              "Name": "miso-application-task-role"
+            },
+            "tags_all": {
+              "Name": "miso-application-task-role"
+            },
+            "unique_id": "AROAVF34OVVAILGN4TJW6"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role_policy",
+      "name": "cognito_ses_policy",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "cognito-ses-sender-role:cognito-ses-sender-policy",
+            "name": "cognito-ses-sender-policy",
+            "name_prefix": "",
+            "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":\"ses:SendEmail\",\"Effect\":\"Allow\",\"Resource\":\"*\"}]}",
+            "role": "cognito-ses-sender-role"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.cognito_ses_role"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role_policy",
+      "name": "miso_task_role_policy",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "miso-application-task-role:miso-application-task-policy",
+            "name": "miso-application-task-policy",
+            "name_prefix": "",
+            "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"sqs:SendMessage\",\"sqs:ReceiveMessage\",\"sqs:DeleteMessage\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:sqs:us-east-1:356206423360:miso-*\"}]}",
+            "role": "miso-application-task-role"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.miso_task_role",
+            "data.aws_caller_identity.current",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role_policy_attachment",
+      "name": "ecs_task_execution_role_attachment",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "miso-ecs-task-execution-role-20250810171439886600000001",
+            "policy_arn": "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+            "role": "miso-ecs-task-execution-role"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.ecs_task_execution_role"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_internet_gateway",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:internet-gateway/igw-08551c36ee13dbab5",
+            "id": "igw-08551c36ee13dbab5",
+            "owner_id": "356206423360",
+            "tags": {
+              "Name": "miso-igw"
+            },
+            "tags_all": {
+              "Name": "miso-igw"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lb",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "access_logs": [
+              {
+                "bucket": "",
+                "enabled": false,
+                "prefix": ""
+              }
+            ],
+            "arn": "arn:aws:elasticloadbalancing:us-east-1:356206423360:loadbalancer/app/miso-alb/09063f3e345b9850",
+            "arn_suffix": "app/miso-alb/09063f3e345b9850",
+            "client_keep_alive": 3600,
+            "connection_logs": [
+              {
+                "bucket": "",
+                "enabled": false,
+                "prefix": ""
+              }
+            ],
+            "customer_owned_ipv4_pool": "",
+            "desync_mitigation_mode": "defensive",
+            "dns_name": "miso-alb-1849267894.us-east-1.elb.amazonaws.com",
+            "dns_record_client_routing_policy": null,
+            "drop_invalid_header_fields": false,
+            "enable_cross_zone_load_balancing": true,
+            "enable_deletion_protection": false,
+            "enable_http2": true,
+            "enable_tls_version_and_cipher_suite_headers": false,
+            "enable_waf_fail_open": false,
+            "enable_xff_client_port": false,
+            "enable_zonal_shift": false,
+            "enforce_security_group_inbound_rules_on_private_link_traffic": "",
+            "id": "arn:aws:elasticloadbalancing:us-east-1:356206423360:loadbalancer/app/miso-alb/09063f3e345b9850",
+            "idle_timeout": 60,
+            "internal": false,
+            "ip_address_type": "ipv4",
+            "ipam_pools": [],
+            "load_balancer_type": "application",
+            "minimum_load_balancer_capacity": [],
+            "name": "miso-alb",
+            "name_prefix": "",
+            "preserve_host_header": false,
+            "security_groups": [
+              "sg-0e15ab374a84f17df"
+            ],
+            "subnet_mapping": [
+              {
+                "allocation_id": "",
+                "ipv6_address": "",
+                "outpost_id": "",
+                "private_ipv4_address": "",
+                "subnet_id": "subnet-0d13969305c12d5e3"
+              },
+              {
+                "allocation_id": "",
+                "ipv6_address": "",
+                "outpost_id": "",
+                "private_ipv4_address": "",
+                "subnet_id": "subnet-0e2ce73f1e8ef87fc"
+              }
+            ],
+            "subnets": [
+              "subnet-0d13969305c12d5e3",
+              "subnet-0e2ce73f1e8ef87fc"
+            ],
+            "tags": {
+              "Name": "miso-alb"
+            },
+            "tags_all": {
+              "Name": "miso-alb"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc",
+            "xff_header_processing_mode": "append",
+            "zone_id": "Z35SXDOTRQ7X7K"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_security_group.alb",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lb_listener",
+      "name": "http",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "alpn_policy": null,
+            "arn": "arn:aws:elasticloadbalancing:us-east-1:356206423360:listener/app/miso-alb/09063f3e345b9850/c72b7fe4ac0de767",
+            "certificate_arn": null,
+            "default_action": [
+              {
+                "authenticate_cognito": [],
+                "authenticate_oidc": [],
+                "fixed_response": [],
+                "forward": [],
+                "order": 1,
+                "redirect": [],
+                "target_group_arn": "arn:aws:elasticloadbalancing:us-east-1:356206423360:targetgroup/miso-default-tg/f1f066508473c0f6",
+                "type": "forward"
+              }
+            ],
+            "id": "arn:aws:elasticloadbalancing:us-east-1:356206423360:listener/app/miso-alb/09063f3e345b9850/c72b7fe4ac0de767",
+            "load_balancer_arn": "arn:aws:elasticloadbalancing:us-east-1:356206423360:loadbalancer/app/miso-alb/09063f3e345b9850",
+            "mutual_authentication": [],
+            "port": 80,
+            "protocol": "HTTP",
+            "routing_http_request_x_amzn_mtls_clientcert_header_name": null,
+            "routing_http_request_x_amzn_mtls_clientcert_issuer_header_name": null,
+            "routing_http_request_x_amzn_mtls_clientcert_leaf_header_name": null,
+            "routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name": null,
+            "routing_http_request_x_amzn_mtls_clientcert_subject_header_name": null,
+            "routing_http_request_x_amzn_mtls_clientcert_validity_header_name": null,
+            "routing_http_request_x_amzn_tls_cipher_suite_header_name": null,
+            "routing_http_request_x_amzn_tls_version_header_name": null,
+            "routing_http_response_access_control_allow_credentials_header_value": "",
+            "routing_http_response_access_control_allow_headers_header_value": "",
+            "routing_http_response_access_control_allow_methods_header_value": "",
+            "routing_http_response_access_control_allow_origin_header_value": "",
+            "routing_http_response_access_control_expose_headers_header_value": "",
+            "routing_http_response_access_control_max_age_header_value": "",
+            "routing_http_response_content_security_policy_header_value": "",
+            "routing_http_response_server_enabled": true,
+            "routing_http_response_strict_transport_security_header_value": "",
+            "routing_http_response_x_content_type_options_header_value": "",
+            "routing_http_response_x_frame_options_header_value": "",
+            "ssl_policy": "",
+            "tags": {},
+            "tags_all": {},
+            "tcp_idle_timeout_seconds": null,
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDAsInVwZGF0ZSI6MzAwMDAwMDAwMDAwfX0=",
+          "dependencies": [
+            "aws_lb.main",
+            "aws_lb_target_group.main",
+            "aws_security_group.alb",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lb_target_group",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:elasticloadbalancing:us-east-1:356206423360:targetgroup/miso-default-tg/f1f066508473c0f6",
+            "arn_suffix": "targetgroup/miso-default-tg/f1f066508473c0f6",
+            "connection_termination": null,
+            "deregistration_delay": "300",
+            "health_check": [
+              {
+                "enabled": true,
+                "healthy_threshold": 2,
+                "interval": 30,
+                "matcher": "200",
+                "path": "/health",
+                "port": "traffic-port",
+                "protocol": "HTTP",
+                "timeout": 5,
+                "unhealthy_threshold": 2
+              }
+            ],
+            "id": "arn:aws:elasticloadbalancing:us-east-1:356206423360:targetgroup/miso-default-tg/f1f066508473c0f6",
+            "ip_address_type": "ipv4",
+            "lambda_multi_value_headers_enabled": false,
+            "load_balancer_arns": [
+              "arn:aws:elasticloadbalancing:us-east-1:356206423360:loadbalancer/app/miso-alb/09063f3e345b9850"
+            ],
+            "load_balancing_algorithm_type": "round_robin",
+            "load_balancing_anomaly_mitigation": "off",
+            "load_balancing_cross_zone_enabled": "use_load_balancer_configuration",
+            "name": "miso-default-tg",
+            "name_prefix": "",
+            "port": 8080,
+            "preserve_client_ip": null,
+            "protocol": "HTTP",
+            "protocol_version": "HTTP1",
+            "proxy_protocol_v2": false,
+            "slow_start": 0,
+            "stickiness": [
+              {
+                "cookie_duration": 86400,
+                "cookie_name": "",
+                "enabled": false,
+                "type": "lb_cookie"
+              }
+            ],
+            "tags": {
+              "Name": "miso-default-tg"
+            },
+            "tags_all": {
+              "Name": "miso-default-tg"
+            },
+            "target_failover": [
+              {
+                "on_deregistration": null,
+                "on_unhealthy": null
+              }
+            ],
+            "target_group_health": [
+              {
+                "dns_failover": [
+                  {
+                    "minimum_healthy_targets_count": "1",
+                    "minimum_healthy_targets_percentage": "off"
+                  }
+                ],
+                "unhealthy_state_routing": [
+                  {
+                    "minimum_healthy_targets_count": 1,
+                    "minimum_healthy_targets_percentage": "off"
+                  }
+                ]
+              }
+            ],
+            "target_health_state": [
+              {
+                "enable_unhealthy_connection_termination": null,
+                "unhealthy_draining_interval": null
+              }
+            ],
+            "target_type": "ip",
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_nat_gateway",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "allocation_id": "eipalloc-02c72e7bd41ddb8cf",
+            "association_id": "eipassoc-07ac69eb9992a4c41",
+            "connectivity_type": "public",
+            "id": "nat-0e90d4a8e6471cf15",
+            "network_interface_id": "eni-0b9d2861dc50cd5f1",
+            "private_ip": "10.0.1.170",
+            "public_ip": "52.7.67.219",
+            "secondary_allocation_ids": [],
+            "secondary_private_ip_address_count": 0,
+            "secondary_private_ip_addresses": [],
+            "subnet_id": "subnet-0e2ce73f1e8ef87fc",
+            "tags": {
+              "Name": "miso-nat-gw"
+            },
+            "tags_all": {
+              "Name": "miso-nat-gw"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTgwMDAwMDAwMDAwMCwidXBkYXRlIjo2MDAwMDAwMDAwMDB9fQ==",
+          "dependencies": [
+            "aws_eip.nat",
+            "aws_internet_gateway.main",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route_table",
+      "name": "private",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:route-table/rtb-00be1265d62142b99",
+            "id": "rtb-00be1265d62142b99",
+            "owner_id": "356206423360",
+            "propagating_vgws": [],
+            "route": [
+              {
+                "carrier_gateway_id": "",
+                "cidr_block": "0.0.0.0/0",
+                "core_network_arn": "",
+                "destination_prefix_list_id": "",
+                "egress_only_gateway_id": "",
+                "gateway_id": "",
+                "ipv6_cidr_block": "",
+                "local_gateway_id": "",
+                "nat_gateway_id": "nat-0e90d4a8e6471cf15",
+                "network_interface_id": "",
+                "transit_gateway_id": "",
+                "vpc_endpoint_id": "",
+                "vpc_peering_connection_id": ""
+              }
+            ],
+            "tags": {
+              "Name": "miso-private-rt"
+            },
+            "tags_all": {
+              "Name": "miso-private-rt"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDAsImRlbGV0ZSI6MzAwMDAwMDAwMDAwLCJ1cGRhdGUiOjEyMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_eip.nat",
+            "aws_internet_gateway.main",
+            "aws_nat_gateway.main",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route_table",
+      "name": "public",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:route-table/rtb-083b6d7ec0337d793",
+            "id": "rtb-083b6d7ec0337d793",
+            "owner_id": "356206423360",
+            "propagating_vgws": [],
+            "route": [
+              {
+                "carrier_gateway_id": "",
+                "cidr_block": "0.0.0.0/0",
+                "core_network_arn": "",
+                "destination_prefix_list_id": "",
+                "egress_only_gateway_id": "",
+                "gateway_id": "igw-08551c36ee13dbab5",
+                "ipv6_cidr_block": "",
+                "local_gateway_id": "",
+                "nat_gateway_id": "",
+                "network_interface_id": "",
+                "transit_gateway_id": "",
+                "vpc_endpoint_id": "",
+                "vpc_peering_connection_id": ""
+              }
+            ],
+            "tags": {
+              "Name": "miso-public-rt"
+            },
+            "tags_all": {
+              "Name": "miso-public-rt"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDAsImRlbGV0ZSI6MzAwMDAwMDAwMDAwLCJ1cGRhdGUiOjEyMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_internet_gateway.main",
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route_table_association",
+      "name": "private",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "gateway_id": "",
+            "id": "rtbassoc-080e09202dd10524c",
+            "route_table_id": "rtb-00be1265d62142b99",
+            "subnet_id": "subnet-067415c3cf6a405d5",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDAsImRlbGV0ZSI6MzAwMDAwMDAwMDAwLCJ1cGRhdGUiOjEyMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_eip.nat",
+            "aws_internet_gateway.main",
+            "aws_nat_gateway.main",
+            "aws_route_table.private",
+            "aws_subnet.private",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        },
+        {
+          "index_key": 1,
+          "schema_version": 0,
+          "attributes": {
+            "gateway_id": "",
+            "id": "rtbassoc-0cea8a9fc5b98dbb2",
+            "route_table_id": "rtb-00be1265d62142b99",
+            "subnet_id": "subnet-014dd2bfa6d7cf485",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDAsImRlbGV0ZSI6MzAwMDAwMDAwMDAwLCJ1cGRhdGUiOjEyMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_eip.nat",
+            "aws_internet_gateway.main",
+            "aws_nat_gateway.main",
+            "aws_route_table.private",
+            "aws_subnet.private",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route_table_association",
+      "name": "public",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "gateway_id": "",
+            "id": "rtbassoc-0f5cfbc894e9ba5f9",
+            "route_table_id": "rtb-083b6d7ec0337d793",
+            "subnet_id": "subnet-0e2ce73f1e8ef87fc",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDAsImRlbGV0ZSI6MzAwMDAwMDAwMDAwLCJ1cGRhdGUiOjEyMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_internet_gateway.main",
+            "aws_route_table.public",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        },
+        {
+          "index_key": 1,
+          "schema_version": 0,
+          "attributes": {
+            "gateway_id": "",
+            "id": "rtbassoc-00b0a85d29d6a659f",
+            "route_table_id": "rtb-083b6d7ec0337d793",
+            "subnet_id": "subnet-0d13969305c12d5e3",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDAsImRlbGV0ZSI6MzAwMDAwMDAwMDAwLCJ1cGRhdGUiOjEyMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_internet_gateway.main",
+            "aws_route_table.public",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "alb",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:security-group/sg-0e15ab374a84f17df",
+            "description": "Security group for the MISO ALB",
+            "egress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "Allow all outbound traffic",
+                "from_port": 0,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "-1",
+                "security_groups": [],
+                "self": false,
+                "to_port": 0
+              }
+            ],
+            "id": "sg-0e15ab374a84f17df",
+            "ingress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "HTTP from public internet",
+                "from_port": 80,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 80
+              },
+              {
+                "cidr_blocks": [],
+                "description": "HTTP from API Gateway VPC Link",
+                "from_port": 80,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [
+                  "sg-03b05c0eec56f8823"
+                ],
+                "self": false,
+                "to_port": 80
+              }
+            ],
+            "name": "miso-alb-sg",
+            "name_prefix": "",
+            "owner_id": "356206423360",
+            "revoke_rules_on_delete": false,
+            "tags": {
+              "Name": "miso-alb-sg"
+            },
+            "tags_all": {
+              "Name": "miso-alb-sg"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "ecs_service",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:security-group/sg-00bc19e7e1843f720",
+            "description": "Security group for all MISO ECS services",
+            "egress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "Allow all outbound traffic",
+                "from_port": 0,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "-1",
+                "security_groups": [],
+                "self": false,
+                "to_port": 0
+              }
+            ],
+            "id": "sg-00bc19e7e1843f720",
+            "ingress": [
+              {
+                "cidr_blocks": [],
+                "description": "Allow ECS tasks to communicate with VPC endpoints in the same SG",
+                "from_port": 443,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": true,
+                "to_port": 443
+              },
+              {
+                "cidr_blocks": [],
+                "description": "Allow traffic from ALB",
+                "from_port": 8080,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [
+                  "sg-0e15ab374a84f17df"
+                ],
+                "self": false,
+                "to_port": 8080
+              }
+            ],
+            "name": "miso-ecs-service-sg",
+            "name_prefix": "",
+            "owner_id": "356206423360",
+            "revoke_rules_on_delete": false,
+            "tags": {
+              "Name": "miso-ecs-service-sg"
+            },
+            "tags_all": {
+              "Name": "miso-ecs-service-sg"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "vpc_link",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:security-group/sg-03b05c0eec56f8823",
+            "description": "Security group for the API Gateway VPC Link",
+            "egress": [
+              {
+                "cidr_blocks": [],
+                "description": "Allow traffic to ALB",
+                "from_port": 80,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [
+                  "sg-0e15ab374a84f17df"
+                ],
+                "self": false,
+                "to_port": 80
+              }
+            ],
+            "id": "sg-03b05c0eec56f8823",
+            "ingress": [],
+            "name": "miso-vpc-link-sg",
+            "name_prefix": "",
+            "owner_id": "356206423360",
+            "revoke_rules_on_delete": false,
+            "tags": {
+              "Name": "miso-vpc-link-sg"
+            },
+            "tags_all": {
+              "Name": "miso-vpc-link-sg"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group_rule",
+      "name": "alb_ingress_public",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "HTTP from public internet",
+            "from_port": 80,
+            "id": "sgrule-2171240635",
+            "ipv6_cidr_blocks": null,
+            "prefix_list_ids": null,
+            "protocol": "tcp",
+            "security_group_id": "sg-0e15ab374a84f17df",
+            "security_group_rule_id": "sgr-091ab5f2a9b1916d9",
+            "self": false,
+            "source_security_group_id": null,
+            "timeouts": null,
+            "to_port": 80,
+            "type": "ingress"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_security_group.alb",
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group_rule",
+      "name": "alb_ingress_vpc_link",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "cidr_blocks": null,
+            "description": "HTTP from API Gateway VPC Link",
+            "from_port": 80,
+            "id": "sgrule-2135064078",
+            "ipv6_cidr_blocks": null,
+            "prefix_list_ids": null,
+            "protocol": "tcp",
+            "security_group_id": "sg-0e15ab374a84f17df",
+            "security_group_rule_id": "sgr-07c810d12412a2efd",
+            "self": false,
+            "source_security_group_id": "sg-03b05c0eec56f8823",
+            "timeouts": null,
+            "to_port": 80,
+            "type": "ingress"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_security_group.alb",
+            "aws_security_group.vpc_link",
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group_rule",
+      "name": "all_outbound",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": "alb",
+          "schema_version": 2,
+          "attributes": {
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound traffic",
+            "from_port": 0,
+            "id": "sgrule-2885869535",
+            "ipv6_cidr_blocks": null,
+            "prefix_list_ids": null,
+            "protocol": "-1",
+            "security_group_id": "sg-0e15ab374a84f17df",
+            "security_group_rule_id": "sgr-08ea86e179682c6fb",
+            "self": false,
+            "source_security_group_id": null,
+            "timeouts": null,
+            "to_port": 0,
+            "type": "egress"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_security_group.alb",
+            "aws_security_group.ecs_service",
+            "aws_vpc.main"
+          ]
+        },
+        {
+          "index_key": "ecs",
+          "schema_version": 2,
+          "attributes": {
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound traffic",
+            "from_port": 0,
+            "id": "sgrule-3714156455",
+            "ipv6_cidr_blocks": null,
+            "prefix_list_ids": null,
+            "protocol": "-1",
+            "security_group_id": "sg-00bc19e7e1843f720",
+            "security_group_rule_id": "sgr-0e804e0899a4969f7",
+            "self": false,
+            "source_security_group_id": null,
+            "timeouts": null,
+            "to_port": 0,
+            "type": "egress"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_security_group.alb",
+            "aws_security_group.ecs_service",
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group_rule",
+      "name": "ecs_ingress_from_alb",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "cidr_blocks": null,
+            "description": "Allow traffic from ALB",
+            "from_port": 8080,
+            "id": "sgrule-1237665991",
+            "ipv6_cidr_blocks": null,
+            "prefix_list_ids": null,
+            "protocol": "tcp",
+            "security_group_id": "sg-00bc19e7e1843f720",
+            "security_group_rule_id": "sgr-0ab022d4e5e7f4d49",
+            "self": false,
+            "source_security_group_id": "sg-0e15ab374a84f17df",
+            "timeouts": null,
+            "to_port": 8080,
+            "type": "ingress"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_security_group.alb",
+            "aws_security_group.ecs_service",
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group_rule",
+      "name": "ecs_self_ingress_https",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "cidr_blocks": null,
+            "description": "Allow ECS tasks to communicate with VPC endpoints in the same SG",
+            "from_port": 443,
+            "id": "sgrule-71713572",
+            "ipv6_cidr_blocks": null,
+            "prefix_list_ids": null,
+            "protocol": "tcp",
+            "security_group_id": "sg-00bc19e7e1843f720",
+            "security_group_rule_id": "sgr-024464555b9cc5e22",
+            "self": false,
+            "source_security_group_id": "sg-00bc19e7e1843f720",
+            "timeouts": null,
+            "to_port": 443,
+            "type": "ingress"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_security_group.ecs_service",
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group_rule",
+      "name": "vpc_link_egress_to_alb",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "cidr_blocks": null,
+            "description": "Allow traffic to ALB",
+            "from_port": 80,
+            "id": "sgrule-1382113516",
+            "ipv6_cidr_blocks": null,
+            "prefix_list_ids": null,
+            "protocol": "tcp",
+            "security_group_id": "sg-03b05c0eec56f8823",
+            "security_group_rule_id": "sgr-08e84a72be0182921",
+            "self": false,
+            "source_security_group_id": "sg-0e15ab374a84f17df",
+            "timeouts": null,
+            "to_port": 80,
+            "type": "egress"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjIifQ==",
+          "dependencies": [
+            "aws_security_group.alb",
+            "aws_security_group.vpc_link",
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ses_domain_identity",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ses:us-east-1:356206423360:identity/stemcultivation.com",
+            "domain": "stemcultivation.com",
+            "id": "stemcultivation.com",
+            "verification_token": "ACcjxiz+BFZPJrTTU5bWxu6aNxzE0AO+1ctM4UdYtzQ="
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sqs_queue",
+      "name": "miso_analysis_requests",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sqs:us-east-1:356206423360:miso-analysis-requests.fifo",
+            "content_based_deduplication": true,
+            "deduplication_scope": "queue",
+            "delay_seconds": 0,
+            "fifo_queue": true,
+            "fifo_throughput_limit": "perQueue",
+            "id": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-analysis-requests.fifo",
+            "kms_data_key_reuse_period_seconds": 300,
+            "kms_master_key_id": "",
+            "max_message_size": 262144,
+            "message_retention_seconds": 345600,
+            "name": "miso-analysis-requests.fifo",
+            "name_prefix": "",
+            "policy": "",
+            "receive_wait_time_seconds": 0,
+            "redrive_allow_policy": "",
+            "redrive_policy": "",
+            "sqs_managed_sse_enabled": true,
+            "tags": {
+              "Name": "miso-analysis-requests-queue",
+              "Project": "MISO Factory"
+            },
+            "tags_all": {
+              "Name": "miso-analysis-requests-queue",
+              "Project": "MISO Factory"
+            },
+            "timeouts": null,
+            "url": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-analysis-requests.fifo",
+            "visibility_timeout_seconds": 30
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAsImRlbGV0ZSI6MTgwMDAwMDAwMDAwLCJ1cGRhdGUiOjE4MDAwMDAwMDAwMH19"
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sqs_queue",
+      "name": "miso_council_proposals",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sqs:us-east-1:356206423360:miso-council-proposals.fifo",
+            "content_based_deduplication": true,
+            "deduplication_scope": "queue",
+            "delay_seconds": 0,
+            "fifo_queue": true,
+            "fifo_throughput_limit": "perQueue",
+            "id": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-council-proposals.fifo",
+            "kms_data_key_reuse_period_seconds": 300,
+            "kms_master_key_id": "",
+            "max_message_size": 262144,
+            "message_retention_seconds": 345600,
+            "name": "miso-council-proposals.fifo",
+            "name_prefix": "",
+            "policy": "",
+            "receive_wait_time_seconds": 0,
+            "redrive_allow_policy": "",
+            "redrive_policy": "",
+            "sqs_managed_sse_enabled": true,
+            "tags": {
+              "Name": "miso-council-proposals-queue",
+              "Project": "MISO Factory"
+            },
+            "tags_all": {
+              "Name": "miso-council-proposals-queue",
+              "Project": "MISO Factory"
+            },
+            "timeouts": null,
+            "url": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-council-proposals.fifo",
+            "visibility_timeout_seconds": 30
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAsImRlbGV0ZSI6MTgwMDAwMDAwMDAwLCJ1cGRhdGUiOjE4MDAwMDAwMDAwMH19"
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sqs_queue",
+      "name": "miso_failures",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sqs:us-east-1:356206423360:miso-failures.fifo",
+            "content_based_deduplication": true,
+            "deduplication_scope": "queue",
+            "delay_seconds": 0,
+            "fifo_queue": true,
+            "fifo_throughput_limit": "perQueue",
+            "id": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-failures.fifo",
+            "kms_data_key_reuse_period_seconds": 300,
+            "kms_master_key_id": "",
+            "max_message_size": 262144,
+            "message_retention_seconds": 345600,
+            "name": "miso-failures.fifo",
+            "name_prefix": "",
+            "policy": "",
+            "receive_wait_time_seconds": 0,
+            "redrive_allow_policy": "",
+            "redrive_policy": "",
+            "sqs_managed_sse_enabled": true,
+            "tags": {
+              "Name": "miso-failures-queue",
+              "Project": "MISO Factory"
+            },
+            "tags_all": {
+              "Name": "miso-failures-queue",
+              "Project": "MISO Factory"
+            },
+            "timeouts": null,
+            "url": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-failures.fifo",
+            "visibility_timeout_seconds": 30
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAsImRlbGV0ZSI6MTgwMDAwMDAwMDAwLCJ1cGRhdGUiOjE4MDAwMDAwMDAwMH19"
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sqs_queue",
+      "name": "miso_specialization_requests",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sqs:us-east-1:356206423360:miso-specialization-requests.fifo",
+            "content_based_deduplication": true,
+            "deduplication_scope": "queue",
+            "delay_seconds": 0,
+            "fifo_queue": true,
+            "fifo_throughput_limit": "perQueue",
+            "id": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-specialization-requests.fifo",
+            "kms_data_key_reuse_period_seconds": 300,
+            "kms_master_key_id": "",
+            "max_message_size": 262144,
+            "message_retention_seconds": 345600,
+            "name": "miso-specialization-requests.fifo",
+            "name_prefix": "",
+            "policy": "",
+            "receive_wait_time_seconds": 0,
+            "redrive_allow_policy": "",
+            "redrive_policy": "",
+            "sqs_managed_sse_enabled": true,
+            "tags": {
+              "Name": "miso-specialization-requests-queue",
+              "Project": "MISO Factory"
+            },
+            "tags_all": {
+              "Name": "miso-specialization-requests-queue",
+              "Project": "MISO Factory"
+            },
+            "timeouts": null,
+            "url": "https://sqs.us-east-1.amazonaws.com/356206423360/miso-specialization-requests.fifo",
+            "visibility_timeout_seconds": 30
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAsImRlbGV0ZSI6MTgwMDAwMDAwMDAwLCJ1cGRhdGUiOjE4MDAwMDAwMDAwMH19"
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_subnet",
+      "name": "private",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:subnet/subnet-067415c3cf6a405d5",
+            "assign_ipv6_address_on_creation": false,
+            "availability_zone": "us-east-1a",
+            "availability_zone_id": "use1-az4",
+            "cidr_block": "10.0.101.0/24",
+            "customer_owned_ipv4_pool": "",
+            "enable_dns64": false,
+            "enable_lni_at_device_index": 0,
+            "enable_resource_name_dns_a_record_on_launch": false,
+            "enable_resource_name_dns_aaaa_record_on_launch": false,
+            "id": "subnet-067415c3cf6a405d5",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_association_id": "",
+            "ipv6_native": false,
+            "map_customer_owned_ip_on_launch": false,
+            "map_public_ip_on_launch": false,
+            "outpost_arn": "",
+            "owner_id": "356206423360",
+            "private_dns_hostname_type_on_launch": "ip-name",
+            "tags": {
+              "Name": "miso-private-subnet-1"
+            },
+            "tags_all": {
+              "Name": "miso-private-subnet-1"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        },
+        {
+          "index_key": 1,
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:subnet/subnet-014dd2bfa6d7cf485",
+            "assign_ipv6_address_on_creation": false,
+            "availability_zone": "us-east-1b",
+            "availability_zone_id": "use1-az6",
+            "cidr_block": "10.0.102.0/24",
+            "customer_owned_ipv4_pool": "",
+            "enable_dns64": false,
+            "enable_lni_at_device_index": 0,
+            "enable_resource_name_dns_a_record_on_launch": false,
+            "enable_resource_name_dns_aaaa_record_on_launch": false,
+            "id": "subnet-014dd2bfa6d7cf485",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_association_id": "",
+            "ipv6_native": false,
+            "map_customer_owned_ip_on_launch": false,
+            "map_public_ip_on_launch": false,
+            "outpost_arn": "",
+            "owner_id": "356206423360",
+            "private_dns_hostname_type_on_launch": "ip-name",
+            "tags": {
+              "Name": "miso-private-subnet-2"
+            },
+            "tags_all": {
+              "Name": "miso-private-subnet-2"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_subnet",
+      "name": "public",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:subnet/subnet-0e2ce73f1e8ef87fc",
+            "assign_ipv6_address_on_creation": false,
+            "availability_zone": "us-east-1a",
+            "availability_zone_id": "use1-az4",
+            "cidr_block": "10.0.1.0/24",
+            "customer_owned_ipv4_pool": "",
+            "enable_dns64": false,
+            "enable_lni_at_device_index": 0,
+            "enable_resource_name_dns_a_record_on_launch": false,
+            "enable_resource_name_dns_aaaa_record_on_launch": false,
+            "id": "subnet-0e2ce73f1e8ef87fc",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_association_id": "",
+            "ipv6_native": false,
+            "map_customer_owned_ip_on_launch": false,
+            "map_public_ip_on_launch": true,
+            "outpost_arn": "",
+            "owner_id": "356206423360",
+            "private_dns_hostname_type_on_launch": "ip-name",
+            "tags": {
+              "Name": "miso-public-subnet-1"
+            },
+            "tags_all": {
+              "Name": "miso-public-subnet-1"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        },
+        {
+          "index_key": 1,
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:subnet/subnet-0d13969305c12d5e3",
+            "assign_ipv6_address_on_creation": false,
+            "availability_zone": "us-east-1b",
+            "availability_zone_id": "use1-az6",
+            "cidr_block": "10.0.2.0/24",
+            "customer_owned_ipv4_pool": "",
+            "enable_dns64": false,
+            "enable_lni_at_device_index": 0,
+            "enable_resource_name_dns_a_record_on_launch": false,
+            "enable_resource_name_dns_aaaa_record_on_launch": false,
+            "id": "subnet-0d13969305c12d5e3",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_association_id": "",
+            "ipv6_native": false,
+            "map_customer_owned_ip_on_launch": false,
+            "map_public_ip_on_launch": true,
+            "outpost_arn": "",
+            "owner_id": "356206423360",
+            "private_dns_hostname_type_on_launch": "ip-name",
+            "tags": {
+              "Name": "miso-public-subnet-2"
+            },
+            "tags_all": {
+              "Name": "miso-public-subnet-2"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "aws_vpc.main",
+            "data.aws_availability_zones.available"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_vpc",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:vpc/vpc-0e2d52720983e34dc",
+            "assign_generated_ipv6_cidr_block": false,
+            "cidr_block": "10.0.0.0/16",
+            "default_network_acl_id": "acl-0750b21ae39e544cf",
+            "default_route_table_id": "rtb-06f2ba6b93c2cf478",
+            "default_security_group_id": "sg-02f4486264009a292",
+            "dhcp_options_id": "dopt-0fe6958a107507bbd",
+            "enable_dns_hostnames": true,
+            "enable_dns_support": true,
+            "enable_network_address_usage_metrics": false,
+            "id": "vpc-0e2d52720983e34dc",
+            "instance_tenancy": "default",
+            "ipv4_ipam_pool_id": null,
+            "ipv4_netmask_length": null,
+            "ipv6_association_id": "",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_network_border_group": "",
+            "ipv6_ipam_pool_id": "",
+            "ipv6_netmask_length": 0,
+            "main_route_table_id": "rtb-06f2ba6b93c2cf478",
+            "owner_id": "356206423360",
+            "tags": {
+              "Name": "miso-vpc"
+            },
+            "tags_all": {
+              "Name": "miso-vpc"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_vpc_endpoint",
+      "name": "ecr_api",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:vpc-endpoint/vpce-02e40bf34ff2202a6",
+            "auto_accept": null,
+            "cidr_blocks": [],
+            "dns_entry": [
+              {
+                "dns_name": "vpce-02e40bf34ff2202a6-lagd0o0b.api.ecr.us-east-1.vpce.amazonaws.com",
+                "hosted_zone_id": "Z7HUB22UULQXV"
+              },
+              {
+                "dns_name": "vpce-02e40bf34ff2202a6-lagd0o0b-us-east-1a.api.ecr.us-east-1.vpce.amazonaws.com",
+                "hosted_zone_id": "Z7HUB22UULQXV"
+              },
+              {
+                "dns_name": "vpce-02e40bf34ff2202a6-lagd0o0b-us-east-1b.api.ecr.us-east-1.vpce.amazonaws.com",
+                "hosted_zone_id": "Z7HUB22UULQXV"
+              },
+              {
+                "dns_name": "api.ecr.us-east-1.amazonaws.com",
+                "hosted_zone_id": "Z09667291FNFCC4LDI57K"
+              },
+              {
+                "dns_name": "ecr.us-east-1.api.aws",
+                "hosted_zone_id": "Z02142122HYZA5OZIJQ25"
+              }
+            ],
+            "dns_options": [
+              {
+                "dns_record_ip_type": "ipv4",
+                "private_dns_only_for_inbound_resolver_endpoint": false
+              }
+            ],
+            "id": "vpce-02e40bf34ff2202a6",
+            "ip_address_type": "ipv4",
+            "network_interface_ids": [
+              "eni-0955363f6fb4061ae",
+              "eni-0a4586ad6f0c6ac77"
+            ],
+            "owner_id": "356206423360",
+            "policy": "{\"Statement\":[{\"Action\":\"*\",\"Effect\":\"Allow\",\"Principal\":\"*\",\"Resource\":\"*\"}]}",
+            "prefix_list_id": null,
+            "private_dns_enabled": true,
+            "requester_managed": false,
+            "resource_configuration_arn": "",
+            "route_table_ids": [],
+            "security_group_ids": [
+              "sg-00bc19e7e1843f720"
+            ],
+            "service_name": "com.amazonaws.us-east-1.ecr.api",
+            "service_network_arn": "",
+            "service_region": "us-east-1",
+            "state": "available",
+            "subnet_configuration": [
+              {
+                "ipv4": "10.0.101.117",
+                "ipv6": "",
+                "subnet_id": "subnet-067415c3cf6a405d5"
+              },
+              {
+                "ipv4": "10.0.102.45",
+                "ipv6": "",
+                "subnet_id": "subnet-014dd2bfa6d7cf485"
+              }
+            ],
+            "subnet_ids": [
+              "subnet-014dd2bfa6d7cf485",
+              "subnet-067415c3cf6a405d5"
+            ],
+            "tags": {},
+            "tags_all": {},
+            "timeouts": null,
+            "vpc_endpoint_type": "Interface",
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_security_group.ecs_service",
+            "aws_subnet.private",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_vpc_endpoint",
+      "name": "ecr_dkr",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:vpc-endpoint/vpce-0539d11be166f8f33",
+            "auto_accept": null,
+            "cidr_blocks": [],
+            "dns_entry": [
+              {
+                "dns_name": "vpce-0539d11be166f8f33-asad3z23.dkr.ecr.us-east-1.vpce.amazonaws.com",
+                "hosted_zone_id": "Z7HUB22UULQXV"
+              },
+              {
+                "dns_name": "vpce-0539d11be166f8f33-asad3z23-us-east-1a.dkr.ecr.us-east-1.vpce.amazonaws.com",
+                "hosted_zone_id": "Z7HUB22UULQXV"
+              },
+              {
+                "dns_name": "vpce-0539d11be166f8f33-asad3z23-us-east-1b.dkr.ecr.us-east-1.vpce.amazonaws.com",
+                "hosted_zone_id": "Z7HUB22UULQXV"
+              },
+              {
+                "dns_name": "dkr.ecr.us-east-1.amazonaws.com",
+                "hosted_zone_id": "Z00901933NP1HY6YAJ467"
+              },
+              {
+                "dns_name": "*.dkr.ecr.us-east-1.amazonaws.com",
+                "hosted_zone_id": "Z00901933NP1HY6YAJ467"
+              },
+              {
+                "dns_name": "dkr-ecr.us-east-1.on.aws",
+                "hosted_zone_id": "Z02188191SAUAU8GOUVTD"
+              },
+              {
+                "dns_name": "*.dkr-ecr.us-east-1.on.aws",
+                "hosted_zone_id": "Z02188191SAUAU8GOUVTD"
+              }
+            ],
+            "dns_options": [
+              {
+                "dns_record_ip_type": "ipv4",
+                "private_dns_only_for_inbound_resolver_endpoint": false
+              }
+            ],
+            "id": "vpce-0539d11be166f8f33",
+            "ip_address_type": "ipv4",
+            "network_interface_ids": [
+              "eni-046fd53a2923940e6",
+              "eni-0eb6d7c248f85a4fe"
+            ],
+            "owner_id": "356206423360",
+            "policy": "{\"Statement\":[{\"Action\":\"*\",\"Effect\":\"Allow\",\"Principal\":\"*\",\"Resource\":\"*\"}]}",
+            "prefix_list_id": null,
+            "private_dns_enabled": true,
+            "requester_managed": false,
+            "resource_configuration_arn": "",
+            "route_table_ids": [],
+            "security_group_ids": [
+              "sg-00bc19e7e1843f720"
+            ],
+            "service_name": "com.amazonaws.us-east-1.ecr.dkr",
+            "service_network_arn": "",
+            "service_region": "us-east-1",
+            "state": "available",
+            "subnet_configuration": [
+              {
+                "ipv4": "10.0.101.249",
+                "ipv6": "",
+                "subnet_id": "subnet-067415c3cf6a405d5"
+              },
+              {
+                "ipv4": "10.0.102.57",
+                "ipv6": "",
+                "subnet_id": "subnet-014dd2bfa6d7cf485"
+              }
+            ],
+            "subnet_ids": [
+              "subnet-014dd2bfa6d7cf485",
+              "subnet-067415c3cf6a405d5"
+            ],
+            "tags": {},
+            "tags_all": {},
+            "timeouts": null,
+            "vpc_endpoint_type": "Interface",
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_security_group.ecs_service",
+            "aws_subnet.private",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_vpc_endpoint",
+      "name": "s3",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:356206423360:vpc-endpoint/vpce-0d383d7c63ebeac7c",
+            "auto_accept": null,
+            "cidr_blocks": [
+              "16.15.176.0/20",
+              "16.182.0.0/16",
+              "18.34.0.0/19",
+              "52.216.0.0/15",
+              "54.231.0.0/16",
+              "3.5.0.0/19",
+              "18.34.232.0/21",
+              "16.15.192.0/18"
+            ],
+            "dns_entry": [],
+            "dns_options": [],
+            "id": "vpce-0d383d7c63ebeac7c",
+            "ip_address_type": "",
+            "network_interface_ids": [],
+            "owner_id": "356206423360",
+            "policy": "{\"Statement\":[{\"Action\":\"*\",\"Effect\":\"Allow\",\"Principal\":\"*\",\"Resource\":\"*\"}],\"Version\":\"2008-10-17\"}",
+            "prefix_list_id": "pl-63a5400a",
+            "private_dns_enabled": false,
+            "requester_managed": false,
+            "resource_configuration_arn": "",
+            "route_table_ids": [
+              "rtb-00be1265d62142b99"
+            ],
+            "security_group_ids": [],
+            "service_name": "com.amazonaws.us-east-1.s3",
+            "service_network_arn": "",
+            "service_region": "us-east-1",
+            "state": "available",
+            "subnet_configuration": [],
+            "subnet_ids": [],
+            "tags": {},
+            "tags_all": {},
+            "timeouts": null,
+            "vpc_endpoint_type": "Gateway",
+            "vpc_id": "vpc-0e2d52720983e34dc"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_eip.nat",
+            "aws_internet_gateway.main",
+            "aws_nat_gateway.main",
+            "aws_route_table.private",
+            "aws_subnet.public",
+            "aws_vpc.main",
+            "data.aws_availability_zones.available",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}

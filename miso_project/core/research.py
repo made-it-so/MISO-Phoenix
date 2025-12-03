@@ -6,23 +6,21 @@ logger = logging.getLogger("miso.core.research")
 
 class ResearchScout:
     """
-    The Auto-Didactic Sensor.
-    Scans the arXiv datasphere for architectural upgrades.
+    The Auto-Didactic Sensor (V77 - Calibrated).
+    Scans arXiv with Relevance Sorting to avoid 'Newest Paper' noise.
     """
     
     def __init__(self):
         self.client = arxiv.Client()
 
     def search_papers(self, query: str, max_results: int = 3) -> List[Dict]:
-        """
-        Retrieves "Context Flow" from global research.
-        """
         logger.info(f"Scouting arXiv for: {query}")
         
+        # CRITICAL FIX: Sort by Relevance, not Date
         search = arxiv.Search(
             query=query,
             max_results=max_results,
-            sort_by=arxiv.SortCriterion.SubmittedDate
+            sort_by=arxiv.SortCriterion.Relevance
         )
         
         papers = []
@@ -30,7 +28,7 @@ class ResearchScout:
             for r in self.client.results(search):
                 papers.append({
                     "title": r.title,
-                    "summary": r.summary[:500] + "...", # Compress for Cortex
+                    "summary": r.summary[:500] + "...",
                     "url": r.pdf_url,
                     "published": str(r.published.date())
                 })
@@ -38,4 +36,3 @@ class ResearchScout:
         except Exception as e:
             logger.error(f"Scout Failure: {e}")
             return [{"error": str(e)}]
-
