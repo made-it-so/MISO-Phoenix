@@ -42,3 +42,9 @@ INFO:     127.0.0.1:35312 - "GET /system/stats HTTP/1.1" 200 OK
 INFO:miso.interface:Incoming Request: chat
 INFO:miso.core.cortex:Reasoning Arc: Firing gemini-2.5-flash
 INFO:miso.memory.vector:Recalling memories for: Create a file named 'status.txt' with the current timestamp, then push it to git with message 'Status Update'.
+ERROR:miso.memory.hippocampus:Memory Encoding Failed: connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "user"
+
+INFO:     127.0.0.1:35314 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36782 - "GET /system/stats HTTP/1.1" 200 OK
+INFO:miso.interface:Incoming Request: execute_code
+INFO:     127.0.0.1:36792 - "POST /process HTTP/1.1" 200 OK
