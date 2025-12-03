@@ -1,50 +1,24 @@
 nohup: ignoring input
 /home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
   warnings.warn(message, FutureWarning)
-[0;93m2025-12-03 20:05:07.425792668 [W:onnxruntime:Default, device_discovery.cc:164 DiscoverDevicesForPlatform] GPU device discovery failed: device_discovery.cc:89 ReadFileContents Failed to open file: "/sys/class/drm/card0/device/vendor"[m
+[0;93m2025-12-03 20:29:37.853642471 [W:onnxruntime:Default, device_discovery.cc:164 DiscoverDevicesForPlatform] GPU device discovery failed: device_discovery.cc:89 ReadFileContents Failed to open file: "/sys/class/drm/card0/device/vendor"[m
+INFO:miso.core.ouroboros:Ouroboros attached to branch: release/enterprise-v1
 ERROR:miso.memory.hippocampus:Memory Initialization Failed: connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "user"
 
 WARNING:miso.memory.hippocampus:Hippocampus offline (DB Connection Failed): connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "user"
 
+INFO:botocore.credentials:Found credentials from IAM Role: MISO-EC2-Role-Elastic
 INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
 INFO:apscheduler.scheduler:Added job "trigger_sleep_cycle" to job store "default"
 INFO:apscheduler.scheduler:Scheduler started
-INFO:     Started server process [543648]
+INFO:     Started server process [544461]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:33080 - "GET /system/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33086 - "GET /system/stats HTTP/1.1" 200 OK
-INFO:miso.interface:Incoming Request: research
-INFO:miso.core.cortex:Dispatching Task: research
-INFO:     127.0.0.1:33098 - "POST /process HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50420 - "GET /system/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50430 - "GET /system/stats HTTP/1.1" 200 OK
-INFO:miso.interface:Incoming Request: research
-INFO:miso.core.cortex:Dispatching Task: research
-INFO:     127.0.0.1:50442 - "POST /process HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39196 - "GET /system/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39204 - "GET /system/stats HTTP/1.1" 200 OK
-INFO:miso.interface:Incoming Request: research
-INFO:miso.core.cortex:Dispatching Task: research
-INFO:     127.0.0.1:39218 - "POST /process HTTP/1.1" 200 OK
-INFO:miso.interface:Incoming Request: check_task
-INFO:miso.core.cortex:Dispatching Task: check_task
-INFO:     127.0.0.1:45330 - "POST /process HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43358 - "GET /system/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:38820 - "GET /system/stats HTTP/1.1" 200 OK
-INFO:miso.interface:Incoming Request: research
-INFO:miso.core.cortex:Dispatching Task: research
-INFO:     127.0.0.1:38834 - "POST /process HTTP/1.1" 200 OK
-INFO:miso.interface:Incoming Request: check_task
-INFO:miso.core.cortex:Dispatching Task: check_task
-INFO:     127.0.0.1:38850 - "POST /process HTTP/1.1" 200 OK
-INFO:miso.interface:Incoming Request: check_task
-INFO:miso.core.cortex:Dispatching Task: check_task
-INFO:     127.0.0.1:38864 - "POST /process HTTP/1.1" 200 OK
-INFO:miso.interface:Incoming Request: check_task
-INFO:miso.core.cortex:Dispatching Task: check_task
-INFO:     127.0.0.1:38874 - "POST /process HTTP/1.1" 200 OK
-INFO:miso.interface:Incoming Request: check_task
-INFO:miso.core.cortex:Dispatching Task: check_task
-INFO:     127.0.0.1:38876 - "POST /process HTTP/1.1" 200 OK
+INFO:miso.interface:Incoming Request: audit_aws
+INFO:miso.core.cortex:CFO Arc: Auditing Infrastructure
+INFO:miso.core.accountant:>>> AUDITING AWS INFRASTRUCTURE...
+WARNING:miso.core.accountant:Instance i-09e1c15fb14623951 is ON-DEMAND. Migrate to Spot to save ~70%.
+ERROR:miso.memory.hippocampus:Memory Encoding Failed: connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "user"
+
+INFO:     127.0.0.1:42854 - "POST /process HTTP/1.1" 200 OK
