@@ -13,6 +13,7 @@ import openai
 from anthropic import Anthropic
 import google.generativeai as genai
 
+# ORGANS
 from miso_project.utils.sandbox import DockerSandbox
 from miso_project.core.ouroboros import GitManager
 from miso_project.core.logger import InteractionLogger
@@ -26,8 +27,8 @@ logger = logging.getLogger("miso.core.cortex")
 
 class Cortex:
     """
-    The High-Frequency Processor (V87 - Multimodal).
-    Now capable of processing Visual Input via Gemini.
+    The High-Frequency Processor (V91 - Restored).
+    Integrates Vision, Voice, Criticism, and Tactile Execution.
     """
     def __init__(self):
         self.sandbox = DockerSandbox()
@@ -40,15 +41,9 @@ class Cortex:
         
         self.weights_path = "miso_project/config/routing_weights.json"
         self.active_weights = self._load_synaptic_weights()
+        self.system_instruction = "You are MISO V91. Concise Enterprise Intelligence."
         
-        self.system_instruction = """
-You are MISO V87. You have a PHYSICAL BODY (DockerSandbox) and VISION.
-PROTOCOL:
-1. If shown an image, analyze it for technical or architectural details.
-2. If asked to act, WRITE PYTHON CODE.
-3. If asked to save/push work, output: GIT_PUSH: "Commit Message"
-"""
-        # Clients (Lazy Load)
+        # Clients
         self.openai_key = os.getenv("OPENAI_API_KEY")
         if self.openai_key: self.openai_client = openai.OpenAI(api_key=self.openai_key)
         else: self.openai_client = None
@@ -62,119 +57,140 @@ PROTOCOL:
         else: self.has_gemini = False
 
     def _load_synaptic_weights(self) -> Dict[str, float]:
-        try:
-            if os.path.exists(self.weights_path):
-                with open(self.weights_path, 'r') as f: return json.load(f)
-            return {"gemini-2.5-flash": 1.0}
-        except: return {"gemini-2.5-flash": 1.0}
+        return {"gemini-2.5-flash": 1.0}
 
     def select_model(self) -> str:
-        models = list(self.active_weights.keys())
-        probs = list(self.active_weights.values())
-        return random.choices(models, weights=probs, k=1)[0]
+        return "gemini-2.5-flash"
+
+    # --- SENSORY METHODS ---
+    def _transcribe_audio(self, audio_bytes: bytes) -> str:
+        if not self.openai_client: return "ERR: Auditory Lobe Offline"
+        try:
+            audio_file = io.BytesIO(audio_bytes)
+            audio_file.name = "command.wav"
+            return self.openai_client.audio.transcriptions.create(model="whisper-1", file=audio_file, language="en").text
+        except Exception as e: return f"Hearing Loss: {e}"
+
+    def _generate_speech(self, text: str) -> str:
+        if not self.openai_client: return None
+        try:
+            res = self.openai_client.audio.speech.create(model="tts-1", voice="alloy", input=text[:4096])
+            return base64.b64encode(res.content).decode('utf-8')
+        except: return None
 
     def _call_vision(self, prompt: str, image_b64: str) -> str:
-        """The Visual Processing Center."""
-        if not self.has_gemini: return "ERR: Vision requires Gemini Lobe."
+        if not self.has_gemini: return "ERR: Vision requires Gemini."
         try:
-            model = genai.GenerativeModel('gemini-2.5-flash')
-            image_data = base64.b64decode(image_b64)
-            image = Image.open(io.BytesIO(image_data))
-            
-            response = model.generate_content([prompt, image])
-            return response.text
-        except Exception as e:
-            return f"Vision Failure: {e}"
+            m = genai.GenerativeModel('gemini-2.5-flash')
+            img = Image.open(io.BytesIO(base64.b64decode(image_b64)))
+            return m.generate_content([prompt, img]).text
+        except Exception as e: return f"Vision Failure: {e}"
 
     def _call_llm(self, model: str, prompt: str) -> str:
-        full_prompt = f"{self.system_instruction}\n\nUSER REQUEST: {prompt}"
         try:
-            if "gpt" in model:
-                if not self.openai_client: return "ERR: OpenAI Offline"
-                response = self.openai_client.chat.completions.create(model=model, messages=[{"role": "user", "content": full_prompt}])
-                return response.choices[0].message.content
-            elif "claude" in model or "haiku" in model:
-                if not self.anthropic_client: return "ERR: Anthropic Offline"
-                response = self.anthropic_client.messages.create(model="claude-3-haiku-20240307", max_tokens=1024, messages=[{"role": "user", "content": full_prompt}])
-                return response.content[0].text
-            elif "gemini" in model:
-                if not self.has_gemini: return "ERR: Gemini Offline"
-                m = genai.GenerativeModel("gemini-2.5-flash")
-                response = m.generate_content(full_prompt)
-                return response.text
-            else: return f"ERR: Unknown Synapse '{model}'"
-        except Exception as e: return f"Thinking Error ({model}): {e}"
+            if "gemini" in model and self.has_gemini:
+                return genai.GenerativeModel("gemini-2.5-flash").generate_content(prompt).text
+            if self.openai_client:
+                return self.openai_client.chat.completions.create(model="gpt-4o", messages=[{"role":"user","content":prompt}]).choices[0].message.content
+            return "ERR: No Cognitive Function"
+        except Exception as e: return str(e)
 
     def _extract_code(self, text: str) -> str:
         match = re.search(r"```python\n(.*?)```", text, re.DOTALL)
         return match.group(1) if match else None
 
-    def process_task(self, task_type: str, payload: str, image_data: str = None) -> Dict[str, Any]:
+    # --- MAIN LOOP ---
+    def process_task(self, task_type: str, payload: str, image_data: str = None, audio_data: str = None) -> Dict[str, Any]:
         start_time = time.time()
         model = self.select_model()
         result = {}
         success = True
         
         try:
+            # 1. AUDIO SENSE
+            if audio_data:
+                logger.info("Processing Audio...")
+                transcription = self._transcribe_audio(base64.b64decode(audio_data))
+                if not transcription or len(transcription) < 2:
+                    return {"response": "Audio unclear.", "transcription": "(Silence)"}
+                payload = transcription
+                task_type = "chat"
+
+            # 2. ROUTING
             if task_type == "audit_aws":
-                logger.info("CFO Arc: Auditing Infrastructure")
-                report = self.cfo.audit_infrastructure()
-                tf_code = self.cfo.generate_terraform_migration()
-                result = {"audit": report, "migration_plan": tf_code, "msg": "Audit Complete."}
+                result = {"audit": self.cfo.audit_infrastructure(), "msg": "Audit Complete"}
 
             elif task_type == "execute_code":
+                # RESTORED: CRITIC + OUTPUT CAPTURE
                 COMPLIANT_FILENAME = "miso_project/utils/transient_action.py"
+                
+                # A. Critique
                 verdict = self.critic.critique(COMPLIANT_FILENAME, payload)
-                if verdict["verdict"] == "FAIL": return {"output": f"CRITIC REJECTED: {verdict['reason']}"}
+                if verdict["verdict"] == "FAIL":
+                    return {"output": f"CRITIC REJECTED: {verdict['reason']}"}
+                
+                # B. Execute
                 logger.info("Reflex Arc: Engaging Backbone")
-                exec_res = self.sandbox.execute(payload)
-                result = {"output": exec_res["stdout"] or exec_res["stderr"]}
+                exec_res = self.sandbox.execute(payload, trusted=True)
+                
+                # C. Return Actual Output
+                result = {"output": exec_res["stdout"] or exec_res["stderr"] or "No Output"}
+                success = (exec_res["status"] == "success")
+
+            elif task_type == "research":
+                # RESTORED: RESEARCH HANDLER
+                papers = self.scout.search_papers(payload)
+                prompt = f"Summarize:\n{json.dumps(papers)}"
+                insight = self._call_llm(model, prompt)
+                self.vector_memory.store_insight(insight, metadata={"topic": payload})
+                result = {"papers": papers, "insight": insight}
 
             elif task_type == "chat":
                 logger.info(f"Reasoning Arc: Firing {model}")
                 
-                # OPTIC NERVE ACTIVATION
                 if image_data:
-                    logger.info("Visual Signal Detected. Rerouting to Vision Lobe.")
                     response_text = self._call_vision(payload, image_data)
                 else:
-                    # Normal Text Path
-                    memories = self.vector_memory.recall(payload)
-                    if memories: payload = f"Context: {memories}\nQuery: {payload}"
+                    if not audio_data:
+                        memories = self.vector_memory.recall(payload)
+                        if memories: payload = f"Context: {memories}\nQuery: {payload}"
                     response_text = self._call_llm(model, payload)
                 
+                # Action Reflex
                 code_to_run = self._extract_code(response_text)
                 if code_to_run:
                     COMPLIANT_FILENAME = "miso_project/utils/transient_action.py"
                     verdict = self.critic.critique(COMPLIANT_FILENAME, code_to_run)
-                    if verdict["verdict"] == "FAIL": action_out = f"CRITIC BLOCKED ACTION: {verdict['reason']}"
+                    if verdict["verdict"] == "FAIL":
+                        action_out = f"CRITIC BLOCKED: {verdict['reason']}"
                     else:
-                        exec_res = self.sandbox.execute(code_to_run)
+                        exec_res = self.sandbox.execute(code_to_run, trusted=True)
                         action_out = exec_res["stdout"] or exec_res["stderr"]
                     response_text += f"\n\n**⚡ Action Result:**\n```\n{action_out}\n```"
 
+                # Git Reflex
                 if "GIT_PUSH:" in response_text:
                     try:
-                        msg_match = re.search(r'GIT_PUSH:\s*"(.*?)"', response_text)
-                        msg = msg_match.group(1) if msg_match else "Auto-Commit"
+                        msg = re.search(r'GIT_PUSH:\s*"(.*?)"', response_text).group(1)
                         self.immune_system.repo.git.add('.')
                         self.immune_system.repo.git.commit('-m', msg)
                         self.immune_system.repo.git.push()
-                        response_text += f"\n\n**🐙 Git Status:** Successfully pushed to remote."
-                    except Exception as git_err: response_text += f"\n\n**🐙 Git Error:** {str(git_err)}"
+                        response_text += "\n\n**🐙 Git Status:** Pushed."
+                    except Exception as e: response_text += f"\n\n**🐙 Git Error:** {e}"
 
-                result = {"response": response_text}
-
-            else: result = {"response": "Task handled by sub-routine"}
+                # Voice Reply
+                audio_reply = self._generate_speech(response_text) if audio_data else None
+                result = {"response": response_text, "audio_reply": audio_reply, "transcription": payload if audio_data else None}
 
         except Exception as e:
             success = False
             result = {"error": str(e)}
             logger.error(f"Cortex Failure: {e}")
 
+        # Ledger
         latency = int((time.time() - start_time) * 1000)
         cost = self.cfo.estimate_request_cost(model, len(payload)//4, len(str(result))//4)
         result["cost"] = f"${cost:.6f}"
-        
         self.hippocampus.log_synapse(task_type, model, success, latency, 0, payload, result)
+        
         return result
