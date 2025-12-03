@@ -1,46 +1,27 @@
 nohup: ignoring input
 /home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
   warnings.warn(message, FutureWarning)
-[0;93m2025-12-03 18:30:38.736398323 [W:onnxruntime:Default, device_discovery.cc:164 DiscoverDevicesForPlatform] GPU device discovery failed: device_discovery.cc:89 ReadFileContents Failed to open file: "/sys/class/drm/card0/device/vendor"[m
+[0;93m2025-12-03 19:03:54.916655214 [W:onnxruntime:Default, device_discovery.cc:164 DiscoverDevicesForPlatform] GPU device discovery failed: device_discovery.cc:89 ReadFileContents Failed to open file: "/sys/class/drm/card0/device/vendor"[m
 INFO:miso.core.ouroboros:Ouroboros attached to branch: release/enterprise-v1
 ERROR:miso.memory.hippocampus:Memory Initialization Failed: connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "user"
 
 WARNING:miso.memory.hippocampus:Hippocampus offline (DB Connection Failed): connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "user"
 
-INFO:miso.memory.vector:Initializing new Memory Collection...
 INFO:apscheduler.scheduler:Adding job tentatively -- it will be properly scheduled when the scheduler starts
 INFO:apscheduler.scheduler:Added job "trigger_sleep_cycle" to job store "default"
 INFO:apscheduler.scheduler:Scheduler started
-INFO:     Started server process [539533]
+INFO:     Started server process [540643]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:miso.interface:Incoming Request: research
-INFO:miso.core.cortex:Research Arc: Engaging Scholar
-INFO:miso.core.research:Scouting arXiv for: Self-Modifying Neural Networks
-INFO:arxiv:Requesting page (first: True, try: 0): https://export.arxiv.org/api/query?search_query=Self-Modifying+Neural+Networks&id_list=&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100
-INFO:arxiv:Got first page: 100 of 364355 total results
-INFO:miso.memory.vector:Encoding memory: It appears there might be a misunderstanding regar...
-/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/qdrant_client/common/client_warnings.py:8: UserWarning: `add` method has been deprecated and will be removed in 1.17. Instead, inference can be done internally within regular methods like `upsert` by wrapping data into `models.Document` or `models.Image`.
-  warnings.warn(message, category, stacklevel=stacklevel)
-Fetching 5 files:   0%|          | 0/5 [00:00<?, ?it/s]Fetching 5 files:  20%|██        | 1/5 [00:00<00:00,  5.16it/s]Fetching 5 files:  40%|████      | 2/5 [00:01<00:02,  1.15it/s]Fetching 5 files: 100%|██████████| 5/5 [00:01<00:00,  3.25it/s]
-INFO:miso.memory.vector:Memory consolidated.
-ERROR:miso.memory.hippocampus:Memory Encoding Failed: connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "user"
-
-INFO:     127.0.0.1:48426 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40236 - "GET /system/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40252 - "GET /system/stats HTTP/1.1" 200 OK
 INFO:miso.interface:Incoming Request: chat
 INFO:miso.core.cortex:Reasoning Arc: Firing gemini-2.5-flash
-INFO:miso.memory.vector:Recalling memories for: What research did we find on Self-Modifying Networks?
+INFO:miso.memory.vector:Recalling memories for: Initiate Housekeeping Protocol: Move all root-level setup scripts into a scripts/ directory.
 /home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/qdrant_client/common/client_warnings.py:8: UserWarning: `query` method has been deprecated and will be removed in 1.17. Instead, inference can be done internally within regular methods like `query_points` by wrapping data into `models.Document` or `models.Image`.
   warnings.warn(message, category, stacklevel=stacklevel)
-INFO:miso.core.cortex:Associative Recall triggered.
+INFO:miso.core.cortex:Motor Cortex Triggered: Executing generated code...
 ERROR:miso.memory.hippocampus:Memory Encoding Failed: connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "user"
 
-INFO:     127.0.0.1:55442 - "POST /process HTTP/1.1" 200 OK
-INFO:     199.45.154.122:11900 - "GET / HTTP/1.1" 200 OK
-WARNING:  Invalid HTTP request received.
-INFO:     199.45.154.122:54676 - "GET / HTTP/1.1" 200 OK
-WARNING:  Invalid HTTP request received.
-INFO:     199.45.154.122:54706 - "GET /favicon.ico HTTP/1.1" 404 Not Found
-WARNING:  Invalid HTTP request received.
-INFO:     199.45.154.122:61740 - "GET /sitemap.xml HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40260 - "POST /process HTTP/1.1" 200 OK
