@@ -21,3 +21,6 @@ INFO:miso.core.cortex:Reasoning Arc: Firing gemini-2.5-flash
 INFO:miso.memory.vector:Recalling memories for: Create a file named 'miso_project/utils/v80_real.txt' with the text 'I exist'. Then output GIT_PUSH: "Real File Creation".
 /home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/qdrant_client/common/client_warnings.py:8: UserWarning: `query` method has been deprecated and will be removed in 1.17. Instead, inference can be done internally within regular methods like `query_points` by wrapping data into `models.Document` or `models.Image`.
   warnings.warn(message, category, stacklevel=stacklevel)
+ERROR:miso.memory.hippocampus:Memory Encoding Failed: connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "user"
+
+INFO:     127.0.0.1:39184 - "POST /process HTTP/1.1" 200 OK

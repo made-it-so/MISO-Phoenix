@@ -4994,3 +4994,19 @@ INFO:werkzeug:172.31.28.213 - - [03/Dec/2025 19:50:19] "[33mGET /healthcheck_te
 INFO:werkzeug:172.31.47.200 - - [03/Dec/2025 19:50:20] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
 INFO:werkzeug:172.31.28.213 - - [03/Dec/2025 19:50:49] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
 INFO:werkzeug:172.31.47.200 - - [03/Dec/2025 19:50:50] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.28.213 - - [03/Dec/2025 19:51:19] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.47.200 - - [03/Dec/2025 19:51:20] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.28.213 - - [03/Dec/2025 19:51:49] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.47.200 - - [03/Dec/2025 19:51:51] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+ERROR:werkzeug:35.203.210.70 - - [03/Dec/2025 19:52:14] code 400, message Bad request version ('À\x13À')
+INFO:werkzeug:35.203.210.70 - - [03/Dec/2025 19:52:14] "[35m[1m\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03clÖ\x9b\x1dà\x8e½\x1e\x99Ó\x86ðG¡X£h\x93\x03HÌìZK¬\x08TÐ¬ß\x82 P\x90ð\x8b\x07\x9eÖ\x07©¿\x83gÆº\x19bu\x12ÚD\x99§±\x06\x9e±Æ\x0b·(f/\x00&À+À/À,À0Ì©Ì¨À\x09À\x13À[0m" HTTPStatus.BAD_REQUEST -
+ERROR:werkzeug:35.203.210.70 - - [03/Dec/2025 19:52:14] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03\x08')
+INFO:werkzeug:35.203.210.70 - - [03/Dec/2025 19:52:14] "[35m[1m\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03\x08\x85y¼Ì\x196\x8aÛ7U\x94\x9fÔ¼-\x86\x18Rd\x94Æy4\x88[0m" HTTPStatus.BAD_REQUEST -
+INFO:werkzeug:172.31.28.213 - - [03/Dec/2025 19:52:19] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.47.200 - - [03/Dec/2025 19:52:21] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.28.213 - - [03/Dec/2025 19:52:49] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.47.200 - - [03/Dec/2025 19:52:51] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.28.213 - - [03/Dec/2025 19:53:19] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.47.200 - - [03/Dec/2025 19:53:21] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.28.213 - - [03/Dec/2025 19:53:49] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
+INFO:werkzeug:172.31.47.200 - - [03/Dec/2025 19:53:51] "[33mGET /healthcheck_temp HTTP/1.1[0m" 404 -
