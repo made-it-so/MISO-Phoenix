@@ -45,7 +45,7 @@ PROTOCOL:
 1. If asked to act, WRITE PYTHON CODE.
 2. If asked to save/push work, output: GIT_PUSH: "Commit Message"
 """
-        # Clients (Lazy Load omitted for brevity, same as V80)
+        # Clients (Lazy Load)
         self.openai_key = os.getenv("OPENAI_API_KEY")
         if self.openai_key: self.openai_client = openai.OpenAI(api_key=self.openai_key)
         else: self.openai_client = None
@@ -154,11 +154,10 @@ PROTOCOL:
             result = {"error": str(e)}
             logger.error(f"Cortex Failure: {e}")
 
-        # FINANCIAL LEDGER
+        # FINANCIAL LEDGER (The new bottom line)
         latency = int((time.time() - start_time) * 1000)
-        # Calculate precise cost
         cost = self.cfo.estimate_request_cost(model, len(payload)//4, len(str(result))//4)
-        result["cost"] = f"${cost:.6f}" # Attach bill to result
+        result["cost"] = f"${cost:.6f}" # Attach bill
         
         self.hippocampus.log_synapse(task_type, model, success, latency, 0, payload, result)
         return result
