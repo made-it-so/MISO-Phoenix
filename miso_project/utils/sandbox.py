@@ -3,6 +3,7 @@ import tarfile
 import io
 import time
 import logging
+import os
 from typing import Dict, Optional
 
 # Rigid Logging
@@ -10,8 +11,8 @@ logger = logging.getLogger("miso.backbone.sandbox")
 
 class DockerSandbox:
     """
-    The Immune System's Enforcer.
-    Executes untrusted code in a strictly isolated, ephemeral Docker container.
+    The Immune System's Enforcer (V2 - Tactile).
+    Now mounts the current working directory so file changes persist.
     """
     
     def __init__(self, image: str = "python:3.11-slim"):
@@ -19,9 +20,10 @@ class DockerSandbox:
             self.client = docker.from_env()
             self.image = image
             self._pull_image_if_missing()
+            # We map the Host's current folder to /app in the container
+            self.host_path = os.getcwd()
         except Exception as e:
             logger.error(f"Failed to initialize Docker client: {e}")
-            # We don't raise here to allow Cortex boot, but sandbox will fail if called
             self.client = None
 
     def _pull_image_if_missing(self):
@@ -30,17 +32,6 @@ class DockerSandbox:
         except docker.errors.ImageNotFound:
             logger.info(f"Backbone: Pulling sandbox image {self.image}...")
             self.client.images.pull(self.image)
-
-    def _create_context_tar(self, code: str, filename: str = "script.py") -> bytes:
-        tar_stream = io.BytesIO()
-        with tarfile.open(fileobj=tar_stream, mode='w') as tar:
-            data = code.encode('utf-8')
-            tar_info = tarfile.TarInfo(name=filename)
-            tar_info.size = len(data)
-            tar_info.mtime = time.time()
-            tar.addfile(tarinfo=tar_info, fileobj=io.BytesIO(data))
-        tar_stream.seek(0)
-        return tar_stream.read()
 
     def execute(self, 
                 code: str, 
@@ -53,21 +44,30 @@ class DockerSandbox:
 
         container = None
         try:
+            # PROPRIOCEPTION: Mount the host directory so files persist
+            volumes = {
+                self.host_path: {'bind': '/app', 'mode': 'rw'}
+            }
+
+            # Create the script file directly on the host first
+            # This avoids complex tar injection issues with mounted volumes overwriting
+            script_path = os.path.join(self.host_path, "execution_script.py")
+            with open(script_path, "w") as f:
+                f.write(code)
+
             # Spin up the container (The Cell)
             container = self.client.containers.run(
                 self.image,
-                command="python /app/script.py",
+                command="python execution_script.py", # Run the mounted script
                 detach=True,
-                network_disabled=True,
+                network_disabled=True, # Still airgapped network-wise
                 mem_limit=memory_limit,
                 cpu_period=100000,
                 cpu_quota=cpu_quota,
                 working_dir="/app",
+                volumes=volumes, # <--- The Bridge to Reality
                 tty=False
             )
-
-            # Inject Code
-            container.put_archive("/app", self._create_context_tar(code))
 
             # Monitor Lifecycle
             start_time = time.time()
@@ -96,6 +96,9 @@ class DockerSandbox:
         except Exception as e:
             return {"status": "system_failure", "stdout": "", "stderr": str(e)}
         finally:
+            # Cleanup the temporary script
+            if os.path.exists("execution_script.py"):
+                os.remove("execution_script.py")
             if container:
                 try: container.remove(force=True)
                 except: pass
