@@ -1,0 +1,7 @@
+{
+  "REFINEMENT: workspace/test_calculator.py:2: Cannot find implementation or library stub for module named \"calculator\" ": {
+    "tool": "create_file",
+    "file_path": "workspace/calculator.py",
+    "content": "def add_numbers(a, b):\n    return a + b\n"
+  }
+}

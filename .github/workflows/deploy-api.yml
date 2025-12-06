@@ -1,0 +1,96 @@
+name: Deploy MISO API
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'miso-api/**'
+      - '.github/workflows/deploy-api.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+      with:
+        registry: "356206423360.dkr.ecr.us-east-1.amazonaws.com"
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: miso-api
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Ensure repo exists (idempotent)
+        aws ecr describe-repositories --repository-names $ECR_REPOSITORY || aws ecr create-repository --repository-name $ECR_REPOSITORY
+
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./miso-api
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Create new Task Definition JSON
+      id: task-def
+      run: |
+        cat > api-task-def.json <<EOF
+        {
+            "family": "miso-api-task",
+            "executionRoleArn": "arn:aws:iam::356206423360:role/miso-fargate-exec-role-v2",
+            "taskRoleArn": "arn:aws:iam::356206423360:role/miso-fargate-task-role-v2",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "256",
+            "memory": "512",
+            "containerDefinitions": [
+                {
+                    "name": "miso-api",
+                    "image": "${{ steps.build-image.outputs.image }}",
+                    "essential": true,
+                    "portMappings": [
+                        {
+                            "containerPort": 80,
+                            "hostPort": 80
+                        }
+                    ],
+                    "logConfiguration": {
+                        "logDriver": "awslogs",
+                        "options": {
+                            "awslogs-group": "/ecs/miso-worker-task",
+                            "awslogs-region": "us-east-1",
+                            "awslogs-stream-prefix": "api"
+                        }
+                    }
+                }
+            ]
+        }
+        EOF
+
+    - name: Register new Task Definition
+      id: register-task
+      run: |
+        NewTaskArn=$(aws ecs register-task-definition --cli-input-json file://api-task-def.json | jq -r .taskDefinition.taskDefinitionArn)
+        echo "task_definition_arn=$NewTaskArn" >> $GITHUB_OUTPUT
+
+    - name: Deploy to ECS
+      run: |
+        aws ecs update-service \
+          --cluster MISO-Cluster-Elastic \
+          --service miso-api-service-iac \
+          --task-definition ${{ steps.register-task.outputs.task_definition_arn }} \
+          --force-new-deployment

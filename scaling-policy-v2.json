@@ -1,0 +1,17 @@
+{
+    "TargetValue": 3.0,
+    "CustomizedMetricSpecification": {
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Namespace": "AWS/SQS",
+        "Dimensions": [
+            {
+                "Name": "QueueName",
+                "Value": "miso_job_queue"
+            }
+        ],
+        "Statistic": "Average",
+        "Unit": "Count"
+    },
+    "ScaleOutCooldown": 120,
+    "ScaleInCooldown": 120
+}

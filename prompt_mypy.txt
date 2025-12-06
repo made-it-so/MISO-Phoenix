@@ -1,0 +1,1 @@
+The mypy static analysis of the MISO codebase identified two errors: a missing library stub or py.typed marker for the 'plugin_loader' module in src/integration_code.py, and a duplicate source file issue in src/miso_engine/agents.py, which halted further checking.

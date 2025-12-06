@@ -1,0 +1,9 @@
+# Local Terraform files
+**/.terraform/
+**/.terraform.lock.hcl
+
+# Local Python cache
+**/__pycache__/
+**/*.pyc
+.env
+.env

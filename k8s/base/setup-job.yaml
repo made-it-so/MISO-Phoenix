@@ -1,0 +1,49 @@
+# 1. The Privileged Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: miso-setup-sa
+  namespace: default
+---
+# 2. The Role (Power to Create Secrets)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: secret-maker
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "create", "patch"]
+---
+# 3. The Binding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: setup-sa-binding
+subjects:
+- kind: ServiceAccount
+  name: miso-setup-sa
+roleRef:
+  kind: Role
+  name: secret-maker
+  apiGroup: rbac.authorization.k8s.io
+---
+# 4. The Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: miso-setup-keys
+spec:
+  ttlSecondsAfterFinished: 60 
+  template:
+    spec:
+      serviceAccountName: miso-setup-sa # <--- ONLY the Job gets this power
+      containers:
+      - name: key-maker
+        image: localhost:32000/miso-brain:10-2-2025
+        imagePullPolicy: Always
+        command: ["python3", "mint_admin.py"] 
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+      restartPolicy: OnFailure

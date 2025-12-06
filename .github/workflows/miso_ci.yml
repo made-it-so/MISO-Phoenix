@@ -1,0 +1,54 @@
+name: "MISO CI: Pytest Failure Trigger"
+on:
+  push:
+    branches:
+      - main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    outputs:
+      pytest_outcome: ${{ steps.pytest.outcome }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install -r requirements.txt
+      - name: Run Pytest and Capture Log
+        id: pytest
+        run: |
+          set -o pipefail
+          pytest 2>&1 | tee pytest_errors.log
+        continue-on-error: true
+      - name: Upload pytest log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-log
+          path: pytest_errors.log
+  trigger-miso:
+    needs: test
+    if: needs.test.outputs.pytest_outcome == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pytest-log
+      - run: sudo apt-get update && sudo apt-get install -y jq
+      - name: "CRITICAL FAILURE: Triggering MISO Fixer"
+        run: |
+          MISO_API_ENDPOINT="https://miso.stemcultivation.com/miso/trigger"
+          
+          ERROR_LOG=$(cat pytest_errors.log)
+          JSON_PAYLOAD=$(jq -n \
+            --arg event "pytest_failure" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg commit_sha "${{ github.sha }}" \
+            --arg error_log "$ERROR_LOG" \
+            '{event: $event, branch: $branch, commit_sha: $commit_sha, error_log: $error_log}')
+          
+          curl --fail-with-body --connect-timeout 60 --max-time 180 \
+            -X POST "$MISO_API_ENDPOINT" \
+            --header "Content-Type: application/json" \
+            --header "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
+            --data-raw "$JSON_PAYLOAD"

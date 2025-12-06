@@ -1,0 +1,8 @@
+[
+  {
+    "topic": "bitcoin_miner.py",
+    "outcome": "FAILURE",
+    "details": "Terminated by CFO due to negative ROI (Cost > 0, Improvement = 0).",
+    "timestamp": 0
+  }
+]

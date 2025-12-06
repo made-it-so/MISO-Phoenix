@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: miso-db
+spec:
+  ports:
+  - port: 5432
+  selector:
+    app: miso-db
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miso-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: miso-db
+  template:
+    metadata:
+      labels:
+        app: miso-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_USER
+          value: "miso_admin"
+        - name: POSTGRES_PASSWORD
+          value: "change_me_in_prod" # SECURITY AUDIT: Use K8s Secrets in Phase 34
+        - name: POSTGRES_DB
+          value: "miso_vault"
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-storage
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc

@@ -1,0 +1,41 @@
+cat << 'EOF' > ~/MISO-Phoenix/generation_prompt.txt
+Generate the complete Python code for the file src/miso_swarm/worker_agents.py based on these requirements:
+
+1.  **Filename:** The final code must be intended for a file named `worker_agents.py` located within a `src/miso_swarm/` directory structure.
+2.  **Imports:** The file should primarily import from `autogen` and standard Python libraries (`sys`, `subprocess`, `os`, `logging`, `typing`, `pathlib`, `re`).
+    * **CRITICAL:** It **must NOT** contain any code that modifies `sys.path`.
+    * It **must NOT** attempt to import from other modules within the `miso_swarm` package (like `agents.py` or `utils.py`).
+3.  **Required Functions:** The file **must** define the following four functions:
+    * `create_code_writer_agent`
+    * `create_code_reviewer_agent`
+    * `create_code_tester_agent`
+    * `create_code_execution_agent`
+4.  **Function Signatures:** Each of these four functions **must** accept exactly one argument:
+    * `llm_config: Dict[str, Any]`
+5.  **Function Return Types:**
+    * `create_code_writer_agent` must return an `autogen.AssistantAgent`.
+    * `create_code_reviewer_agent` must return an `autogen.AssistantAgent`.
+    * `create_code_tester_agent` must return an `autogen.AssistantAgent`.
+    * `create_code_execution_agent` must return an `autogen.UserProxyAgent`.
+6.  **Agent Configuration:** Each function should instantiate and configure the corresponding Autogen agent, including:
+    * A unique `name` (e.g., "CodeWriter").
+    * A descriptive `system_message` (ensure these are correctly formatted, especially multi-line examples, and instruct agents *not* to talk to humans). Use the prompts from our latest correct version.
+    * Passing the received `llm_config` to the agent's constructor.
+    * For `create_code_execution_agent`, setting `human_input_mode="NEVER"` and configuring `code_execution_config` (setting `work_dir` to `"workspace"`). It should also register the custom `execution_reply_func`.
+7.  **`execution_reply_func`:** The file **must** also define the helper function `execution_reply_func`.
+    * This function implements the custom logic for the `CodeExecutionAgent`.
+    * It needs access to imports like `sys`, `subprocess`, `os`, `logging`, `Path`, `re`, `typing`.
+    * Its signature must be compatible with `register_reply` (accepting `self`, `messages=Optional[...]`, `sender=Optional[...]`, `config=Optional[...]`).
+    * It must reliably return a `Tuple[bool, Optional[str]]`.
+    * It **must** contain logic to search the chat history backwards to find the last message containing executable code blocks (`python`, `pytest`, `bash`, `sh`) or `requirements.txt`.
+    * It must correctly parse filenames from markdown headers (e.g., ```python filename="app.py" ...```), with robust fallback naming.
+    * It must correctly handle paths when using `subprocess.run`, passing only the relative filename when the `cwd` is set to the `work_dir`.
+    * It must handle installation of `requirements.txt` if found.
+    * It must run `pytest` if test files are found.
+    * It must run non-test Python scripts if found (and if tests passed or weren't run).
+    * It must return the execution logs and append "TASK:COMPLETE" if successful.
+    * It must handle errors gracefully (e.g., no code found, execution errors, timeouts) and return informative error messages within the `Tuple[bool, Optional[str]]`. Use `try...except` blocks.
+8.  **Syntactic Correctness:** The entire file must be valid Python 3 code with no syntax errors. Ensure all triple-quoted strings (`"""`) are correctly terminated.
+
+Output the code in a single ```python filename="worker_agents.py" ... ``` block. Do not include explanations outside of code comments.
+EOF

@@ -1,0 +1,10 @@
+[
+  {
+    "name": "miso-api-container",
+    "image": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso-api:v4",
+    "portMappings": [ { "containerPort": 5000, "protocol": "tcp" } ],
+    "environment": [ { "name": "MISO_SQS_QUEUE_URL", "value": "https://queue.amazonaws.com/356206423360/miso_job_queue" } ],
+    "secrets": [ { "name": "MISO_WEBHOOK_SECRET_ARN", "valueFrom": "arn:aws:secretsmanager:us-east-1:356206423360:secret:miso/webhook_secret-lxlx5U" } ],
+    "logConfiguration": { "logDriver": "awslogs", "options": { "awslogs-group": "/ecs/miso-api", "awslogs-region": "us-east-1", "awslogs-stream-prefix": "ecs" } }
+  }
+]

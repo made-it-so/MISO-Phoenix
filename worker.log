@@ -1,0 +1,35 @@
+nohup: ignoring input
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+ 
+ -------------- celery@ip-172-31-16-61 v5.6.0 (recovery)
+--- ***** ----- 
+-- ******* ---- Linux-6.8.0-1040-aws-x86_64-with-glibc2.35 2025-12-03 20:11:57
+- *** --- * --- 
+- ** ---------- [config]
+- ** ---------- .> app:         miso_swarm:0x766783ffea10
+- ** ---------- .> transport:   redis://localhost:6379/0
+- ** ---------- .> results:     redis://localhost:6379/0
+- *** --- * --- .> concurrency: 2 (prefork)
+-- ******* ---- .> task events: ON
+--- ***** ----- 
+ -------------- [queues]
+                .> celery           exchange=celery(direct) key=celery
+                
+
+[tasks]
+  . miso_project.core.swarm.perform_reflex_action
+  . miso_project.core.swarm.perform_research_task
+
+[2025-12-03 20:11:57,797: INFO/MainProcess] Connected to redis://localhost:6379/0
+[2025-12-03 20:11:57,802: INFO/MainProcess] mingle: searching for neighbors
+[2025-12-03 20:11:58,815: INFO/MainProcess] mingle: all alone
+[2025-12-03 20:11:58,829: INFO/MainProcess] celery@ip-172-31-16-61 ready.
+[2025-12-03 20:12:14,415: INFO/MainProcess] Task miso_project.core.swarm.perform_research_task[ed3152b3-d51c-4027-92cb-2ec1ad59edab] received
+[2025-12-03 20:12:14,417: INFO/ForkPoolWorker-2] Drone ed3152b3-d51c-4027-92cb-2ec1ad59edab: Scouting '"Autonomous Swarm Logistics"'...
+[2025-12-03 20:12:14,419: INFO/ForkPoolWorker-2] Scouting arXiv for: "Autonomous Swarm Logistics"
+[2025-12-03 20:12:14,419: INFO/ForkPoolWorker-2] Requesting page (first: True, try: 0): https://export.arxiv.org/api/query?search_query=%22Autonomous+Swarm+Logistics%22&id_list=&sortBy=relevance&sortOrder=descending&start=0&max_results=100
+[2025-12-03 20:12:14,739: INFO/ForkPoolWorker-2] Got first page: 5 of 5 total results
+[2025-12-03 20:12:22,146: INFO/ForkPoolWorker-2] Task miso_project.core.swarm.perform_research_task[ed3152b3-d51c-4027-92cb-2ec1ad59edab] succeeded in 7.728668631054461s: {'status': 'complete', 'papers': [{'title': 'Self-Organizing Aerial Swarm Robotics for Resilient Load Transportation : A Table-Mechanics-Inspired Approach', 'summary': 'In comparison with existing approaches, which struggle with scalability, communication dependency, and robustness against dynamic failures, cooperative aerial transportation via robot swarms holds transformative potential for logistics and disaster response. Here, we present a physics-inspired cooperative transportation approach for flying robot swarms that imitates the dissipative mechanics of table-leg load distribution. By developing a decentralized dissipative force model, our approach enabl...', 'url': 'https://arxiv.org/pdf/2509.03563v1', 'published': '2025-09-03'}, {'title': 'Industry 6.0: New Generation of Industry driven by Generative AI and Swarm of Heterogeneous Robots', 'summary': 'This paper presents the concept of Industry 6.0, introducing the world\'s first fully automated production system that autonomously handles the entire...', ...}]}
+
+worker: Warm shutdown (MainProcess)

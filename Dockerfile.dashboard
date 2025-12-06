@@ -1,0 +1,7 @@
+import os
+FROM python:3.11-slim
+WORKDIR /app
+RUN pip install --no-cache-dir streamlit redis pandas numpy watchdog
+COPY miso-worker/app/admin_console.py .
+ENV REDIS_HOST="miso-msd-cache.me5spp.0001.use1.cache.amazonaws.com"
+CMD ["streamlit", "run", "admin_console.py", "--server.port=8501", "--server.address=0.0.0.0"]

@@ -1,0 +1,8 @@
+{
+    "TargetValue": 3.0,
+    "PredefinedMetricSpecification": {
+        "PredefinedMetricType": "SQSQueueLReceive"
+    },
+    "ScaleOutCooldown": 120,
+    "ScaleInCooldown": 120
+}

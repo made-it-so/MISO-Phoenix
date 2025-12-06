@@ -1,0 +1,41 @@
+nohup: ignoring input
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+[16:56:40] Scanning available neural models...
+[16:56:40] Brain Connected: models/gemini-pro-latest
+--- THE ADAPTIVE SCIENTIST ONLINE ---
+[16:57:13] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬
+[16:57:58] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬
+[16:58:36] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬
+[16:59:10] Mutation Score: 0.1 -> Discarded.
+[17:00:07] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬
+[17:00:46] Mutation Score: 0.0 -> Discarded.
+[17:01:39] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬
+[17:02:13] Mutation Score: 0.0 -> Discarded.
+[17:03:03] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬
+[17:03:32] Mutation Score: 0.0 -> Discarded.
+[17:04:09] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬
+[17:04:51] Mutation Score: 0.0 -> Discarded.
+[17:05:34] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬
+[17:06:08] Mutation Score: 0.0 -> Discarded.
+[17:06:48] Mutation Score: 0.0 -> Discarded.
+[17:07:27] Mutation Score: 1.0 -> EVOLUTION COMMITTED! 🧬
+[17:08:00] Mutation Score: 0.0 -> Discarded.
+[17:08:37] Mutation Score: 0.3 -> Discarded.
+[17:09:23] Mutation Score: 0.0 -> Discarded.
+[17:10:03] Mutation Score: 0.1 -> Discarded.
+[17:10:37] Mutation Score: 1.0 -> EVOLUTION COMMITTED! 🧬
+[17:11:18] Mutation Score: 0.0 -> Discarded.
+[17:11:52] Mutation Score: 1.0 -> EVOLUTION COMMITTED! 🧬
+[17:12:21] Mutation Score: 0.0 -> Discarded.
+[17:12:57] Mutation Score: 0.95 -> EVOLUTION COMMITTED! 🧬
+[17:13:46] Mutation Score: 0.0 -> Discarded.
+[17:14:30] Mutation Score: 0.0 -> Discarded.
+[17:15:25] Mutation Score: 0.0 -> Discarded.
+[17:15:58] Mutation Score: 0.0 -> Discarded.
+[17:16:46] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬
+[17:17:30] Mutation Score: 0.0 -> Discarded.
+[17:18:23] Mutation Score: 0.0 -> Discarded.
+[17:18:54] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬
+[17:19:34] Mutation Score: 0.95 -> EVOLUTION COMMITTED! 🧬
+[17:20:29] Mutation Score: 0.9 -> EVOLUTION COMMITTED! 🧬

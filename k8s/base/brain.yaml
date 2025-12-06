@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miso-brain
+  labels:
+    app: miso-brain
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: miso-brain
+  template:
+    metadata:
+      labels:
+        app: miso-brain
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: python-app
+        image: localhost:32000/miso-brain:10-2-2025
+        imagePullPolicy: Always
+        env:
+        - name: FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: miso-admin-key
+              key: fernet-key
+        - name: DATABASE_URL
+          value: "postgresql://postgres:dbpassword@miso-db:5432/miso_db"
+        - name: REDIS_URL
+          value: "redis://miso-redis:6379"
+        ports:
+        - containerPort: 8000
+          name: http
+        
+        # --- RESOURCES ---
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "250m"
+          limits:
+            memory: "3Gi"
+            cpu: "1000m"
+            
+        # --- PROBES ---
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          failureThreshold: 18
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          
+        # --- CRITICAL FIX: MOUNT DOCKER SOCKET ---
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: docker-sock
+      
+      volumes:
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: miso-brain
+spec:
+  selector:
+    app: miso-brain
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000

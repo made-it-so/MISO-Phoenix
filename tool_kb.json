@@ -1,0 +1,23 @@
+{
+  "execute_shell": {
+    "description": "Executes a standard, non-interactive shell command in the workspace.",
+    "usage_example": {
+      "task": "Create a new directory named 'docs'.",
+      "command": "mkdir docs"
+    }
+  },
+  "read_file": {
+    "description": "Reads the full contents of a file from the source code repository, not the workspace. The contents will be passed to a specialist for analysis.",
+    "usage_example": {
+      "task": "Read the 'main.py' file to check for bugs.",
+      "file_path": "main.py"
+    }
+  },
+  "write_file": {
+    "description": "Writes content to a file in the workspace.",
+    "usage_example": {
+      "task": "Write 'Hello, World!' to a file named 'hello.txt'.",
+      "command": "echo 'Hello, World!' > hello.txt"
+    }
+  }
+}

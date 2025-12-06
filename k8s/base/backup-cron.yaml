@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: miso-db-backup
+spec:
+  schedule: "0 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: postgres-backup
+            image: postgres:15-alpine
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "💾 Starting Universal Backup..."
+              FILENAME=miso_full_backup_$(date +%Y-%m-%d_%H%M%S).sql
+              
+              # Use pg_dumpall + error checking
+              PGPASSWORD=$POSTGRES_PASSWORD pg_dumpall -h miso-db -U postgres --clean --if-exists --file=/backup/$FILENAME
+              
+              # Verify file size is not zero
+              if [ ! -s /backup/$FILENAME ]; then
+                echo "❌ CRITICAL: Backup is empty/failed!"
+                rm /backup/$FILENAME
+                exit 1
+              else
+                SIZE=$(du -h /backup/$FILENAME | cut -f1)
+                echo "✅ Success: $FILENAME ($SIZE)"
+              fi
+              
+              # Cleanup old files
+              find /backup -name "miso_*.sql" -mtime +7 -delete
+            env:
+            - name: POSTGRES_PASSWORD
+              value: "dbpassword"
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backup
+          restartPolicy: OnFailure
+          volumes:
+          - name: backup-storage
+            hostPath:
+              path: /home/ubuntu/miso_backups
+              type: DirectoryOrCreate

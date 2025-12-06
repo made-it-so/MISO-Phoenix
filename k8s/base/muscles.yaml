@@ -1,0 +1,80 @@
+# --- MUSCLE A: CHEAP (AWS Spot) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miso-muscle-cheap
+  labels:
+    app: muscle-cheap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: muscle-cheap
+  template:
+    metadata:
+      labels:
+        app: muscle-cheap
+    spec:
+      containers:
+      - name: muscle
+        image: localhost:32000/miso-brain:10-2-2025
+        command: ["uvicorn", "muscle_main:app", "--host", "0.0.0.0", "--port", "8000"]
+        env:
+        - name: PROVIDER_ID
+          value: "aws-spot-us-east-1"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: muscle-cheap
+spec:
+  selector:
+    app: muscle-cheap
+  ports:
+    - port: 80
+      targetPort: 8000
+
+# --- MUSCLE B: PREMIUM (Azure GPU) ---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miso-muscle-premium
+  labels:
+    app: muscle-premium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: muscle-premium
+  template:
+    metadata:
+      labels:
+        app: muscle-premium
+    spec:
+      containers:
+      - name: muscle
+        image: localhost:32000/miso-brain:10-2-2025
+        command: ["uvicorn", "muscle_main:app", "--host", "0.0.0.0", "--port", "8000"]
+        env:
+        - name: PROVIDER_ID
+          value: "azure-gpu-west-europe"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: muscle-premium
+spec:
+  selector:
+    app: muscle-premium
+  ports:
+    - port: 80
+      targetPort: 8000

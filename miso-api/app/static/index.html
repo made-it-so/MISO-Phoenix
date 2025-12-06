@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MISO V12.1 DEBUG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white font-mono">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function App() {
+            const [decisions, setDecisions] = React.useState([]);
+            const [stats, setStats] = React.useState({GCP: 0, AZURE: 0, AWS: 0});
+            const [error, setError] = React.useState(null);
+            const [lastFetch, setLastFetch] = React.useState("Never");
+
+            const fetchStats = async () => {
+                try {
+                    const res = await fetch('/stats');
+                    if (!res.ok) throw new Error(`Stats Error: ${res.status}`);
+                    const json = await res.json();
+                    setStats(json);
+                } catch (err) {
+                    console.error(err);
+                    setError(err.message);
+                }
+            };
+
+            const fetchDecisions = async () => {
+                try {
+                    const res = await fetch('/decisions');
+                    if (!res.ok) throw new Error(`Decisions Error: ${res.status}`);
+                    const json = await res.json();
+                    setDecisions(json);
+                } catch (err) {
+                    console.error(err);
+                    setError(err.message);
+                }
+            };
+
+            React.useEffect(() => {
+                const tick = () => {
+                    fetchStats();
+                    fetchDecisions();
+                    setLastFetch(new Date().toLocaleTimeString());
+                };
+                tick();
+                const interval = setInterval(tick, 2000);
+                return () => clearInterval(interval);
+            }, []);
+
+            return (
+                <div class="p-6 max-w-7xl mx-auto">
+                    <header class="mb-8 border-b border-gray-700 pb-4 flex justify-between">
+                        <h1 class="text-3xl font-bold text-yellow-400">MISO V12.1 <span class="text-white">DEBUG MODE</span></h1>
+                        <div class="text-right text-xs text-gray-500">
+                            LAST FETCH: {lastFetch}<br/>
+                            {error && <span class="text-red-500 font-bold">ERROR: {error}</span>}
+                        </div>
+                    </header>
+
+                    {/* RAW DATA DUMP (For Debugging) */}
+                    <div class="bg-gray-800 p-4 mb-6 rounded font-mono text-xs overflow-auto max-h-32 border border-gray-600">
+                        <div class="text-gray-400 mb-1">RAW STATS PAYLOAD:</div>
+                        <pre class="text-green-400">{JSON.stringify(stats, null, 2)}</pre>
+                    </div>
+
+                    {/* VISUALIZATION */}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-gray-800 p-6 rounded-lg border border-gray-600">
+                            <h2 class="text-sm text-gray-400 mb-4 uppercase">GCP Latency</h2>
+                            <div class="flex items-center gap-4">
+                                <div class="text-4xl font-bold text-blue-400">{stats.GCP || 0}ms</div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full transition-all duration-500" style={{width: `${Math.min(stats.GCP / 5, 100)}%`}}></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-lg border border-gray-600">
+                            <h2 class="text-sm text-gray-400 mb-4 uppercase">Azure Latency</h2>
+                            <div class="flex items-center gap-4">
+                                <div class="text-4xl font-bold text-purple-400">{stats.AZURE || 0}ms</div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-purple-500 h-2 rounded-full transition-all duration-500" style={{width: `${Math.min(stats.AZURE / 5, 100)}%`}}></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* DECISIONS LIST */}
+                     <div class="bg-gray-800 rounded border border-gray-700 overflow-hidden">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-black text-gray-500 uppercase text-xs">
+                                <tr>
+                                    <th class="p-3">Time</th>
+                                    <th class="p-3">Duration</th>
+                                    <th class="p-3">Target</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700">
+                                {decisions.slice(0, 10).map((row) => (
+                                    <tr key={row.task_id}>
+                                        <td class="p-3 text-gray-400">{new Date(row.decision_timestamp).toLocaleTimeString()}</td>
+                                        <td class="p-3 text-yellow-400 font-mono">{row.duration_ms}ms</td>
+                                        <td class="p-3">{row.vendor_target}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

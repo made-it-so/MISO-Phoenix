@@ -1,0 +1,22 @@
+name: "MISO Swarm: Manual Test"
+
+on:
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  trigger-swarm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "MANUAL TRIGGER: Activating MISO Swarm"
+        run: |
+          # Using the correct HTTP endpoint and DNS name
+          ALB_DNS_NAME="miso-alb-345728313.us-east-1.elb.amazonaws.com"
+
+          curl --fail-with-body --connect-timeout 60 --max-time 180 \
+            -X POST "http://${ALB_DNS_NAME}/miso/swarm_trigger" \
+            --header "Content-Type: application/json" \
+            --header "Authorization: Bearer ${{ secrets.MISO_WEBHOOK_SECRET }}" \
+            --data-raw '{
+              "event": "manual_swarm_test",
+              "user": "${{ github.actor }}"
+            }'

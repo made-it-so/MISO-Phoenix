@@ -1,0 +1,11 @@
+{
+  "hurdle_rate": 0.05,
+  "investments": {
+    "new_agent.py": {
+      "cost": 0.01,
+      "timestamp": 1763942207.9330485,
+      "status": "LIQUIDATED"
+    }
+  },
+  "generation": 1
+}

@@ -1,0 +1,56 @@
+import os
+
+{
+
+    "family": "miso-worker-task",
+
+    "networkMode": "awsvpc",
+
+    "requiresCompatibilities": ["FARGATE"],
+
+    "cpu": "256",
+
+    "memory": "512",
+
+    "executionRoleArn": "arn:aws:iam::356206423360:role/ecsTaskExecutionRole",
+
+    "containerDefinitions": [
+
+        {
+
+            "name": "miso-worker",
+
+            "image": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso-worker:latest",
+
+            "essential": true,
+
+            "environment": [
+
+                {"name": "GEMINI_API_KEY", "value": "AIzaSyBE_kt6zSl8PZFSRegInVbP_rGKcOkQI1k"},
+
+                {"name": "REDIS_HOST", "value": "miso-msd-cache.me5spp.0001.use1.cache.amazonaws.com"}
+
+            ],
+
+            "logConfiguration": {
+
+                "logDriver": "awslogs",
+
+                "options": {
+
+                    "awslogs-group": "/ecs/miso-worker",
+
+                    "awslogs-region": "us-east-1",
+
+                    "awslogs-stream-prefix": "ecs"
+
+                }
+
+            }
+
+        }
+
+    ]
+
+}
+

@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # 1. THE NERVOUS SYSTEM
+  redis:
+    image: redis:alpine
+    container_name: miso-redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  # 2. THE VAULT (Long-term Memory)
+  db:
+    image: postgres:15-alpine
+    container_name: miso-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: miso_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  # 3. THE BRAIN (API Gateway)
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile.worker # Re-use the equipped body
+    container_name: miso-core
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/app # Mount code for updates
+      - /var/run/docker.sock:/var/run/docker.sock # For spawning sibling containers
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/miso_db
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - db
+    restart: always
+
+  # 4. THE MUSCLE (Swarm Workers)
+  worker:
+    build: 
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: miso-worker
+    command: celery -A miso_project.core.swarm worker --loglevel=info
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/miso_db
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - redis
+      - api
+    restart: always
+
+  # 5. THE FACE (Dashboard)
+  dashboard:
+    build: 
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: miso-dashboard
+    command: streamlit run dashboard.py --server.port 8501 --server.address 0.0.0.0
+    volumes:
+      - .:/app
+    environment:
+      - MISO_API_URL=http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    restart: always
+
+volumes:
+  postgres_data:

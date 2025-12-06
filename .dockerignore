@@ -1,0 +1,9 @@
+# --- MISO GENETIC FILTER ---
+venv/
+__pycache__/
+*.pyc
+.env
+k8s/
+helm/
+docker-compose.yml
+Dockerfile

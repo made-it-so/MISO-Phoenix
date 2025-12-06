@@ -1,0 +1,12 @@
+{
+  "FAST": [],
+  "MID": [
+    "Latency is experiencing a persistent, steady creep, signaling slow system degradation that requires proactive resource analysis before performance thresholds are breached.",
+    "Latency exhibits a steady, albeit slow, upward trend, signaling nascent performance degradation that requires proactive investigation."
+  ],
+  "SLOW": [
+    "Compression Failed",
+    "Model Offline",
+    "Consistent, incremental latency degradation confirms systemic performance drift caused by slow-bleed resource leaks or accumulating state, necessitating immediate preemptive investigation to prevent critical failure."
+  ]
+}

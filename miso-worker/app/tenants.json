@@ -1,0 +1,14 @@
+{
+  "miso_sk_5a2faa08081b1f0e": {
+    "name": "BETA_V42",
+    "tier": "GOLD",
+    "balance": 47.0,
+    "total_spend": 3.0
+  },
+  "miso_sk_643e33b2ff09b2c8": {
+    "name": "RECOVERY_USER",
+    "tier": "GOLD",
+    "balance": -62.0,
+    "total_spend": 72.0
+  }
+}

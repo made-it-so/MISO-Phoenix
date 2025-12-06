@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miso-muscle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: miso-muscle
+  template:
+    metadata:
+      labels:
+        app: miso-muscle
+    spec:
+      containers:
+      - name: worker
+        image: docker.io/library/miso-core:v93
+        imagePullPolicy: Never
+        # CRITICAL FIX: Pointing to the actual location found by grep
+        # Module: miso_project.core.swarm
+        # Variable: celery_app
+        command: ["python", "-m", "celery", "-A", "miso_project.core.swarm:celery_app", "worker", "--loglevel=info"]
+        env:
+        - name: REDIS_HOST
+          value: "miso-redis"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: CELERY_BROKER_URL
+          value: "redis://miso-redis:6379/0"
+        - name: DATABASE_URL
+          value: "postgresql://miso_admin:change_me_in_prod@miso-db:5432/miso_vault"
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+          requests:
+            cpu: "250m"
+            memory: "512Mi"

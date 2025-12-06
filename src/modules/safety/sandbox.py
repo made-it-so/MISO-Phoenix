@@ -1,0 +1,68 @@
+import subprocess
+import logging
+import os
+import json
+import textwrap
+
+logger = logging.getLogger('MISO')
+
+IMAGE_NAME = 'miso-sandbox'
+
+def build_image():
+    try:
+        subprocess.run(['docker', 'build', '-t', IMAGE_NAME, '-f', 'Dockerfile.sandbox', '.'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        logger.info('Sandbox Armor: ACTIVE')
+    except Exception as e:
+        logger.error(f'Failed to build sandbox: {e}')
+
+def run_code(code_snippet, test_harness):
+    # 1. Indent the code so it fits inside the try/except block
+    # We add 4 spaces to every line
+    indented_code = textwrap.indent(code_snippet, '    ')
+    indented_tests = textwrap.indent(test_harness, '    ')
+
+    # 2. Construct the Wrapper
+    # We use double brackets {{ }} for JSON literals
+    wrapped_script = f'''
+import sys
+import json
+
+try:
+{indented_code}
+
+    # --- TEST HARNESS ---
+{indented_tests}
+
+    print(json.dumps({{'status': 'passed', 'msg': 'Tests Passed'}}))
+except AssertionError as e:
+    print(json.dumps({{'status': 'failed', 'msg': 'Assertion Failed'}}))
+except Exception as e:
+    print(json.dumps({{'status': 'error', 'msg': str(e)}}))
+'''
+    
+    with open('wrapper.py', 'w') as f: f.write(wrapped_script)
+
+    # 3. Run Docker
+    try:
+        result = subprocess.run(
+            ['docker', 'run', '--rm', '--network', 'none', '-v', f'{os.getcwd()}/wrapper.py:/app/wrapper.py', IMAGE_NAME],
+            capture_output=True, text=True, timeout=5
+        )
+        
+        output = result.stdout.strip()
+        if not output:
+            # Return 0.0 (float), not False
+            return 0.0, f'Crash/Timeout: {result.stderr}'
+        
+        try:
+            data = json.loads(output.splitlines()[-1])
+            if data['status'] == 'passed': return 1.0, 'PASSED'
+            if data['status'] == 'failed': return 0.4, 'Logic Error'
+            return 0.1, f"Runtime Error: {data['msg']}"
+        except:
+            return 0.1, f'Output Parse Error: {output}'
+            
+    except subprocess.TimeoutExpired:
+        return 0.0, 'Security: Timeout'
+    except Exception as e:
+        return 0.0, f'Sandbox Failure: {e}'

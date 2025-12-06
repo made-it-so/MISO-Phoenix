@@ -1,0 +1,4 @@
+FROM python:3.10-slim
+WORKDIR /app
+# No extra pip installs to keep it fast and secure
+CMD ["python3", "wrapper.py"]
