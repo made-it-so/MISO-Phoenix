@@ -36,3 +36,18 @@ If Docker fails to bind ports (e.g., 5432 or 6379), stop the system services:
 sudo service redis-server stop
 sudo service postgresql stop
 ```
+
+## Docker Troubleshooting (Updated)
+
+### Stale Dependencies
+If you add a package to `requirements.txt` but the container complains it's missing, force a clean build:
+```bash
+docker compose build --no-cache
+```
+
+### Port Conflicts
+If containers fail to start with "Address already in use", stop the system services:
+```bash
+sudo service redis-server stop
+sudo service postgresql stop
+```
