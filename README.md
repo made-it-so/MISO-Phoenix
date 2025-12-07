@@ -51,3 +51,20 @@ If containers fail to start with "Address already in use", stop the system servi
 sudo service redis-server stop
 sudo service postgresql stop
 ```
+
+## Troubleshooting (Updated Dec 7 2025)
+
+### Docker: Stale Dependencies
+If the container fails with "executable not found" (e.g. celery, streamlit) even after you installed it locally:
+Force a clean build to pick up the new `requirements.txt`:
+```bash
+docker compose build --no-cache
+```
+
+### Docker: Port Conflicts
+If containers fail to start with "Address already in use", it means the system-level services are blocking Docker.
+Stop them with:
+```bash
+sudo service redis-server stop
+sudo service postgresql stop
+```
