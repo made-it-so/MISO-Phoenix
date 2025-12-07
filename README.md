@@ -68,3 +68,20 @@ Stop them with:
 sudo service redis-server stop
 sudo service postgresql stop
 ```
+
+## Troubleshooting (Updated Dec 7 2025)
+
+### Docker: Stale Dependencies
+If containers crash with "executable not found" (e.g. celery, streamlit) despite local installation:
+Force a clean build to pick up the new requirements:
+```bash
+docker compose build --no-cache
+```
+
+### Docker: Port Conflicts
+If containers fail with "Address already in use", system services are blocking Docker.
+Stop them with:
+```bash
+sudo service redis-server stop
+sudo service postgresql stop
+```
