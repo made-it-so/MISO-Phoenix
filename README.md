@@ -27,3 +27,12 @@ If Docker containers fail to start, ensure Ubuntu system services aren't hogging
 sudo service redis-server stop
 sudo service postgresql stop
 ```
+
+## Troubleshooting (Updated)
+
+### Port Conflicts
+If Docker fails to bind ports (e.g., 5432 or 6379), stop the system services:
+```bash
+sudo service redis-server stop
+sudo service postgresql stop
+```
