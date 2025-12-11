@@ -76,7 +76,7 @@ class HiveMindOptimizer:
             
             if not plan.get("found"): return
 
-            tool_name = f"tool_{plan['task_name']}_{int(os.getpid())}"
+            tool_name = f"tool_{plan['task_name'].replace(' ', '_').lower()}_{int(os.getpid())}"
             tool_path = f"{TOOLS_DIR}/{tool_name}.py"
             
             with open(tool_path, "w") as f: f.write(plan['python_code'])
