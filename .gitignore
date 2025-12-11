@@ -7,3 +7,6 @@
 **/*.pyc
 .env
 .env
+venv/
+venv/
+venv/

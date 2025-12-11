@@ -26,3 +26,12 @@ def get_model_arsenal(api_key):
         print(f">> ❌ ARSENAL ERROR: {e}")
     
     return arsenal
+
+def get_best_model(api_key):
+    """
+    Wrapper to get the 'pro' model directly,
+    fixing the ImportError in sleep_cycle.py.
+    """
+    arsenal = get_model_arsenal(api_key)
+    # Return Pro if available, otherwise Flash
+    return arsenal.get("pro") or arsenal.get("flash")
