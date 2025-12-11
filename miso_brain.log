@@ -200,3 +200,47 @@ Traceback (most recent call last):
   File "/home/ubuntu/MISO-Phoenix/miso-worker/app/sleep_cycle.py", line 9, in <module>
     from src.utils.model_factory import get_best_model
 ImportError: cannot import name 'get_best_model' from 'src.utils.model_factory' (/home/ubuntu/MISO-Phoenix/src/utils/model_factory.py)
+>> [00:31:45] 💤 TRIGGERING SLEEP CYCLE...
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+Traceback (most recent call last):
+  File "/home/ubuntu/MISO-Phoenix/miso-worker/app/sleep_cycle.py", line 9, in <module>
+    from src.utils.model_factory import get_best_model
+ImportError: cannot import name 'get_best_model' from 'src.utils.model_factory' (/home/ubuntu/MISO-Phoenix/src/utils/model_factory.py)
+>> [00:36:46] 💤 TRIGGERING SLEEP CYCLE...
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+>> ⚡ ARSENAL: Added Flash (models/gemini-2.5-flash)
+>> 🧠 ARSENAL: Added Pro (models/gemini-2.5-pro)
+>> 💎 HIVE MIND OPTIMIZER: Syncing Collective Intelligence...
+>> 🧪 TESTING: tool_Celsius to Fahrenheit Converter_435118...
+>> ❌ TEST FAILED.
+>> ☁️  SYNC: Uploading State to S3...
+>> ✅ State Secured.
+>> [00:42:13] 💤 TRIGGERING SLEEP CYCLE...
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+>> ⚡ ARSENAL: Added Flash (models/gemini-2.5-flash)
+>> 🧠 ARSENAL: Added Pro (models/gemini-2.5-pro)
+>> 💎 HIVE MIND OPTIMIZER: Syncing Collective Intelligence...
+>> 🧪 TESTING: tool_Celsius to Fahrenheit Converter_440298...
+>> ❌ TEST FAILED.
+>> ☁️  SYNC: Uploading State to S3...
+>> ✅ State Secured.
+ >> 💎 CRYSTAL MATCH: Using tool_convert_temp_405697 (Zero Cost)
+ >> ⚡ RESULT: 100.0°C is 212.00°F.
+ >> 💎 CRYSTAL MATCH: Using tool_convert_temp_405697 (Zero Cost)
+ >> ⚡ RESULT: -40.0°C is -40.00°F.
+>> [00:47:37] 💤 TRIGGERING SLEEP CYCLE...
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+>> ⚡ ARSENAL: Added Flash (models/gemini-2.5-flash)
+>> 🧠 ARSENAL: Added Pro (models/gemini-2.5-pro)
+>> 💎 HIVE MIND OPTIMIZER: Syncing Collective Intelligence...
+>> 🧪 TESTING: tool_celsius_to_fahrenheit_conversion_445569...
+>> ❌ TEST FAILED.
+OUTPUT: FAIL: module 'tool_celsius_to_fahrenheit_conversion_445569' has no attribute 'solve'
+
+ERROR: 
+>> ☁️  SYNC: Uploading State to S3...
+>> ✅ State Secured.
