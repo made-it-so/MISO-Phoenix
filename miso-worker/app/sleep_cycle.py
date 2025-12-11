@@ -67,7 +67,7 @@ class HiveMindOptimizer:
         ANALYZE logs. Identify ONE repetitive task for Python automation.
         LOGS: {memory_str}
         OUTPUT JSON: {{"found": bool, "task_name": "str", "regex_trigger": "str", "python_code": "str", "test_input": "str"}}
-        REQUIREMENTS: Code must be robust and self-contained.
+        REQUIREMENTS: Code MUST contain a function named `solve(input_str)` that returns the result.
         """
         try:
             response = self.model.generate_content(analysis_prompt)
@@ -98,7 +98,7 @@ except Exception as e:
             os.remove("temp_test.py")
             
             if "FAIL:" in result.stdout or result.returncode != 0:
-                print(f">> ❌ TEST FAILED.")
+                print(f">> ❌ TEST FAILED.\nOUTPUT: {result.stdout}\nERROR: {result.stderr}")
                 os.remove(tool_path)
                 return
 
