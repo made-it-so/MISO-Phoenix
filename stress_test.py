@@ -1,37 +1,33 @@
-import boto3
+import redis
 import json
-import random
 import time
-import uuid
+import random
+import os
 
-# Configuration
-QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/356206423360/miso_job_queue"
-sqs = boto3.client('sqs', region_name="us-east-1")
+r = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"), port=6379, decode_responses=True)
+QUEUE = "miso:tasks"
 
-VENDORS = ["GCP", "AZURE"]
-VECTORS = ["VEC_A", "VEC_B", "VEC_C", "VEC_D", "VEC_E"] # Limited set to force CACHE HITS
-
-def generate_traffic(count=50):
-    print(f"🚀 INJECTING {count} MARKET ORDERS...")
+tasks = [
+    # TYPE 1: Crystal (Free/Instant) - We use your new tool!
+    {"type": "CRYSTAL", "payload": "Convert 100 Celsius to Fahrenheit"},
+    {"type": "CRYSTAL", "payload": "Convert 0 Celsius to Fahrenheit"},
     
-    for i in range(count):
-        session_id = f"HFT_ORDER_{uuid.uuid4().hex[:8]}"
-        target = random.choice(VENDORS)
-        vector = random.choice(VECTORS)
-        
-        payload = {
-            "session_id": session_id,
-            "cloud_target": target,
-            "feature_hash": vector
-        }
-        
-        sqs.send_message(
-            QueueUrl=QUEUE_URL,
-            MessageBody=json.dumps(payload)
-        )
-        print(f"   -> Sent {session_id} [{target}]")
-        time.sleep(0.1) # 100ms delay (High Frequency)
+    # TYPE 2: Flash (Cheap/Fast) - Simple geography/facts
+    {"type": "FLASH", "payload": "Capital of Spain?"},
+    {"type": "FLASH", "payload": "What is 2+2?"},
+    
+    # TYPE 3: Pro (Expensive/Slow) - Creative coding
+    {"type": "PRO", "payload": "Write a Python haiku generator."},
+    {"type": "PRO", "payload": "Explain quantum entanglement like I'm 5."}
+]
 
-if __name__ == "__main__":
-    generate_traffic(50)
-    print("✅ BATCH COMPLETE.")
+print(f"--- 🌊 INJECTING STRESS TEST (20 Tasks) ---")
+for i in range(20):
+    task = random.choice(tasks)
+    # Add unique ID to track in logs
+    payload = {"id": f"stress_{i}_{task['type']}", "payload": task['payload']}
+    r.rpush(QUEUE, json.dumps(payload))
+    print(f">> 📨 Sent [{task['type']}]: {task['payload'][:30]}...")
+    time.sleep(0.1)
+
+print(">> ✅ FIREHOSE COMPLETE. Watch the Dashboard!")

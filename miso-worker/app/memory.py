@@ -1,62 +1,39 @@
+import json
 import os
-import chromadb
-import uuid
-from chromadb.utils import embedding_functions
-
-# --- BIOLOGICAL MEMORY ---
-# "Replay of sequences underlies episodic memory formation" [Nature Neuroscience]
-# This module acts as the Hippocampus, encoding experiences into stable vector storage.
+import time
 
 class Hippocampus:
     def __init__(self):
-        # Initialize persistent local vector store
-        self.client = chromadb.PersistentClient(path="miso_memory_db")
+        # Shard memory by Process ID for thread safety in Hive Mode
+        self.pid = os.getpid()
+        self.memory_file = f"miso_memory_{self.pid}.json"
         
-        # Use Google's embedding model if available, otherwise default
-        # (Chroma uses all-MiniLM-L6-v2 by default which is fine for local)
-        self.collection = self.client.get_or_create_collection(
-            name="miso_episodic_memory",
-            metadata={"hnsw:space": "cosine"} # Measures semantic similarity
-        )
-        print("--- HIPPOCAMPUS (VECTOR MEMORY) ONLINE ---")
+        if not os.path.exists(self.memory_file):
+            with open(self.memory_file, 'w') as f: json.dump([], f)
+        print(f">> 🧠 HIPPOCAMPUS ONLINE (Shard: {self.pid})")
 
-    def remember(self, task_description, code_solution, outcome="SUCCESS"):
-        """
-        Encodes a completed task into long-term memory.
-        """
-        memory_id = str(uuid.uuid4())
-        
-        self.collection.add(
-            documents=[task_description], # We embed the QUESTION
-            metadatas=[{"solution": code_solution, "outcome": outcome}], # We store the ANSWER
-            ids=[memory_id]
-        )
-        return f"Memory encoded: {memory_id}"
+    def remember(self, prompt, result):
+        entry = {
+            "timestamp": time.time(),
+            "pid": self.pid,
+            "prompt": prompt,
+            "result": result
+        }
+        try:
+            # Atomic append (safer)
+            with open(self.memory_file, 'r+') as f:
+                data = json.load(f)
+                data.append(entry)
+                f.seek(0)
+                json.dump(data, f, indent=2)
+        except: pass
 
-    def recall(self, query_text, n_results=1):
-        """
-        Retrieves relevant past experiences.
-        """
-        results = self.collection.query(
-            query_texts=[query_text],
-            n_results=n_results
-        )
-        
-        if not results['documents'][0]:
-            return None
-            
-        # Return the most relevant past solution
-        best_match = results['metadatas'][0][0]['solution']
-        distance = results['distances'][0][0]
-        
-        # Biological Threshold: If memory is too vague (distance > 0.5), ignore it.
-        if distance > 0.5:
-            return None
-            
-        return best_match
-
-if __name__ == "__main__":
-    # Test the cortex
-    brain = Hippocampus()
-    brain.remember("Write a hello world script", "print('Hello World')")
-    print(f"Recall Test: {brain.recall('coding a greeting script')}")
+    def recall(self, query):
+        # In Hive Mode, recall is local-only for speed. 
+        # Global knowledge comes from the Constitution (updated by Sleep Cycle).
+        try:
+            with open(self.memory_file, 'r') as f:
+                data = json.load(f)
+            matches = [m for m in data if any(w in m['prompt'] for w in query.split())]
+            return json.dumps(matches[-3:] if matches else [])
+        except: return "NO PRECEDENT."

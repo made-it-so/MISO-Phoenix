@@ -1,0 +1,7 @@
+[
+  {
+    "pattern": "(?i)convert\\s+(-?\\d+(?:\\.\\d+)?)\\s+celsius",
+    "module": "tool_convert_temp_405697",
+    "description": "convert_temp"
+  }
+]

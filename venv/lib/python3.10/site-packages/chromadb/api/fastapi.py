@@ -1,6 +1,6 @@
 import orjson
 import logging
-from typing import Any, Dict, Optional, cast, Tuple, List
+from typing import Any, Dict, Mapping, Optional, cast, Tuple, List
 from typing import Sequence
 from uuid import UUID
 import httpx
@@ -104,6 +104,14 @@ class FastAPI(BaseHTTPClient, ServerAPI):
             _headers = self._auth_provider.authenticate()
             for header, value in _headers.items():
                 self._session.headers[header] = value.get_secret_value()
+
+    @override
+    def get_request_headers(self) -> Mapping[str, str]:
+        return dict(self._session.headers)
+
+    @override
+    def get_api_url(self) -> str:
+        return self._api_url
 
     def _make_request(self, method: str, path: str, **kwargs: Dict[str, Any]) -> Any:
         # If the request has json in kwargs, use orjson to serialize it,
@@ -782,10 +790,38 @@ class FastAPI(BaseHTTPClient, ServerAPI):
             client=self,
             id=UUID(resp_json["attached_function"]["id"]),
             name=resp_json["attached_function"]["name"],
-            function_id=resp_json["attached_function"]["function_id"],
+            function_name=resp_json["attached_function"]["function_name"],
             input_collection_id=input_collection_id,
             output_collection=output_collection,
             params=params,
+            tenant=tenant,
+            database=database,
+        )
+
+    @trace_method("FastAPI.get_attached_function", OpenTelemetryGranularity.ALL)
+    @override
+    def get_attached_function(
+        self,
+        name: str,
+        input_collection_id: UUID,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -> "AttachedFunction":
+        """Get an attached function by name for a specific collection."""
+        resp_json = self._make_request(
+            "get",
+            f"/tenants/{tenant}/databases/{database}/collections/{input_collection_id}/functions/{name}",
+        )
+
+        af = resp_json["attached_function"]
+        return AttachedFunction(
+            client=self,
+            id=UUID(af["id"]),
+            name=af["name"],
+            function_name=af["function_name"],
+            input_collection_id=input_collection_id,
+            output_collection=af["output_collection"],
+            params=af.get("params"),
             tenant=tenant,
             database=database,
         )
@@ -794,7 +830,8 @@ class FastAPI(BaseHTTPClient, ServerAPI):
     @override
     def detach_function(
         self,
-        attached_function_id: UUID,
+        name: str,
+        input_collection_id: UUID,
         delete_output: bool = False,
         tenant: str = DEFAULT_TENANT,
         database: str = DEFAULT_DATABASE,
@@ -802,7 +839,7 @@ class FastAPI(BaseHTTPClient, ServerAPI):
         """Detach a function and prevent any further runs."""
         resp_json = self._make_request(
             "post",
-            f"/tenants/{tenant}/databases/{database}/attached_functions/{attached_function_id}/detach",
+            f"/tenants/{tenant}/databases/{database}/collections/{input_collection_id}/attached_functions/{name}/detach",
             json={
                 "delete_output": delete_output,
             },

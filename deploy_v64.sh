@@ -42,7 +42,7 @@ except FileNotFoundError:
 EOF
 
 echo "1. Applying Code Patch..."
-python3 patch_architect_safe.py
+# # python3 patch_architect_safe.py
 
 echo "2. Building Docker Image (V64)..."
 docker build -t miso-v64-gladiator .

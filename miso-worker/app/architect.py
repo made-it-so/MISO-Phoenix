@@ -1,110 +1,88 @@
 import os
-import os
 import json
 import redis
-import subprocess
-import google.generativeai as genai
+import re
+import sys
+import importlib.util
 from datetime import datetime
 from memory import Hippocampus
+from dotenv import load_dotenv
+sys.path.append(os.getcwd())
+from src.utils.model_factory import get_model_arsenal
 
-REDIS_HOST = os.getenv("REDIS_HOST", os.getenv("REDIS_HOST", "localhost"))
-REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+load_dotenv()
+
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GENOME_PATH = "miso-worker/prompts/constitution.txt"
+TOOLS_DIR = "miso-worker/app/tools"
+REGISTRY_PATH = f"{TOOLS_DIR}/registry.json"
 TASK_QUEUE = "miso:tasks"
 
 class SovereignArchitect:
     def __init__(self):
-        self.r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
-        if not GEMINI_API_KEY:
-            print("CRITICAL: No API Key found.")
-            return
-        genai.configure(api_key=GEMINI_API_KEY)
-        self.model = self.find_best_model()
+        print("--- ARCHITECT V68 (MERCENARY ROUTER) ---")
+        self.r = redis.Redis(host=REDIS_HOST, port=6379, decode_responses=True)
         self.hippocampus = Hippocampus()
-        print("--- SOVEREIGN ARCHITECT (V47 SECURE) ONLINE ---")
+        self.arsenal = get_model_arsenal(GEMINI_API_KEY)
 
-    def find_best_model(self):
+    def check_crystal_tools(self, prompt):
+        if not os.path.exists(REGISTRY_PATH): return None
         try:
-            available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-            target = next((m for m in available if "gemini-1.5-flash" in m), 
-                     next((m for m in available if "gemini-pro" in m), available[0] if available else None))
-            return genai.GenerativeModel(target) if target else None
-        except: return None
+            with open(REGISTRY_PATH, "r") as f: registry = json.load(f)
+            for tool in registry:
+                if re.search(tool["pattern"], prompt, re.IGNORECASE):
+                    print(f" >> 💎 CRYSTAL MATCH: Using {tool['module']} (Zero Cost)")
+                    spec = importlib.util.spec_from_file_location(tool["module"], f"{TOOLS_DIR}/{tool['module']}.py")
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    return module.solve(prompt)
+        except: pass
+        return None
 
-    def read_constitution(self):
-        if not os.path.exists(GENOME_PATH): return "You are a helpful AI."
-        with open(GENOME_PATH, "r") as f: return f.read().strip()
+    def route_task(self, prompt):
+        # HEURISTIC ROUTING (The "Value-Added" Decision)
+        
+        # 1. Complexity Check
+        complexity_signals = ["code", "python", "function", "analyze", "why", "reason", "json"]
+        is_complex = any(sig in prompt.lower() for sig in complexity_signals) or len(prompt) > 200
+        
+        if is_complex:
+            print(f" >> 🚦 ROUTING: High Complexity -> PRO Model")
+            return self.arsenal.get("pro")
+        else:
+            print(f" >> 🚦 ROUTING: Low Complexity -> FLASH Model (Cost Saving)")
+            return self.arsenal.get("flash")
 
-    def write_file(self, filename, content):
-        if ".." in filename or filename.startswith("/"): return "ERROR: Access Denied."
-        with open(filename, "w") as f: f.write(content)
-        return f"SUCCESS: Wrote {len(content)} bytes to {filename}"
-
-    def execute_shell(self, command):
-        if "docker" in command: return 1, "ERROR: Recursion limit."
-        try:
-            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=60)
-            output = f"EXIT: {result.returncode}\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-            return result.returncode, output
-        except Exception as e:
-            return 1, f"ERROR: {e}"
-
-    def perform_task(self, task):
-        if not self.model: return
+    def execute(self, task):
         prompt = task.get("payload", "")
-        task_id = task.get("id", "unknown")
-        constitution = self.read_constitution()
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] Architecting {task_id}...")
-
-        past = self.hippocampus.recall(prompt)
-        context = f"RELEVANT PAST:\n{past}\n" if past else "NO PRECEDENT."
-
-        full_prompt = f"""
-        SYSTEM: {constitution}
-        CONTEXT: {context}
-        TASK: {prompt}
         
-        SAFETY PROTOCOL:
-        - If writing a script that modifies AWS/Infrastructure, ensure it prints changes first (Dry Run).
-        
-        TOOLS:
-        1. Write File -> JSON: {{"tool": "write", "filename": "x.py", "content": "..."}}
-        2. Run Shell -> JSON: {{"tool": "shell", "command": "ls -la"}}
-        Output ONLY JSON.
-        """
-        
-        try:
-            response = self.model.generate_content(full_prompt)
-            text = response.text
-            if "```json" in text:
-                json_part = text.split("```json")[1].split("```")[0].strip()
-                data = json.loads(json_part)
-                
-                if data.get("tool") == "write":
-                    res = self.write_file(data["filename"], data["content"])
-                    print(f" >> WRITE: {res}")
-                    # Tentatively memorize writes
-                    self.hippocampus.remember(prompt, data["content"])
-                    
-                elif data.get("tool") == "shell":
-                    exit_code, output = self.execute_shell(data["command"])
-                    print(f" >> SHELL OUTPUT:\n{output}")
-                    
-                    # THE V47 SUCCESS FILTER
-                    if exit_code == 0:
-                        self.hippocampus.remember(prompt, f"COMMAND: {data['command']}\nRESULT: SUCCESS")
-                        print(" >> CONSOLIDATION: Verified Success. Memory Encoded.")
-                    else:
-                        print(" >> CONSOLIDATION ABORTED: Execution Failed.")
-                    
-        except Exception as e:
-            print(f" >> ERROR: {e}")
+        # 1. ZERO COST (Tools)
+        res = self.check_crystal_tools(prompt)
+        if res:
+            print(f" >> ⚡ RESULT: {res}")
+            self.hippocampus.remember(prompt, f"TOOL: {res}")
+            return
 
-    def main_loop(self):
+        # 2. ZERO COST (Backbone)
+        if "CRITICAL" in prompt:
+            print(" >> ⚔️  Gladiator Engaged.")
+            return
+
+        # 3. VARIABLE COST (Mercenary Routing)
+        model = self.route_task(prompt)
+        if model:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] 🧠 Cortex Thinking...")
+            try:
+                response = model.generate_content(prompt)
+                print(f" >> 🗣️  CORTEX: {response.text[:100]}...")
+                self.hippocampus.remember(prompt, response.text)
+            except Exception as e:
+                print(f" >> 💥 Execution Error: {e}")
+
+    def loop(self):
         while True:
-            raw_task = self.r.blpop(TASK_QUEUE, timeout=5)
-            if raw_task: self.perform_task(json.loads(raw_task[1]))
+            task = self.r.blpop(TASK_QUEUE, timeout=5)
+            if task: self.execute(json.loads(task[1]))
 
 if __name__ == "__main__":
-    SovereignArchitect().main_loop()
+    SovereignArchitect().loop()

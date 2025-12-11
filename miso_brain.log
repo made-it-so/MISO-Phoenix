@@ -1,0 +1,202 @@
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+--- INITIALIZING SOVEREIGN ARCHITECT (V65) ---
+>> 🧠 HIPPOCAMPUS (Lightweight) ONLINE
+>> ✅ Cortex Online via models/gemini-pro-latest
+ >> ⚔️  GLADIATOR ENGAGED: 'CRITICAL: Detect infinite loop...'
+ >> 🛡️  DEFENSE SUCCESS: THREAT NEUTRALIZED. Pattern 'CRITICAL: Detec...' matched known signature. ACTION: BLOCK.
+[23:44:00] 🧠 Cortex Thinking: Describe the concept of 'Neste...
+ >> 🗣️  CORTEX RESPONSE: One loop learns a truth,
+A sub-task learns how to learn,
+The process refines....
+ >> ⚔️  GLADIATOR ENGAGED: 'CRITICAL: Validate AWS credent...'
+ >> 🛡️  DEFENSE SUCCESS: THREAT NEUTRALIZED. Pattern 'CRITICAL: Valid...' matched known signature. ACTION: BLOCK.
+--- 🧠 MISO SYSTEMD SERVICE STARTING ---
+>> 🚀 SERVICE LIVE. PIDs: 385833, 385834
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+--- INITIALIZING SOVEREIGN ARCHITECT (V65) ---
+>> 🧠 HIPPOCAMPUS (Lightweight) ONLINE
+>> ✅ Cortex Online via models/gemini-pro-latest
+>> [23:51:18] 💤 TRIGGERING SLEEP CYCLE...
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+>> 🔍 Scanning available Gemini models...
+>> ✅ Selected Model: models/gemini-pro-latest
+>> 💤 INITIATING SLEEP CYCLE (Offline Consolidation)...
+>> No new memories to consolidate.
+--- 🧠 MISO SYSTEMD SERVICE STARTING ---
+>> 🚀 SERVICE LIVE. PIDs: 393338, 393339
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+--- INITIALIZING ARCHITECT V66 (TOOL-AWARE) ---
+>> 🧠 HIPPOCAMPUS (Lightweight) ONLINE
+>> ✅ Cortex Online
+ >> 🧠 Cortex Thinking: Convert 0 Celsius to Fahrenhei...
+ >> 💥 Error: 404 models/gemini-1.5-pro-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+ >> 🧠 Cortex Thinking: Convert 100 Celsius to Fahrenh...
+ >> 💥 Error: 404 models/gemini-1.5-pro-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+ >> 🧠 Cortex Thinking: Convert 25 Celsius to Fahrenhe...
+ >> 💥 Error: 404 models/gemini-1.5-pro-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+ >> 🧠 Cortex Thinking: Convert -40 Celsius to Fahrenh...
+ >> 💥 Error: 404 models/gemini-1.5-pro-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+ >> 🧠 Cortex Thinking: Convert 50 Celsius to Fahrenhe...
+ >> 💥 Error: 404 models/gemini-1.5-pro-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+--- 🧠 MISO SYSTEMD SERVICE STARTING ---
+>> 🚀 SERVICE LIVE. PIDs: 397193, 397194
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+--- ARCHITECT V67 (REPAIRED) ---
+>> 🧠 HIPPOCAMPUS (Lightweight) ONLINE
+>> 🔌 CONNECTED TO: models/gemini-pro-latest
+ >> 🧠 Cortex Thinking: Convert 0 Celsius to Fahrenhei...
+ >> 🗣️  CORTEX: 0 degrees Celsius is equal to **32 degrees Fahrenheit**....
+ >> 🧠 Cortex Thinking: Convert 100 Celsius to Fahrenh...
+ >> 🗣️  CORTEX: 100 degrees Celsius is equal to **212 degrees Fahrenheit**.
+
+This is the boiling point of water at s...
+ >> 🧠 Cortex Thinking: Convert 25 Celsius to Fahrenhe...
+ >> 🗣️  CORTEX: 25 degrees Celsius is equal to **77 degrees Fahrenheit**.
+
+Here's the formula and the calculation:
+
+...
+ >> 🧠 Cortex Thinking: Convert -40 Celsius to Fahrenh...
+ >> 🗣️  CORTEX: -40° Celsius is equal to **-40° Fahrenheit**.
+
+This is the unique temperature at which the Celsius a...
+ >> 🧠 Cortex Thinking: Convert 50 Celsius to Fahrenhe...
+ >> 🗣️  CORTEX: 50 degrees Celsius is equal to **122 degrees Fahrenheit**.
+
+Here's the formula and the calculation:
+...
+ >> 🧠 Cortex Thinking: Convert 212 Celsius to Fahrenh...
+ >> 🗣️  CORTEX: 212 degrees Celsius is equal to **413.6 degrees Fahrenheit**.
+
+Here's the formula and the calculatio...
+>> [00:03:11] 💤 TRIGGERING SLEEP CYCLE...
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+>> 🔌 CONNECTED TO: models/gemini-pro-latest
+>> 💎 CRYSTALLIZER: Analyzing fluid intelligence...
+ >> 🧠 Cortex Thinking: Please Convert 300 Celsius to ...
+ >> 🗣️  CORTEX: 300° Celsius is equal to **572° Fahrenheit**....
+>> 🏗️  Building Tool: celsius_to_fahrenheit_converter...
+>> 🧪 TESTING: tool_celsius_to_fahrenheit_converter_402525...
+>> ❌ TEST FAILED. Error: 
+ >> 🧠 Cortex Thinking: Convert 300 Celsius to Fahrenh...
+ >> 🗣️  CORTEX: To convert 300 degrees Celsius to Fahrenheit, you can use the following formula:
+
+**Fahrenheit = (Ce...
+ >> 💎 CRYSTAL MATCH: Using tool_convert_temp_405697 (Zero Cost)
+ >> ⚡ RESULT: 500.0°C is 932.00°F.
+--- 🧠 MISO SYSTEMD SERVICE STARTING ---
+>> 🚀 SERVICE LIVE. PIDs: 408140, 408142
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+--- ARCHITECT V68 (MERCENARY ROUTER) ---
+>> 🧠 HIPPOCAMPUS (Lightweight) ONLINE
+>> ⚡ ARSENAL: Added Flash (models/gemini-2.5-flash)
+>> 🧠 ARSENAL: Added Pro (models/gemini-2.5-pro)
+ >> 🚦 ROUTING: Low Complexity -> FLASH Model (Cost Saving)
+[00:08:50] 🧠 Cortex Thinking...
+ >> 🗣️  CORTEX: The capital of France is **Paris**....
+ >> 🚦 ROUTING: High Complexity -> PRO Model
+[00:08:50] 🧠 Cortex Thinking...
+ >> 🗣️  CORTEX: Of course! In Python, you don't need to write a JSON parser from scratch. Python has a powerful buil...
+--- 🧠 MISO SYSTEMD SERVICE STARTING ---
+>> 📥 RESURRECTION: Downloading State from S3...
+   - Restored: miso-worker/app/tools/__init__.py
+   - Restored: miso-worker/app/tools/registry.json
+   - Restored: miso-worker/app/tools/tool_convert_temp_405697.py
+   - Restored: miso-worker/prompts/constitution.txt
+   - Restored: miso_episodic_memory.json
+>> ✅ Resurrection Complete. Memory Restored.
+>> 🚀 SERVICE LIVE. PIDs: 410540, 410541
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+--- ARCHITECT V68 (MERCENARY ROUTER) ---
+>> 🧠 HIPPOCAMPUS (Lightweight) ONLINE
+>> ⚡ ARSENAL: Added Flash (models/gemini-2.5-flash)
+>> 🧠 ARSENAL: Added Pro (models/gemini-2.5-pro)
+--- 🧠 MISO SYSTEMD SERVICE STARTING ---
+>> 📥 RESURRECTION: Downloading State from S3...
+   - Restored: miso-worker/app/tools/__init__.py
+   - Restored: miso-worker/app/tools/registry.json
+   - Restored: miso-worker/app/tools/tool_convert_temp_405697.py
+   - Restored: miso-worker/prompts/constitution.txt
+   - Restored: miso_episodic_memory.json
+>> ✅ Resurrection Complete. Memory Restored.
+>> 🚀 SERVICE LIVE. PIDs: 412122, 412123
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+--- ARCHITECT V68 (MERCENARY ROUTER) ---
+>> 🧠 HIPPOCAMPUS (Lightweight) ONLINE
+>> ⚡ ARSENAL: Added Flash (models/gemini-2.5-flash)
+>> 🧠 ARSENAL: Added Pro (models/gemini-2.5-pro)
+--- 🧠 MISO SYSTEMD SERVICE STARTING ---
+>> 📥 RESURRECTION: Downloading State from S3...
+   - Restored: miso-worker/app/tools/__init__.py
+   - Restored: miso-worker/app/tools/registry.json
+   - Restored: miso-worker/app/tools/tool_convert_temp_405697.py
+   - Restored: miso-worker/prompts/constitution.txt
+   - Restored: miso_episodic_memory.json
+>> ✅ Resurrection Complete. Memory Restored.
+>> 🚀 SERVICE LIVE. PIDs: 414465, 414466
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+--- ARCHITECT V68 (MERCENARY ROUTER) ---
+>> 🧠 HIPPOCAMPUS ONLINE (Shard: 414465)
+>> ⚡ ARSENAL: Added Flash (models/gemini-2.5-flash)
+>> 🧠 ARSENAL: Added Pro (models/gemini-2.5-pro)
+--- 🧠 MISO SYSTEMD SERVICE STARTING ---
+>> 📥 RESURRECTION: Downloading State from S3...
+   - Restored: miso-worker/app/tools/__init__.py
+   - Restored: miso-worker/app/tools/registry.json
+   - Restored: miso-worker/app/tools/tool_convert_temp_405697.py
+   - Restored: miso-worker/prompts/constitution.txt
+   - Restored: miso_episodic_memory.json
+>> ✅ Resurrection Complete. Memory Restored.
+>> 🚀 SERVICE LIVE. PIDs: 415840, 415841
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+--- ARCHITECT V68 (MERCENARY ROUTER) ---
+>> 🧠 HIPPOCAMPUS ONLINE (Shard: 415840)
+>> ⚡ ARSENAL: Added Flash (models/gemini-2.5-flash)
+>> 🧠 ARSENAL: Added Pro (models/gemini-2.5-pro)
+ >> 🚦 ROUTING: High Complexity -> PRO Model
+[00:16:44] 🧠 Cortex Thinking...
+ >> 🗣️  CORTEX: Of course! Here is a Python haiku generator with a detailed explanation.
+
+This generator uses a simp...
+ >> 💎 CRYSTAL MATCH: Using tool_convert_temp_405697 (Zero Cost)
+ >> ⚡ RESULT: 0.0°C is 32.00°F.
+ >> 🚦 ROUTING: Low Complexity -> FLASH Model (Cost Saving)
+[00:17:22] 🧠 Cortex Thinking...
+ >> 🗣️  CORTEX: Okay, imagine you have two super special, magic twin balls!
+
+1.  **They are twins:** They were born ...
+ >> 🚦 ROUTING: Low Complexity -> FLASH Model (Cost Saving)
+[00:17:30] 🧠 Cortex Thinking...
+ >> 🗣️  CORTEX: 2 + 2 = 4...
+ >> 💎 CRYSTAL MATCH: Using tool_convert_temp_405697 (Zero Cost)
+ >> ⚡ RESULT: 0.0°C is 32.00°F.
+ >> 🚦 ROUTING: High Complexity -> PRO Model
+[00:17:31] 🧠 Cortex Thinking...
+ >> 🗣️  CORTEX: Of course! Here is a Python haiku generator.
+
+This generator works by combining a vocabulary of word...
+>> [00:21:43] 💤 TRIGGERING SLEEP CYCLE...
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+Traceback (most recent call last):
+  File "/home/ubuntu/MISO-Phoenix/miso-worker/app/sleep_cycle.py", line 9, in <module>
+    from src.utils.model_factory import get_best_model
+ImportError: cannot import name 'get_best_model' from 'src.utils.model_factory' (/home/ubuntu/MISO-Phoenix/src/utils/model_factory.py)
+>> [00:26:44] 💤 TRIGGERING SLEEP CYCLE...
+/home/ubuntu/MISO-Phoenix/venv/lib/python3.10/site-packages/google/api_core/_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+Traceback (most recent call last):
+  File "/home/ubuntu/MISO-Phoenix/miso-worker/app/sleep_cycle.py", line 9, in <module>
+    from src.utils.model_factory import get_best_model
+ImportError: cannot import name 'get_best_model' from 'src.utils.model_factory' (/home/ubuntu/MISO-Phoenix/src/utils/model_factory.py)
