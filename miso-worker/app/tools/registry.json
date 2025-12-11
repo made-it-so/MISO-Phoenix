@@ -23,5 +23,60 @@
     "pattern": "^Convert (-?\\d+\\.?\\d*)\\s+Celsius to Fahrenheit$",
     "module": "tool_celsius_to_fahrenheit_conversion_450765",
     "description": "Celsius to Fahrenheit Conversion"
+  },
+  {
+    "pattern": "Convert (-?\\d+\\.?\\d*) Celsius to Fahrenheit",
+    "module": "tool_celsius_to_fahrenheit_conversion_454984",
+    "description": "Celsius to Fahrenheit Conversion"
+  },
+  {
+    "pattern": "^Convert\\s+(-?\\d+\\.?\\d*)\\s+Celsius\\s+to\\s+Fahrenheit$",
+    "module": "tool_celsius_to_fahrenheit_conversion_455511",
+    "description": "Celsius to Fahrenheit Conversion"
+  },
+  {
+    "pattern": "^Convert\\s+(-?\\d+\\.?\\d*)\\s+Celsius\\s+to\\s+Fahrenheit$",
+    "module": "tool_convert_celsius_to_fahrenheit_455725",
+    "description": "Convert Celsius to Fahrenheit"
+  },
+  {
+    "pattern": "(?i)^Convert (-?\\d+\\.?\\d*) Celsius to Fahrenheit$",
+    "module": "tool_celsius_to_fahrenheit_conversion_455815",
+    "description": "Celsius to Fahrenheit Conversion"
+  },
+  {
+    "pattern": "^Convert ([-]?\\d*\\.?\\d+)\\s+Celsius to Fahrenheit$",
+    "module": "tool_celsius_to_fahrenheit_conversion_455980",
+    "description": "Celsius to Fahrenheit Conversion"
+  },
+  {
+    "pattern": "^Convert (-?\\d+\\.?\\d*) Celsius to Fahrenheit$",
+    "module": "tool_celsius_to_fahrenheit_conversion_456434",
+    "description": "Celsius to Fahrenheit Conversion"
+  },
+  {
+    "pattern": "^Convert\\s+(-?\\d+(\\.\\d+)?)\\s+Celsius\\s+to\\s+Fahrenheit$",
+    "module": "tool_celsius_to_fahrenheit_conversion_456707",
+    "description": "Celsius to Fahrenheit Conversion"
+  },
+  {
+    "pattern": "Convert\\s+(-?\\d+\\.?\\d*)\\s+Celsius to Fahrenheit",
+    "module": "tool_celsius_to_fahrenheit_converter_457434",
+    "description": "Celsius to Fahrenheit Converter"
+  },
+  {
+    "pattern": "(?i)convert\\s+(-?\\d+\\.?\\d*)\\s+celsius\\s+to\\s+fahrenheit",
+    "module": "tool_convert_celsius_to_fahrenheit_458154",
+    "description": "Convert Celsius to Fahrenheit"
+  },
+  {
+    "pattern": "Convert\\s+(-?\\d+\\.?\\d*)\\s+Celsius\\s+to\\s+Fahrenheit",
+    "module": "tool_celsius_to_fahrenheit_conversion_458793",
+    "description": "Celsius to Fahrenheit Conversion"
+  },
+  {
+    "pattern": "^Convert (-?\\d+\\.?\\d*) Celsius to Fahrenheit$",
+    "module": "tool_celsius_to_fahrenheit_conversion_459373",
+    "description": "Celsius to Fahrenheit Conversion"
   }
 ]

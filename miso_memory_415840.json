@@ -46,5 +46,29 @@
     "pid": 415840,
     "prompt": "Convert -40 Celsius to Fahrenheit",
     "result": "TOOL: -40.0\u00b0C is -40.00\u00b0F."
+  },
+  {
+    "timestamp": 1765458514.7658064,
+    "pid": 415840,
+    "prompt": "Convert 0 Celsius to Fahrenheit",
+    "result": "TOOL: 0.0\u00b0C is 32.00\u00b0F."
+  },
+  {
+    "timestamp": 1765458516.7662117,
+    "pid": 415840,
+    "prompt": "Convert 100 Celsius to Fahrenheit",
+    "result": "TOOL: 100.0\u00b0C is 212.00\u00b0F."
+  },
+  {
+    "timestamp": 1765458518.7680917,
+    "pid": 415840,
+    "prompt": "Convert 25 Celsius to Fahrenheit",
+    "result": "TOOL: 25.0\u00b0C is 77.00\u00b0F."
+  },
+  {
+    "timestamp": 1765458520.77141,
+    "pid": 415840,
+    "prompt": "Convert -40 Celsius to Fahrenheit",
+    "result": "TOOL: -40.0\u00b0C is -40.00\u00b0F."
   }
 ]
