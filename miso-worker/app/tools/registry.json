@@ -8,5 +8,20 @@
     "pattern": "^Convert\\s+(-?\\d+\\.?\\d*)\\s+Celsius\\s+to\\s+Fahrenheit$",
     "module": "tool_celsius_to_fahrenheit_converter_446355",
     "description": "Celsius to Fahrenheit Converter"
+  },
+  {
+    "pattern": "(?i)convert\\s+(-?\\d+\\.?\\d*)\\s+celsius\\s+to\\s+fahrenheit",
+    "module": "tool_celsius_to_fahrenheit_conversion_450561",
+    "description": "Celsius to Fahrenheit Conversion"
+  },
+  {
+    "pattern": "Convert (-?\\d+\\.?\\d*)\\s+Celsius to Fahrenheit",
+    "module": "tool_celsius_to_fahrenheit_conversion_450651",
+    "description": "Celsius to Fahrenheit Conversion"
+  },
+  {
+    "pattern": "^Convert (-?\\d+\\.?\\d*)\\s+Celsius to Fahrenheit$",
+    "module": "tool_celsius_to_fahrenheit_conversion_450765",
+    "description": "Celsius to Fahrenheit Conversion"
   }
 ]
