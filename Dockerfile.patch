@@ -1,0 +1,5 @@
+FROM 356206423360.dkr.ecr.us-east-1.amazonaws.com/miso-production:latest
+# Install AWS CLI so we can copy files to/from S3
+RUN pip install awscli
+# Reset the entrypoint
+ENTRYPOINT ["/bin/sh", "-c"]

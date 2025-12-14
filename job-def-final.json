@@ -1,0 +1,10 @@
+{
+    "jobDefinitionName": "MisoJob_Shell_Final",
+    "type": "container",
+    "containerProperties": {
+        "image": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso-production:shell",
+        "memory": 2048,
+        "vcpus": 1,
+        "jobRoleArn": "arn:aws:iam::356206423360:role/MisoInstanceRole"
+    }
+}

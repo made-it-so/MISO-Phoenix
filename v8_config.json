@@ -1,0 +1,27 @@
+{
+    "computeEnvironmentName": "MisoComputeEnv_v8_OD",
+    "type": "MANAGED",
+    "state": "ENABLED",
+    "serviceRole": "arn:aws:iam::356206423360:role/MisoBatchServiceRole",
+    "computeResources": {
+        "type": "EC2",
+        "allocationStrategy": "BEST_FIT_PROGRESSIVE",
+        "minvCpus": 0,
+        "maxvCpus": 256,
+        "instanceTypes": ["optimal"],
+        "subnets": [
+    "subnet-0a9fa0468b44e7eb4",
+    "subnet-0d5b8687b028ef1ac",
+    "subnet-01df846c12e725654",
+    "subnet-08b99fdefac81424e",
+    "subnet-02832ec949ebf1994",
+    "subnet-065eb180fb19e1e36",
+    "subnet-029dd1e5b2544816d",
+    "subnet-0faca65ba8ae5f3e4"
+],
+        "securityGroupIds": [
+    "sg-0cfdce2e9a10667ef"
+],
+        "instanceRole": "arn:aws:iam::356206423360:instance-profile/MisoInstanceProfile"
+    }
+}

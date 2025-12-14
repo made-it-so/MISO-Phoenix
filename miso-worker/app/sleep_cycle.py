@@ -1,6 +1,5 @@
 import os
 import json
-import glob
 import redis
 import sys
 import subprocess
@@ -15,55 +14,76 @@ load_dotenv()
 
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 TOOLS_DIR = "miso-worker/app/tools"
-REGISTRY_PATH = f"{TOOLS_DIR}/registry.json"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 class HiveMindOptimizer:
     def __init__(self):
+        # Connect to the new database
         self.r = redis.Redis(host=REDIS_HOST, port=6379, decode_responses=True)
         self.model = get_best_model(GEMINI_API_KEY)
 
-    def read_hive_memories(self):
-        all_memories = []
-        for fpath in glob.glob("miso_memory_*.json"):
-            try:
-                with open(fpath, "r") as f: all_memories.extend(json.load(f))
-            except: pass
-        all_memories.sort(key=lambda x: x['timestamp'])
-        return all_memories[-50:]
+    def process_queue(self):
+        # Check the queue for new tasks (Non-blocking)
+        task_json = self.r.lpop("miso:queue")
+        
+        if not task_json:
+            return # Queue is empty
 
-    def crystallize(self, memories):
-        memory_str = "\n".join([f"IN: {m['prompt']}" for m in memories])
+        try:
+            task_data = json.loads(task_json)
+            print(f">> 🧠 Pulled Task from Redis: {task_data['prompt'][:40]}...")
+            
+            # Crystallize (Write Code)
+            success = self.crystallize(task_data)
+            
+            if success:
+                # Move to Long-Term Memory (History)
+                task_data["result"] = "COMPLETED"
+                task_data["completed_at"] = time.time()
+                self.r.lpush("miso:history", json.dumps(task_data))
+                self.r.ltrim("miso:history", 0, 99)
+                print(f">> ✅ Task Archived in Redis History.")
+            else:
+                print(">> ⚠️ Task Failed. Dropping.")
+                
+        except Exception as e:
+            print(f">> ⚠️ Redis Processing Error: {e}")
+
+    def crystallize(self, task):
+        prompt = task.get("prompt")
+        
         analysis_prompt = f"""
-        ANALYZE logs. Identify ONE repetitive task for Python automation.
-        LOGS: {memory_str}
-        OUTPUT JSON: {{"found": bool, "task_name": "str", "regex_trigger": "str", "python_code": "str", "test_input": "str"}}
+        TASK: {prompt}
+        OUTPUT JSON: {{"found": bool, "task_name": "str", "python_code": "str", "test_input": "str"}}
         REQUIREMENTS: 
-        1. Code MUST contain a function named `solve(input_str)` that returns the result.
+        1. Code MUST contain a function named `solve(input_str)`.
         2. Code must be robust and self-contained.
         """
+        
         try:
             response = self.model.generate_content(analysis_prompt)
             text = response.text.replace("```json", "").replace("```", "").strip()
             plan = json.loads(text)
+        except:
+            print(">> ❌ Model Generation Failed")
+            return False
 
-            if not plan.get("found"): return
+        if not plan.get("found"): return False
 
-            # Sanitize name
-            safe_name = plan['task_name'].replace(' ', '_').lower()
-            tool_name = f"tool_{safe_name}_{int(os.getpid())}"
-            tool_path = f"{TOOLS_DIR}/{tool_name}.py"
-            
-            # 1. Create Branch
-            branch_name = f"feat/miso-{safe_name}-{int(time.time())}"
-            subprocess.run(["git", "checkout", "-b", branch_name])
+        safe_name = plan['task_name'].replace(' ', '_').lower()
+        tool_name = f"tool_{safe_name}"
+        tool_path = f"{TOOLS_DIR}/{tool_name}.py"
+        
+        # 1. Create Branch
+        branch_name = f"feat/miso-{safe_name}-{int(time.time())}"
+        subprocess.run(["git", "checkout", "-b", branch_name])
 
-            # 2. Write Code
-            with open(tool_path, "w") as f: f.write(plan['python_code'])
+        # 2. Write Code
+        with open(tool_path, "w") as f: f.write(plan['python_code'])
 
-            # 3. Sandbox Test
-            print(f">> 🧪 TESTING: {tool_name}...")
-            tester_code = f"""
+        # 3. Sandbox Test
+        print(f">> 🧪 TESTING: {tool_name}...")
+        tester_code = f"""
 import sys
 import os
 sys.path.append(os.path.abspath('{TOOLS_DIR}'))
@@ -73,38 +93,32 @@ try:
 except Exception as e:
     print(f'FAIL: {{e}}')
 """
-            with open("temp_test.py", "w") as f: f.write(tester_code)
-            result = subprocess.run([sys.executable, "temp_test.py"], capture_output=True, text=True)
-            os.remove("temp_test.py")
+        with open("temp_test.py", "w") as f: f.write(tester_code)
+        result = subprocess.run([sys.executable, "temp_test.py"], capture_output=True, text=True)
+        os.remove("temp_test.py")
 
-            if "FAIL:" in result.stdout or result.returncode != 0:
-                print(f">> ❌ TEST FAILED.\nOUTPUT: {result.stdout}\nERROR: {result.stderr}")
-                os.remove(tool_path)
-                subprocess.run(["git", "checkout", "main"]) # Revert branch
-                return
-
-            print(f">> ✅ CRYSTALLIZED: {tool_name}")
-            
-            # 4. Commit and Push Branch
-            subprocess.run(["git", "add", tool_path])
-            subprocess.run(["git", "commit", "-m", f"Feat(Miso): Created {safe_name} tool"])
-            subprocess.run(["git", "push", "origin", branch_name])
-            
-            # 5. Open PR
-            create_pr(branch_name, f"Miso Auto-Tool: {plan['task_name']}", f"Miso created this tool based on repetitive memory patterns.\n\nTest Input: {plan['test_input']}")
-            
-            # 6. Return to base
+        if "FAIL:" in result.stdout or result.returncode != 0:
+            print(f">> ❌ TEST FAILED. Reverting...")
+            os.remove(tool_path)
             subprocess.run(["git", "checkout", "main"])
+            return False
 
-        except Exception as e:
-            print(f">> ⚠️ Optimizer Error: {e}")
-            subprocess.run(["git", "checkout", "main"]) # Safety net
+        print(f">> ✅ CRYSTALLIZED: {tool_name}")
+        
+        # 4. Push & PR
+        subprocess.run(["git", "add", tool_path])
+        subprocess.run(["git", "commit", "-m", f"Feat(Miso): Created {safe_name} tool"])
+        subprocess.run(["git", "push", "origin", branch_name])
+        
+        create_pr(branch_name, f"Miso Auto-Tool: {plan['task_name']}", f"Automated PR.\nTask: {prompt}")
+        
+        # 5. Return to base
+        subprocess.run(["git", "checkout", "main"])
+        return True
 
     def run(self):
-        print(">> 💎 HIVE MIND OPTIMIZER: Syncing Collective Intelligence...")
-        memories = self.read_hive_memories()
-        if memories and self.model:
-            self.crystallize(memories)
+        print(">> 💎 HIVE MIND (REDIS ENABLED): Checking queue...")
+        self.process_queue()
         push_state()
 
 if __name__ == "__main__":

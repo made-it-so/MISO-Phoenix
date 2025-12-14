@@ -1,0 +1,12 @@
+{
+    "jobDefinitionName": "MisoJob_Shell",
+    "type": "container",
+    "containerProperties": {
+        "image": "356206423360.dkr.ecr.us-east-1.amazonaws.com/miso-production:latest",
+        "memory": 2048,
+        "vcpus": 1,
+        "jobRoleArn": "arn:aws:iam::356206423360:role/MisoInstanceRole",
+        "entryPoint": ["/bin/sh", "-c"],
+        "command": ["echo 'Placeholder'"]
+    }
+}

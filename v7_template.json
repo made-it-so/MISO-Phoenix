@@ -1,0 +1,9 @@
+{
+    "NetworkInterfaces": [
+        {
+            "DeviceIndex": 0,
+            "AssociatePublicIpAddress": true,
+            "Groups": ["sg-0b5376e26e74f6e92"]
+        }
+    ]
+}
