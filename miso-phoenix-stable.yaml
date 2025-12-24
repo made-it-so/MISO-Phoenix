@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miso-brain-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: miso-brain
+  template:
+    metadata:
+      labels:
+        app: miso-brain
+    spec:
+      containers:
+      - name: brain
+        image: python:3.10-slim
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            pip install flask apscheduler google-generativeai boto3 ollama GitPython psycopg2-binary;
+            python3 /app/miso_main.py
+        env:
+        - name: GOOGLE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: miso-secrets
+              key: GOOGLE_API_KEY
+        - name: MISO_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: miso-secrets
+              key: MISO_WEBHOOK_SECRET
+        - name: MISO_GITHUB_PAT
+          valueFrom:
+            secretKeyRef:
+              name: miso-secrets
+              key: MISO_GITHUB_PAT
+        - name: DATABASE_URL
+          value: "postgresql://postgres:phoenix_pass@miso-db-service:5432/postgres"
+        volumeMounts:
+        - name: code-volume
+          mountPath: /app
+      volumes:
+      - name: code-volume
+        hostPath:
+          path: /home/ubuntu/MISO-Phoenix

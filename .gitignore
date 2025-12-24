@@ -1,12 +1,5 @@
-# Local Terraform files
-**/.terraform/
-**/.terraform.lock.hcl
-
-# Local Python cache
-**/__pycache__/
-**/*.pyc
+venv/
+*.log
+*.zip
+__pycache__/
 .env
-.env
-venv/
-venv/
-venv/
