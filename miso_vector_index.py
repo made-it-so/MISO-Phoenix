@@ -34,19 +34,26 @@ def _cosine(a: list[float], b: list[float]) -> float:
 
 
 def _embed(text: str) -> list[float]:
-    """Call Ollama embeddings endpoint. Returns a float vector."""
-    try:
-        r = requests.post(
-            f"{OLLAMA_URL}/api/embeddings",
-            json={"model": EMBED_MODEL, "prompt": text},
-            timeout=30,
-        )
-        r.raise_for_status()
-        return r.json()["embedding"]
-    except requests.exceptions.RequestException as e:
-        raise RuntimeError(f"Embedding request failed: {e}") from e
-    except KeyError as e:
-        raise RuntimeError(f"Unexpected embedding response shape: {e}") from e
+    """Call Ollama embeddings endpoint. Returns a float vector.
+
+    Tries /api/embeddings (legacy) then /api/embed (v0.3+).
+    Returns empty list if no embedding model is available — callers
+    should check for empty list and degrade to keyword search.
+    """
+    for endpoint, payload in [
+        (f"{OLLAMA_URL}/api/embeddings", {"model": EMBED_MODEL, "prompt": text}),
+        (f"{OLLAMA_URL}/api/embed",      {"model": EMBED_MODEL, "input": text}),
+    ]:
+        try:
+            r = requests.post(endpoint, json=payload, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+            vec = data.get("embedding") or (data.get("embeddings") or [[]])[0]
+            if vec:
+                return vec
+        except Exception:
+            continue
+    return []  # no embedding model available — caller degrades gracefully
 
 
 class VectorIndex:
@@ -70,33 +77,54 @@ class VectorIndex:
         with open(self.path, "w", encoding="utf-8") as f:
             json.dump(self._index, f)
 
-    def add(self, node_id: str, text: str, metadata: dict | None = None, force: bool = False):
+    def add(self, node_id: str, text: str, metadata: dict | None = None, force: bool = False) -> bool:
         """
         Embed `text` and store under `node_id`.
         Skips if node_id already exists unless force=True.
+        Returns True if added, False if skipped.
+        If embedding is unavailable, stores text-only (keyword fallback still works).
         """
         if node_id in self._index and not force:
-            return
+            return False
         embedding = _embed(text)
         self._index[node_id] = {
             "text": text,
-            "embedding": embedding,
+            "embedding": embedding,  # may be [] if no embed model
             "metadata": metadata or {},
         }
         self._save()
+        return True
 
     def search(self, query: str, top_k: int = 5) -> list[dict]:
         """
         Return the top_k most semantically similar nodes to `query`.
+        Falls back to keyword search if no embedding model available.
         Each result: { "node_id", "score", "text", "metadata" }
         """
         if not self._index:
             return []
 
         query_vec = _embed(query)
+
+        # Keyword fallback when embedding unavailable
+        if not query_vec:
+            query_lower = query.lower()
+            results = []
+            for node_id, entry in self._index.items():
+                text = entry.get("text", "")
+                count = text.lower().count(query_lower)
+                if count > 0:
+                    score = count / max(len(text), 1)
+                    results.append({"node_id": node_id, "score": score,
+                                    "text": text, "metadata": entry.get("metadata", {})})
+            return sorted(results, key=lambda x: -x["score"])[:top_k]
+
         scored = []
         for node_id, entry in self._index.items():
-            score = _cosine(query_vec, entry["embedding"])
+            stored_vec = entry.get("embedding", [])
+            if not stored_vec:
+                continue  # skip text-only entries in vector search
+            score = _cosine(query_vec, stored_vec)
             scored.append({
                 "node_id": node_id,
                 "score": score,
