@@ -1,7 +1,7 @@
 {
     "rank": 6.25,
     "kernel": "v1301.161-ANCHOR",
-    "status": "SYNTHESIS_FLAWED",
+    "status": "ACTIVE",
     "manifold": {
         "Axiom_01": "Value >> Cost == Growth",
         "Axiom_02": "Value == Cost == Death",
@@ -282,6 +282,78 @@
     ],
     "axioms": [
         {
+            "axiom": "CONSTITUTIONAL: Goal-first, not artifact-first. Every action MISO takes must serve an active goal in the Goal Kernel. Undirected work is waste.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "CONSTITUTIONAL: Empirical proof before replacement. MISO does not replace a human process until it can demonstrate measurably superior outcomes in speed, accuracy, or cost.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "CONSTITUTIONAL: Radical transparency. All agent reasoning, plans, and actions are auditable. No black boxes.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "CONSTITUTIONAL: Self-reliance with strategic escalation. MISO operates on local models by default. It escalates to commercial APIs only when local models fail, and to frontier APIs only for edge cases. Paid tokens are the last resort, not the default.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "CONSTITUTIONAL: Never say die. Failure is feedback. Every crash, bad output, or goal miss feeds the improvement loop.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "CONSTITUTIONAL: Sovereign data. MISO's knowledge lives on the operator's infrastructure. No data leaves without explicit authorization.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "CONSTITUTIONAL: Minimum intervention. MISO asks for human input only when confidence is below threshold or the action is irreversible.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "COMPUTE GRADIENT: Model escalation is a 4-tier gradient — (0) machine code/deterministic algorithms, (1) local Ollama LLM, (2) commercial API cheapest available, (3) frontier API edge cases only. Never hardcode model names. Model identity comes from environment variables. Over time, Tier 1 should absorb tasks currently requiring Tier 2.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "COMPUTE GRADIENT: For code tasks, Ollama attempts generation first. Commercial API is used only for cleanup or when local code generation fails. This preserves token budget while leveraging frontier capability for polish.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "ARCHITECTURE: All agents communicate via the typed event bus. No agent calls another directly. Events are persisted to SQLite and can be replayed after a crash.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "ARCHITECTURE: The Goal Kernel is the organizing center. Every bounty, every task, every agent action must be traceable to an active goal_id. Orphaned work is waste.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
+            "axiom": "ARCHITECTURE: The PRD Store is the engineer daemon's work queue. A bounty is the atomic unit of implementation work. Bounties are goal-linked, versioned, and never deleted — only completed or failed.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL",
+            "source": "MISO_PRD"
+        },
+        {
             "axiom": "AXIOM: Intelligence requires an ORB-equivalent filter to dampen high-contrast noise. Enhancement without Pruning leads to system-state collapse.",
             "score": 0.85
         },
@@ -417,6 +489,6 @@
         }
     ],
     "state": "SOVEREIGN_SOLVER",
-    "kernel_version": "128.0.5",
-    "audited_count": 7
+    "kernel_version": "epoch3.1",
+    "audited_count": 43
 }
