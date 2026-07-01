@@ -14,6 +14,7 @@ Tools exposed:
   Consiglieri:    get_counsel, audit_action, detect_blind_spots, live_call_support
   PRD Store:      create_bounty, list_bounties, complete_bounty, fail_bounty
   Session Search: search_sessions
+  Coordinator:    run_coordinator, coordinator_status
 """
 import argparse
 from fastmcp import FastMCP
@@ -262,6 +263,35 @@ def search_sessions(query: str, top_k: int = 5) -> list[dict]:
     return [{"session_id": r.get("metadata", {}).get("session_id", "?")[:16],
              "score": round(r.get("score", 0), 4),
              "text": r.get("text", "")[:500]} for r in results]
+
+
+# ── Coordinator ────────────────────────────────────────────────────────────────
+
+@mcp.tool()
+def run_coordinator(goal_id: str) -> dict:
+    """
+    Decompose an active goal into a task graph and dispatch all ready tasks.
+    The Coordinator acts as Chief of Staff — it calls the LLM to break the goal
+    into ≤7 ordered tasks, assigns each to the correct agent (engineer / brain /
+    consiglieri / research / autonomy), and respects dependency ordering.
+    Returns the resulting task list with status.
+    """
+    from miso_coordinator import Coordinator
+    c = Coordinator()
+    c.start()
+    c.decompose_and_dispatch(goal_id)
+    return {"goal_id": goal_id, "tasks": c.get_status(goal_id)}
+
+
+@mcp.tool()
+def coordinator_status(goal_id: str | None = None) -> list[dict]:
+    """
+    Return the current task graph for a goal (or all recent tasks if no goal_id).
+    Status values: PENDING, READY, IN_PROGRESS, COMPLETED, FAILED, ESCALATED.
+    Use to check what the Coordinator is working on and which tasks are blocked.
+    """
+    from miso_coordinator import Coordinator
+    return Coordinator().get_status(goal_id)
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────
