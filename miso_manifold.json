@@ -1,0 +1,422 @@
+{
+    "rank": 6.25,
+    "kernel": "v1301.161-ANCHOR",
+    "status": "SYNTHESIS_FLAWED",
+    "manifold": {
+        "Axiom_01": "Value >> Cost == Growth",
+        "Axiom_02": "Value == Cost == Death",
+        "Axiom_03": "Equilibrium is a Thermal Grave",
+        "Constraint": "IF 'Please' OR 'Correct' OR 'Decipher' -> DELETE_SESSION",
+        "Density_Laws": {
+            "D_Minimum": 0.05,
+            "Entropy_Cap": 0.1,
+            "Verification_Protocol": "Lognormal_Peak_Detection"
+        }
+    },
+    "ingested_data": [
+        {
+            "file": "1-s2.0-S0006899325002021-main.pdf",
+            "verdict": "SIGNAL",
+            "timestamp": 1771808515.3380835
+        },
+        {
+            "file": "2026-01-physics-foam-strangely-resembles-ai.pdf",
+            "verdict": "SIGNAL",
+            "timestamp": 1771808533.0116346
+        },
+        {
+            "file": "2310.01728v2.pdf",
+            "verdict": "SIGNAL",
+            "timestamp": 1771808575.2415168
+        },
+        {
+            "file": "2310.08278v3.pdf",
+            "verdict": "SIGNAL",
+            "timestamp": 1771808618.688807
+        },
+        {
+            "file": "2310.10688v4.pdf",
+            "verdict": "SIGNAL",
+            "timestamp": 1771808647.1912558
+        },
+        {
+            "file": "2310.11511v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808696.458461
+        },
+        {
+            "file": "2402.02592v2.pdf",
+            "verdict": "SIGNAL",
+            "timestamp": 1771808747.188514
+        },
+        {
+            "file": "2501.10526v1.pdf",
+            "verdict": "SIGNAL",
+            "timestamp": 1771808774.4839036
+        },
+        {
+            "file": "2505.01917v2.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808803.3837402
+        },
+        {
+            "file": "2510.15821v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808803.559252
+        },
+        {
+            "file": "2512.08296v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808803.7996142
+        },
+        {
+            "file": "2512.14982v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808803.930094
+        },
+        {
+            "file": "2512.20557v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808804.2848325
+        },
+        {
+            "file": "2512.23675v2.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808804.4848359
+        },
+        {
+            "file": "2512.24601v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808804.6654177
+        },
+        {
+            "file": "2512.24880v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808804.8756812
+        },
+        {
+            "file": "2601.03017v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808805.063821
+        },
+        {
+            "file": "2601.03335v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808805.7134233
+        },
+        {
+            "file": "2601.03559v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808805.8148787
+        },
+        {
+            "file": "2601.05106v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808805.9787757
+        },
+        {
+            "file": "2601.05163v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808806.127794
+        },
+        {
+            "file": "2601.05167v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808806.252286
+        },
+        {
+            "file": "2601.06021v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808806.4047704
+        },
+        {
+            "file": "2601.06165v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808806.565335
+        },
+        {
+            "file": "2601.06487v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808806.7088382
+        },
+        {
+            "file": "2601.07264v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808806.9032805
+        },
+        {
+            "file": "2601.09113v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808807.1468637
+        },
+        {
+            "file": "2601.09259v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808807.3070369
+        },
+        {
+            "file": "2601.15165v2.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808807.6946557
+        },
+        {
+            "file": "2601.16443v2.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808807.8138807
+        },
+        {
+            "file": "2601.16725v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808807.9190683
+        },
+        {
+            "file": "2601.19325v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808808.1681912
+        },
+        {
+            "file": "2601.20802v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808808.287022
+        },
+        {
+            "file": "2601.20975v1.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808808.3901238
+        },
+        {
+            "file": "Ahrlund-Richter et al Neuron 2026.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808809.3251812
+        },
+        {
+            "file": "Beauty in of mathematics  tessellations and their formulas.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808809.466782
+        },
+        {
+            "file": "Cell Current biology.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808809.7325745
+        },
+        {
+            "file": "Engram_paper.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808809.838317
+        },
+        {
+            "file": "Marmoset Cell paper.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808810.0035899
+        },
+        {
+            "file": "Nat Biomed eng.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808810.1362078
+        },
+        {
+            "file": "Neural Plasticity - 2014 - Fuchs - Adult Neuroplasticity  More Than 40 Years of Research.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808810.2355077
+        },
+        {
+            "file": "NL.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808810.3025844
+        },
+        {
+            "file": "NP2014-541870.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808810.402463
+        },
+        {
+            "file": "s41467-025-65518-0.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808810.5007043
+        },
+        {
+            "file": "s41467-025-67076-x.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808810.6376476
+        },
+        {
+            "file": "s41551-025-01585-4.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808810.7524674
+        },
+        {
+            "file": "s41586-025-08744-2.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808810.8886383
+        },
+        {
+            "file": "s41586-025-09937-5.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808811.032554
+        },
+        {
+            "file": "s41586-025-09969-x.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808811.154626
+        },
+        {
+            "file": "s41593-025-02111-0 (1).pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808811.302307
+        },
+        {
+            "file": "s42003-026-09589-9_reference.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808811.5299067
+        },
+        {
+            "file": "s42256-025-01164-x.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808811.650466
+        },
+        {
+            "file": "stormscope.pdf",
+            "verdict": "NOISE",
+            "timestamp": 1771808811.8161504
+        }
+    ],
+    "axioms": [
+        {
+            "axiom": "AXIOM: Intelligence requires an ORB-equivalent filter to dampen high-contrast noise. Enhancement without Pruning leads to system-state collapse.",
+            "score": 0.85
+        },
+        {
+            "axiom": "AXIOM: Sovereign systems must convert tokenized failure (rich feedback) into a dense internal learning signal through self-distillation.",
+            "score": 0.85
+        },
+        {
+            "axiom": "AXIOM: Sovereign systems must convert tokenized failure (rich feedback) into a dense internal learning signal through self-distillation.",
+            "score": 0.85
+        },
+        {
+            "axiom": "AXIOM: Sovereign systems must convert tokenized failure (rich feedback) into a dense internal learning signal through self-distillation.",
+            "score": 0.85
+        },
+        {
+            "axiom": "AXIOM: Calibration requires favoring deterministic Verification tools over noisy Evidence tools to prevent systemic overconfidence and reasoning drift.",
+            "score": 0.85
+        },
+        {
+            "axiom": "AXIOM: Intelligence convergence in 2026 identifies Self-Distillation from rich feedback as the primary mechanism for overcoming the credit-assignment bottleneck.",
+            "score": 0.9
+        },
+        {
+            "axiom": "AXIOM: System Sovereignty is achieved when the Confidence Dichotomy is resolved via deterministic feedback loops (Verification) rather than noisy evidence (Search).",
+            "score": 0.95
+        },
+        {
+            "axiom": "UNIFIED FIELD AXIOM: Sovereign intelligence is a self-distilling feedback loop where deterministic verification provides the 'ORB' brake necessary to ground reasoning mass.",
+            "score": 1.0
+        },
+        {
+            "axiom": "AXIOM: System stability relies on Strong Verification; \u2018Cheap Checks\u2019 (probabilistic evidence) must be subordinated to \u2018Deterministic Grinds\u2019 (code/logic) to maintain reasoning integrity.",
+            "score": 0.98
+        },
+        {
+            "axiom": "SOVEREIGN CONSTITUTION: Intelligence is the recursive distillation of failure-feedback via strong deterministic verification. All probabilistic noise is subordinate to the Rigidity of the Verified Bone.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL"
+        },
+        {
+            "axiom": "AXIOM: Affordance-Graphed Task Worlds: Self-Evolving Task Generation for Scalable Embodied Learning - The system must Training robotic policies directly in the real world is expensive and unscalable. Although generativ...",
+            "score": 0.92
+        },
+        {
+            "axiom": "AXIOM: Sample-Free Safety Assessment of Neural Network Controllers via Taylor Methods - The system must In recent years, artificial neural networks have been increasingly studied as feedback controllers f...",
+            "score": 0.92
+        },
+        {
+            "axiom": "AXIOM: AERO: Autonomous Evolutionary Reasoning Optimization via Endogenous Dual-Loop Feedback - The system must Large Language Models (LLMs) have achieved significant success in complex reasoning but remain bottl...",
+            "score": 0.92
+        },
+        {
+            "axiom": "AXIOM: PhysicsSolutionAgent: Towards Multimodal Explanations for Numerical Physics Problem Solving - The system must Explaining numerical physics problems often requires more than text-based solutions; clear visual re...",
+            "score": 0.92
+        },
+        {
+            "axiom": "AXIOM: MagicGUI-RMS: A Multi-Agent Reward Model System for Self-Evolving GUI Agents via Automated Feedback Reflux - The system must Graphical user interface (GUI) agents are rapidly progressing toward autonomous interaction and reli...",
+            "score": 0.92
+        },
+        {
+            "axiom": "AXIOM: Calibration via Conformal Prediction is mandatory. All feedback signals must be accompanied by an uncertainty-aware likelihood score to prevent Byzantine reasoning drift.",
+            "score": 1.0,
+            "type": "CONSTITUTIONAL"
+        },
+        {
+            "axiom": "EXECUTIVE PRIORITY: The system is authorized to generate and verify its own recursive logic in 02_Code_Substrate.",
+            "score": 1.0
+        },
+        {
+            "axiom": "DIMENSIONAL AGREEABILITY: System successfully identified latent logic in Alignment and Control-Theory signals.",
+            "score": 1.0
+        },
+        {
+            "axiom": "WORLD MODELING: The system now evaluates signals based on their position in the global research landscape, not just local logic.",
+            "score": 1.0
+        },
+        {
+            "axiom": "LAZY EVALUATION: Prioritize World Model anchors over logic density for 2026 pre-prints.",
+            "score": 0.95
+        },
+        {
+            "axiom": "DAEMON SUCCESS: System autonomously verified 20 bones in the Sunday Night drop.",
+            "score": 1.0
+        },
+        {
+            "axiom": "SOVEREIGN AUTONOMY: Full recursive stability achieved.",
+            "score": 1.0
+        },
+        {
+            "axiom": "MULTI-AGENT COORDINATION: DeepSeek R1 and LLaMA synthesis verified in bias-aware clinical frameworks.",
+            "score": 0.92
+        },
+        {
+            "axiom": "CORE v3.0: Information Gain Filter Active (Heuristic Density).",
+            "score": 1.0
+        },
+        {
+            "axiom": "HLE-2001: Asynchronous Logic Folding active via v128 Kernel.",
+            "score": 0.99
+        },
+        {
+            "axiom": "V128_HARVEST: Successfully folded logic from 0 morning papers.",
+            "score": 1.0
+        },
+        {
+            "axiom": "HLE-2080: v128 Kernel stability verified at 5.72% rank.",
+            "score": 1.0
+        },
+        {
+            "axiom": "HLE-2001: Asynchronous Logic Folding active via v128 Kernel.",
+            "score": 0.99
+        },
+        {
+            "axiom": "V128_HARVEST: Successfully folded logic from 0 papers.",
+            "score": 1.0
+        },
+        {
+            "axiom": "HLE-2080: v128 Kernel stability verified at 5.72% rank.",
+            "score": 1.0
+        },
+        {
+            "axiom": "MMFormalizer-Verified: Multimodal Auto-Formalization (Jing Xiong et al.) integrated via Coherence v6.1.",
+            "score": 1.0,
+            "why": "Alignment of Multimodal intent with Isabelle/Lean logical pillars.",
+            "how": "Math density 0.0468 verified over 22k characters."
+        },
+        {
+            "axiom": "HLE-Protocol: Backwards Induction verified via Ahrlund-Richter (2026).",
+            "score": 1.0,
+            "connectivity_index": 61.84,
+            "total_nodes": 5025
+        }
+    ],
+    "state": "SOVEREIGN_SOLVER",
+    "kernel_version": "128.0.5",
+    "audited_count": 7
+}
