@@ -124,7 +124,24 @@ The system is a polyglot FastAPI backend with:
 
 ---
 
-### VI. Known Issues / Next Session
+### VI. Session 2026-07-01 (Part 2) — What Was Built
+
+| File | Change |
+|---|---|
+| `miso_swarm_orchestrator.py` | Rebuilt as 4-tier compute gradient — Tier1(Ollama)→Tier2(commercial)→Tier3(frontier), no hardcoded model names, `call_code_then_escalate()` added |
+| `miso_manifold.json` | Seeded with 12 MISO constitutional axioms; status ACTIVE; kernel epoch3.1 |
+| Remote | `evolution/oracle_payload` pushed to `github.com/made-it-so/MISO-Phoenix` |
+
+### VI-B. Hidden Files Not Yet Ingested
+- `.miso_workspace/incubator/` — 90+ daily forensic audit files (Mar-Jul 2026)
+- `.miso_workspace/miso_roadmap.md` — persistent state ledger
+- `Documents/GitHub/MISO_SOVEREIGN/GOLDEN_MANIFESTO.md`
+- `Dropbox/MISO_SYNC/SOVEREIGN_STRATEGY.md`
+- `MISO-Factory-BROKEN-AUTH/chat_logs/summaries/` — 51 chat summaries
+- EC2 (`ubuntu@3.91.130.202`): `/root/arena/miso_v5/devops_agent_spec.md`, `miso_audit.md`, `sysop.py`
+- SSH key: `C:\Users\kyle\.ssh\MISO-Ollama-Key.pem`
+
+### VII. Known Issues / Next Session
 
 1. **miso-steel-thread/backend-services/ingest_service.py** — hardcoded Google API key exposed. Rotate at console.cloud.google.com → APIs & Services → Credentials.
 2. **Vector index is empty** — run `python miso_vector_index.py` to index existing manifold axioms.
