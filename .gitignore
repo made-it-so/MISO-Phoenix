@@ -1,0 +1,28 @@
+﻿# System Noise
+AppData/
+.cargo/
+.rustup/
+Local/
+Roaming/
+venv/
+__pycache__/
+
+# MISO Data (Keep the data, ignore the logs)
+miso_data/logs/
+miso_data/cache/
+
+# MISO Runtime State — do not commit, regenerated on first run
+miso_goals.json
+miso_bounty_board.db
+miso_vector_index.json
+miso_processed_files.json
+staging/
+deployments/
+bounty_logs/
+
+# Python
+*.pyc
+*.pyo
+.env
+*.db-shm
+*.db-wal
