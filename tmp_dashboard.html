@@ -1,0 +1,1938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MISO</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* ── Tokens ──────────────────────────────────────────────────────────────── */
+:root {
+  --bg:            #09090b;
+  --surface:       #18181b;
+  --surface-2:     #27272a;
+  --surface-3:     #323236;
+  --border:        rgba(255,255,255,.07);
+  --border-2:      rgba(255,255,255,.13);
+  --text:          #e4e4e7;
+  --text-strong:   #f4f4f5;
+  --text-muted:    #71717a;
+  --text-dim:      #52525b;
+  --text-faint:    #a1a1aa;
+  --accent:        #7c3aed;
+  --accent-h:      #6d28d9;
+  --accent-dim:    rgba(124,58,237,.15);
+  --accent-border: rgba(124,58,237,.3);
+  --user-bubble:   #3b0764;
+  --user-text:     #ede9fe;
+  --shadow-float:  0 40px 120px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.06);
+  --nav-w:         44px;
+  --nav-open:      232px;
+  --prd-w:         62%;
+}
+html.light {
+  --bg:            #f4f4f5;
+  --surface:       #ffffff;
+  --surface-2:     #f0f0f2;
+  --surface-3:     #e6e6ea;
+  --border:        rgba(0,0,0,.08);
+  --border-2:      rgba(0,0,0,.14);
+  --text:          #27272a;
+  --text-strong:   #09090b;
+  --text-muted:    #71717a;
+  --text-dim:      #a1a1aa;
+  --text-faint:    #d4d4d8;
+  --user-bubble:   #7c3aed;
+  --user-text:     #fff;
+  --shadow-float:  0 20px 60px rgba(0,0,0,.2), 0 0 0 1px rgba(0,0,0,.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
+#app { display: flex; height: 100vh; }
+
+/* ── Nav strip ───────────────────────────────────────────────────────────── */
+#nav {
+  width: var(--nav-w); flex-shrink: 0;
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+  transition: width .2s cubic-bezier(.4,0,.2,1); z-index: 30; position: relative;
+}
+#nav:hover { width: var(--nav-open); }
+
+.nav-brand {
+  height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 12px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0; overflow: hidden;
+}
+.nav-logo {
+  width: 22px; height: 22px; border-radius: 6px; background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .62rem; font-weight: 800; color: #fff; flex-shrink: 0; letter-spacing: .02em;
+}
+.nav-brand-text {
+  font-size: .88rem; font-weight: 700; letter-spacing: .06em; color: var(--text-strong);
+  white-space: nowrap; opacity: 0; transition: opacity .12s .06s;
+}
+#nav:hover .nav-brand-text { opacity: 1; }
+
+.nav-brand-actions {
+  margin-left: auto; display: flex; gap: 5px; opacity: 0; transition: opacity .12s .06s; flex-shrink: 0;
+}
+#nav:hover .nav-brand-actions { opacity: 1; }
+
+.nav-icon-btn {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: var(--surface-2); border: 1px solid var(--border-2);
+  color: var(--text-faint); font-size: .68rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: color .12s;
+}
+.nav-icon-btn:hover { color: var(--text); }
+
+/* Collapsed icon stubs */
+.nav-stubs { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 0; flex-shrink: 0; }
+#nav:hover .nav-stubs { display: none; }
+
+.nav-stub { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: .72rem; }
+
+/* Expanded session area */
+#session-area { flex: 1; overflow: hidden; display: none; flex-direction: column; }
+#nav:hover #session-area { display: flex; }
+
+/* Nav tabs */
+.nav-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.nav-tab { flex: 1; text-align: center; padding: 7px 0; font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.nav-pane { flex: 1; overflow-y: auto; display: none; flex-direction: column; }
+.nav-pane.active { display: flex; }
+
+.nav-section-label { font-size: .6rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); padding: 10px 12px 3px; white-space: nowrap; }
+
+#session-list { padding: 3px 6px 8px; display: flex; flex-direction: column; gap: 1px; }
+.session-item {
+  padding: 7px 8px; border-radius: 7px; cursor: pointer;
+  font-size: .77rem; color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: background .1s, color .1s; display: flex; align-items: center; gap: 7px;
+}
+.session-item:hover { background: var(--surface-2); color: var(--text); }
+.session-item.active { background: var(--accent-dim); color: var(--text-strong); }
+.session-item i { font-size: .62rem; color: var(--text-dim); flex-shrink: 0; }
+
+/* Goal cards */
+#goal-list { padding: 6px; display: flex; flex-direction: column; gap: 6px; }
+.goal-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 10px 11px; cursor: pointer; transition: border-color .15s; }
+.goal-card:hover { border-color: var(--accent-border); }
+.goal-card.active-goal { border-color: var(--accent); }
+.goal-card.achieved { border-color: rgba(34,197,94,.4); opacity: .75; }
+.goal-intent { font-size: .77rem; font-weight: 600; color: var(--text-strong); margin-bottom: 4px; line-height: 1.35; }
+.goal-criteria { font-size: .68rem; color: var(--text-dim); line-height: 1.45; margin-bottom: 6px; }
+.goal-status-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.goal-status-pill { font-size: .6rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; letter-spacing: .05em; }
+.pill-active   { background: rgba(99,102,241,.15); color: #818cf8; }
+.pill-achieved { background: rgba(34,197,94,.12); color: #4ade80; }
+.pill-draft    { background: rgba(100,116,139,.12); color: var(--text-dim); }
+.pill-paused   { background: rgba(234,179,8,.12); color: #facc15; }
+.goal-artifacts { display: flex; flex-direction: column; gap: 3px; margin-bottom: 7px; }
+.goal-artifact-row { font-size: .68rem; display: flex; align-items: center; gap: 5px; color: var(--text-dim); }
+.goal-artifact-row.built { color: var(--text-muted); }
+.goal-artifact-row .a-check { color: #4ade80; font-size: .6rem; }
+.goal-artifact-row .a-open { color: var(--text-dim); font-size: .6rem; }
+.goal-actions { display: flex; gap: 5px; }
+.goal-btn { font-size: .65rem; padding: 4px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; white-space: nowrap; }
+.goal-btn:hover { border-color: var(--accent-border); color: var(--text); }
+.goal-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.goal-btn.primary:hover { opacity: .85; }
+
+/* PRD artifact plan */
+.prd-artifact-plan { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+.prd-plan-head { font-size: .62rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+.prd-artifact-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface-2); margin-bottom: 5px; }
+.prd-artifact-item.now { border-color: rgba(99,102,241,.3); background: rgba(99,102,241,.06); }
+.prd-artifact-num { font-size: .65rem; font-weight: 700; color: var(--text-dim); width: 16px; flex-shrink: 0; }
+.prd-artifact-info { flex: 1; min-width: 0; }
+.prd-artifact-title { font-size: .75rem; font-weight: 600; color: var(--text-strong); }
+.prd-artifact-desc { font-size: .67rem; color: var(--text-dim); line-height: 1.4; margin-top: 1px; }
+.prd-artifact-build-btn { font-size: .65rem; padding: 3px 8px; border-radius: 6px; border: none; background: var(--accent); color: #fff; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.prd-artifact-build-btn:hover { opacity: .85; }
+.prd-artifact-built-badge { font-size: .62rem; padding: 2px 7px; border-radius: 6px; background: rgba(34,197,94,.1); color: #4ade80; font-weight: 600; flex-shrink: 0; }
+
+/* ── Conversation column ─────────────────────────────────────────────────── */
+#chat-col { flex: 1; min-width: 320px; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+
+#thread { flex: 1; overflow-y: auto; padding: 20px 18px 12px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+
+/* Empty state */
+.thread-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 16px; text-align: center; padding: 24px 16px; }
+.empty-logo { font-size: 1.8rem; font-weight: 800; letter-spacing: .05em; color: var(--text-strong); }
+.empty-sub  { font-size: .82rem; color: var(--text-muted); line-height: 1.6; max-width: 280px; }
+.empty-chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+.empty-chip {
+  padding: 6px 14px; border-radius: 20px; font-size: .74rem;
+  background: var(--surface); border: 1px solid var(--border-2);
+  color: var(--text-muted); cursor: pointer; transition: border-color .12s, color .12s, background .12s;
+}
+.empty-chip:hover { border-color: var(--accent-border); color: var(--text-strong); background: var(--surface-2); }
+
+/* Bubbles */
+.msg { display: flex; gap: 9px; }
+.msg-user { flex-direction: row-reverse; }
+.msg-avatar { width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: .6rem; color: #fff; margin-top: 2px; }
+
+.msg-bubble { max-width: 88%; padding: 10px 14px; border-radius: 14px; font-size: .84rem; line-height: 1.56; }
+.msg-user .msg-bubble { background: var(--user-bubble); color: var(--user-text); border-radius: 14px 14px 4px 14px; }
+.msg-miso .msg-bubble { background: var(--surface-2); color: var(--text); border-radius: 14px 14px 14px 4px; display: flex; flex-direction: column; gap: 8px; }
+
+.msg-status-line { font-size: .72rem; color: var(--text-muted); font-family: monospace; }
+.msg-result { display: flex; align-items: center; gap: 8px; font-size: .82rem; flex-wrap: wrap; }
+.msg-check { color: #4ade80; font-weight: 700; }
+.msg-err   { color: #f87171; font-weight: 700; }
+.score-badge { background: var(--surface-3); border: 1px solid var(--border-2); border-radius: 5px; padding: 1px 7px; font-size: .68rem; color: var(--text-faint); font-family: monospace; }
+
+.view-app-btn {
+  display: inline-flex; align-items: center; gap: 6px; font-size: .73rem;
+  background: var(--accent-dim); border: 1px solid var(--accent-border);
+  color: var(--accent); border-radius: 7px; padding: 4px 11px; cursor: pointer;
+  transition: background .12s; margin-top: 2px; width: fit-content;
+}
+.view-app-btn:hover { background: rgba(124,58,237,.25); }
+
+.msg-log-toggle { font-size: .7rem; color: var(--text-dim); background: none; border: none; cursor: pointer; padding: 0; transition: color .12s; }
+.msg-log-toggle:hover { color: var(--text-muted); }
+.msg-log { font-size: .67rem; color: #86efac; background: #0d1117; border-radius: 7px; padding: 9px 11px; max-height: 130px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; display: none; font-family: monospace; }
+
+/* Thinking */
+.thinking-dots { display: inline-flex; gap: 4px; }
+.thinking-dot  { width: 5px; height: 5px; border-radius: 50%; background: var(--text-dim); animation: tdb .9s ease-in-out infinite; }
+.thinking-dot:nth-child(2) { animation-delay: .15s; }
+.thinking-dot:nth-child(3) { animation-delay: .3s; }
+@keyframes tdb { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
+
+/* Input */
+#input-area { padding: 10px 14px 14px; border-top: 1px solid var(--border); flex-shrink: 0; }
+#prompt-wrap { display: flex; align-items: flex-end; gap: 8px; background: var(--surface); border: 1px solid var(--border-2); border-radius: 14px; padding: 10px 12px; transition: border-color .15s; }
+#prompt-wrap:focus-within { border-color: var(--accent-border); }
+#prompt-input { flex: 1; background: transparent; border: none; outline: none; resize: none; color: var(--text); font-size: .85rem; font-family: inherit; line-height: 1.5; max-height: 160px; overflow-y: auto; }
+#prompt-input::placeholder { color: var(--text-dim); }
+#send-btn { width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0; background: var(--accent); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, opacity .15s; align-self: flex-end; }
+#send-btn:hover { background: var(--accent-h); }
+#send-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ── PRD column ──────────────────────────────────────────────────────────── */
+#prd-col { flex: 1; min-width: 280px; display: flex; flex-direction: column; background: var(--surface); }
+
+.prd-header { height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.prd-header-title { font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); flex: 1; }
+
+#prd-build-btn {
+  background: var(--accent); color: #fff; border: none; border-radius: 8px;
+  padding: 6px 14px; font-size: .76rem; font-weight: 600; cursor: pointer;
+  transition: background .15s, opacity .15s; display: flex; align-items: center; gap: 6px; opacity: .35; pointer-events: none;
+}
+#prd-build-btn.ready { opacity: 1; pointer-events: all; }
+#prd-build-btn.ready:hover { background: var(--accent-h); }
+#prd-rebuild-btn {
+  background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border-2); border-radius: 8px;
+  padding: 6px 12px; font-size: .76rem; font-weight: 600; cursor: pointer;
+  transition: background .15s, opacity .15s; display: flex; align-items: center; gap: 5px; opacity: .35; pointer-events: none;
+}
+#prd-rebuild-btn.ready { opacity: 1; pointer-events: all; }
+#prd-rebuild-btn.ready:hover { background: var(--surface-3,#2a2a3a); }
+
+#prd-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+.prd-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 12px; color: var(--text-dim); font-size: .82rem; text-align: center; padding: 40px 20px; }
+.prd-placeholder i { font-size: 2rem; opacity: .13; }
+
+.prd-field { display: flex; flex-direction: column; gap: 4px; }
+.prd-label { font-size: .6rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--text-dim); }
+.prd-value { font-size: .81rem; color: var(--text); line-height: 1.5; }
+
+.prd-lib-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.prd-lib-tag { background: var(--accent-dim); border: 1px solid var(--accent-border); color: var(--text-faint); border-radius: 6px; padding: 2px 10px; font-size: .71rem; }
+
+.prd-interactions { display: flex; flex-direction: column; gap: 4px; }
+.prd-interaction { background: var(--surface-2); border: 1px solid var(--border); border-radius: 7px; padding: 7px 11px; font-size: .73rem; color: var(--text-faint); font-family: monospace; }
+
+.prd-pass { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: .79rem; color: var(--text-muted); line-height: 1.55; }
+
+/* ── Floating artifact window ────────────────────────────────────────────── */
+#artifact-float {
+  position: fixed;
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--shadow-float);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 400;
+  min-width: 320px;
+  min-height: 240px;
+  resize: both;
+}
+#artifact-float.visible { display: flex; animation: float-in .18s ease-out; }
+@keyframes float-in { from { opacity: 0; transform: scale(.97) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+#float-toolbar {
+  height: 44px; display: flex; align-items: center; gap: 8px;
+  padding: 0 14px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0; cursor: move; user-select: none;
+  background: var(--surface);
+}
+.float-toolbar-dots { display: flex; gap: 5px; flex-shrink: 0; }
+.float-dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot-close  { background: #ff5f57; cursor: pointer; }
+.dot-min    { background: #ffbd2e; cursor: pointer; }
+.dot-max    { background: #28c941; cursor: pointer; }
+.dot-close:hover  { background: #ff3b30; }
+.dot-min:hover    { background: #ffad00; }
+.dot-max:hover    { background: #00b300; }
+
+#float-title { flex: 1; font-size: .8rem; font-weight: 600; color: var(--text-strong); text-align: center; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 8px; }
+
+.float-btn {
+  width: 28px; height: 28px; border-radius: 7px; background: var(--surface-2);
+  border: 1px solid var(--border-2); color: var(--text-muted); font-size: .7rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color .12s;
+}
+.float-btn:hover { color: var(--text); }
+
+#artifact-frame { flex: 1; border: none; width: 100%; background: #fff; }
+
+/* Minimized chip */
+#float-chip {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border-2);
+  border-radius: 10px; padding: 8px 16px; z-index: 400;
+  display: none; align-items: center; gap: 10px; cursor: pointer;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5); font-size: .8rem; color: var(--text-muted);
+  transition: color .12s;
+}
+#float-chip:hover { color: var(--text); }
+#float-chip i { color: var(--accent); font-size: .8rem; }
+#float-chip.visible { display: flex; }
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+#toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 8px 20px; border-radius: 10px; font-size: .8rem; z-index: 9999; opacity: 0; transition: opacity .2s; pointer-events: none; background: #14532d; color: #86efac; }
+#toast.show { opacity: 1; }
+
+/* Consigliere float — handled entirely by consigliere-widget.js (self-injecting) */
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Nav strip ──────────────────────────────────────────────────────── -->
+  <nav id="nav">
+    <div class="nav-brand">
+      <div class="nav-logo">M</div>
+      <span class="nav-brand-text">MISO</span>
+      <div class="nav-brand-actions">
+        <button class="nav-icon-btn" id="theme-btn" onclick="toggleTheme()" title="Theme"><i class="fas fa-moon"></i></button>
+        <button class="nav-icon-btn" onclick="newChat()" title="New chat"><i class="fas fa-plus"></i></button>
+      </div>
+    </div>
+    <div class="nav-stubs">
+      <div class="nav-stub" title="Sessions"><i class="fas fa-clock-rotate-left"></i></div>
+      <div class="nav-stub" title="New"><i class="fas fa-plus"></i></div>
+    </div>
+    <div id="session-area">
+      <div class="nav-tabs">
+        <div class="nav-tab active" id="nav-tab-sessions" onclick="switchNavTab('sessions')">Sessions</div>
+        <div class="nav-tab" id="nav-tab-goals" onclick="switchNavTab('goals')">Goals</div>
+      </div>
+      <div class="nav-pane active" id="nav-pane-sessions">
+        <div class="nav-section-label">Recent</div>
+        <div id="session-list">
+          <div style="padding:12px;text-align:center;color:var(--text-dim);font-size:.75rem"><i class="fas fa-circle-notch fa-spin"></i></div>
+        </div>
+      </div>
+      <div class="nav-pane" id="nav-pane-goals">
+        <div class="nav-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:10px">
+          Goals
+          <span id="goal-context-badge" style="display:none;font-size:.58rem;padding:1px 6px;border-radius:8px;background:rgba(99,102,241,.2);color:#818cf8;font-weight:700">IN GOAL</span>
+        </div>
+        <div style="padding:6px 10px 2px">
+          <button onclick="newGoal()" style="width:100%;font-size:.72rem;padding:7px 10px;border-radius:8px;border:1px dashed var(--border);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;gap:6px;transition:border-color .15s,color .15s" onmouseover="this.style.borderColor='var(--accent-border)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
+            <i class="fas fa-plus fa-xs"></i> New goal
+          </button>
+        </div>
+        <div id="proposal-list" style="padding:0 6px"></div>
+        <div id="goal-list">
+          <div style="padding:12px;text-align:center;color:var(--text-dim);font-size:.75rem"><i class="fas fa-circle-notch fa-spin"></i></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Conversation ────────────────────────────────────────────────────── -->
+  <div id="chat-col">
+    <div id="thread"></div>
+    <div id="input-area">
+      <div id="prompt-wrap">
+        <button id="import-code-btn" onclick="openImportModal()" title="Import code or image to reverse-engineer a PRD"
+          style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border-2);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:color .15s,border-color .15s"
+          onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--accent-border)'"
+          onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border-2)'">
+          <i class="fas fa-file-code" style="font-size:.68rem"></i>
+        </button>
+        <button onclick="openImageGenModal()" title="Generate image or art"
+          style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border-2);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:color .15s,border-color .15s"
+          onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--accent-border)'"
+          onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border-2)'">
+          <i class="fas fa-image" style="font-size:.68rem"></i>
+        </button>
+        <textarea id="prompt-input" rows="1" placeholder="What outcome do you want? Describe the goal…"
+          oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+        <button id="send-btn" onclick="sendMessage()">
+          <i class="fas fa-arrow-up" style="font-size:.74rem"></i>
+        </button>
+      </div>
+
+      <!-- ── Import Code Modal ──────────────────────────────────────────────── -->
+      <div id="import-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+        <div style="background:var(--surface);border:1px solid var(--border-2);border-radius:16px;padding:24px;width:480px;max-width:94vw;box-shadow:var(--shadow-float)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+            <i class="fas fa-file-code" style="color:var(--accent);font-size:1rem"></i>
+            <span style="font-size:.95rem;font-weight:700;color:var(--text-strong)">Import Code</span>
+            <button onclick="closeImportModal()" style="margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem">✕</button>
+          </div>
+
+          <!-- Drop zone -->
+          <div id="import-dropzone"
+            ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+            ondragleave="this.style.borderColor='var(--border-2)'"
+            ondrop="handleImportDrop(event)"
+            onclick="document.getElementById('import-file-input').click()"
+            style="border:2px dashed var(--border-2);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:border-color .15s;margin-bottom:14px">
+            <i class="fas fa-cloud-upload-alt" style="font-size:1.6rem;color:var(--text-dim);margin-bottom:8px;display:block"></i>
+            <div id="import-dropzone-label" style="font-size:.82rem;color:var(--text-dim);line-height:1.5">
+              Drop files here or click to browse<br>
+              <span style="font-size:.72rem;color:var(--text-dim);opacity:.7">.zip, .py, .js, .ts, .html, .go, .rs, .sql · .png, .jpg, .gif, .webp</span>
+            </div>
+          </div>
+          <input id="import-file-input" type="file" multiple
+            accept=".zip,.py,.js,.ts,.jsx,.tsx,.html,.css,.json,.yaml,.yml,.md,.txt,.sql,.sh,.go,.rs,.toml,.png,.jpg,.jpeg,.gif,.webp"
+            style="display:none" onchange="handleImportFiles(this.files)">
+
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+            <div>
+              <label style="font-size:.72rem;color:var(--text-dim);display:block;margin-bottom:4px">Project name <span style="opacity:.5">(optional)</span></label>
+              <input id="import-name" type="text" placeholder="e.g. payments-service"
+                style="width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:8px;padding:7px 10px;color:var(--text);font-size:.82rem;outline:none">
+            </div>
+            <div>
+              <label style="font-size:.72rem;color:var(--text-dim);display:block;margin-bottom:4px">What do you want to understand? <span style="opacity:.5">(optional)</span></label>
+              <input id="import-intent" type="text" placeholder="e.g. reverse engineer a PRD, find security issues"
+                style="width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:8px;padding:7px 10px;color:var(--text);font-size:.82rem;outline:none">
+            </div>
+          </div>
+
+          <button id="import-submit-btn" onclick="submitImport()" disabled
+            style="width:100%;background:var(--accent);border:none;color:#fff;font-size:.82rem;font-weight:600;padding:10px;border-radius:10px;cursor:pointer;opacity:.4;transition:opacity .15s">
+            <span id="import-submit-label"><i class="fas fa-magnifying-glass fa-xs"></i> Analyze &amp; Generate PRD</span>
+          </button>
+
+          <!-- ── Post-analysis Ask MISO chat ──────────────────────────────── -->
+          <div id="import-chat-panel" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+            <div style="font-size:.72rem;font-weight:700;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">
+              <i class="fas fa-user-tie fa-xs"></i> Ask MISO about this code
+            </div>
+            <div id="import-chat-thread" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;font-size:.8rem"></div>
+            <div style="display:flex;gap:8px">
+              <input id="import-chat-input" type="text" placeholder="What does this do? How should we structure the PRD?"
+                onkeydown="if(event.key==='Enter')sendImportChat()"
+                style="flex:1;background:var(--surface-2);border:1px solid var(--border-2);border-radius:8px;padding:7px 10px;color:var(--text);font-size:.8rem;outline:none">
+              <button onclick="sendImportChat()"
+                style="background:var(--accent);border:none;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.75rem;white-space:nowrap">
+                <i class="fas fa-arrow-up fa-xs"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Image Generation Modal ───────────────────────────────────────────── -->
+  <div id="imggen-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+    <div style="background:var(--surface);border:1px solid var(--border-2);border-radius:16px;padding:24px;width:520px;max-width:94vw;box-shadow:var(--shadow-float)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <i class="fas fa-image" style="color:#a78bfa;font-size:1rem"></i>
+        <span style="font-size:.95rem;font-weight:700;color:var(--text-strong)">Generate Image</span>
+        <button onclick="closeImageGenModal()" style="margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem">✕</button>
+      </div>
+
+      <textarea id="imggen-intent" rows="3" placeholder="Describe the image… e.g. 'a clean SaaS dashboard hero, dark mode'"
+        onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey))submitImageGen()"
+        style="width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:10px;padding:10px 12px;color:var(--text);font-size:.85rem;resize:none;outline:none;margin-bottom:12px;font-family:inherit"></textarea>
+
+      <div style="display:flex;gap:10px;margin-bottom:16px;align-items:flex-end">
+        <div style="flex:1">
+          <label style="font-size:.72rem;color:var(--text-dim);display:block;margin-bottom:4px">Style</label>
+          <select id="imggen-style" style="width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:8px;padding:7px 10px;color:var(--text);font-size:.82rem;outline:none">
+            <option value="none">None</option>
+            <option value="ui_mockup">UI Mockup</option>
+            <option value="product_photo">Product Photo</option>
+            <option value="concept_art">Concept Art</option>
+            <option value="icon">Icon</option>
+            <option value="illustration">Illustration</option>
+            <option value="photo_realistic">Photo Realistic</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="imggen-submit-btn" onclick="submitImageGen()"
+        style="width:100%;background:#7c3aed;border:none;color:#fff;font-size:.85rem;font-weight:600;padding:11px;border-radius:10px;cursor:pointer;margin-bottom:14px">
+        <span id="imggen-submit-label"><i class="fas fa-star fa-xs"></i> Generate</span>
+      </button>
+
+      <div id="imggen-result" style="display:none">
+        <img id="imggen-img" src="" alt="Generated"
+          style="width:100%;border-radius:10px;border:1px solid var(--border);margin-bottom:8px;max-height:400px;object-fit:contain">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span id="imggen-meta" style="font-size:.72rem;color:var(--text-dim)"></span>
+          <button onclick="useImageInGoal()" style="font-size:.72rem;padding:4px 10px;background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);border-radius:6px;cursor:pointer">
+            Use in PRD
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PRD panel ──────────────────────────────────────────────────────── -->
+  <div id="prd-col">
+    <div class="prd-header">
+      <span class="prd-header-title">Spec</span>
+      <button id="prd-build-btn" onclick="buildFromApprovedPrd()" title="Build from this spec">
+        <i class="fas fa-rocket fa-xs"></i> <span id="prd-build-label">Build App</span>
+      </button>
+      <button id="prd-stop-btn" onclick="_stopGoalExecution=true;this.style.display='none'" title="Stop after current artifact" style="display:none;background:#f87171;border-color:#f87171;color:#fff;font-size:.65rem;padding:4px 9px;border-radius:6px;border:none;cursor:pointer">
+        <i class="fas fa-stop fa-xs"></i> Stop
+      </button>
+      <button id="prd-rebuild-btn" onclick="rebuildFromPrd()" title="Edit prompt from spec">
+        <i class="fas fa-pen fa-xs"></i> Edit
+      </button>
+      <button id="prd-review-btn" onclick="reviewPrd()" title="Automated spec audit — checks if the generated spec matches your stated goal intent" style="display:none;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:.65rem;padding:4px 9px;border-radius:6px;cursor:pointer">
+        <i class="fas fa-magnifying-glass fa-xs"></i> Audit Spec
+      </button>
+    </div>
+    <!-- ── Consigliere assessment panel ──────────────────────────────────── -->
+    <div id="prd-review-panel" style="display:none;border-bottom:1px solid var(--border);padding:16px 18px;background:rgba(251,191,36,.04);max-height:45%;overflow-y:auto;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:.7rem;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:.06em"><i class="fas fa-magnifying-glass fa-xs"></i> Spec Audit</span>
+        <button onclick="document.getElementById('prd-review-panel').style.display='none'" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.75rem;padding:0 2px" title="Dismiss">✕</button>
+      </div>
+      <div id="prd-review-content"></div>
+    </div>
+    <div id="prd-body">
+      <div class="prd-placeholder">
+        <i class="fas fa-file-code"></i>
+        <span>Describe a goal and MISO will plan the artifacts needed to achieve it</span>
+      </div>
+    </div>
+    <!-- ── Brain panel ──────────────────────────────────────────────────── -->
+    <div id="brain-panel" style="border-top:1px solid var(--border);padding:0">
+      <div id="brain-header" onclick="toggleBrain()" style="display:flex;align-items:center;gap:7px;padding:8px 12px;cursor:pointer;user-select:none">
+        <i class="fas fa-brain" style="font-size:.72rem;color:#a78bfa"></i>
+        <span style="font-size:.72rem;font-weight:700;color:var(--text)">Brain</span>
+        <span id="brain-event-count" style="font-size:.6rem;color:var(--text-dim);margin-left:2px"></span>
+        <i id="brain-chevron" class="fas fa-chevron-down" style="font-size:.6rem;color:var(--text-dim);margin-left:auto;transition:transform .2s"></i>
+      </div>
+      <div id="brain-body" style="display:none;padding:0 12px 12px">
+        <div id="brain-reflect" style="font-size:.68rem;color:var(--text-dim);line-height:1.7">Loading…</div>
+        <div style="margin-top:8px;font-size:.65rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em">Recent events</div>
+        <div id="brain-events" style="margin-top:4px;max-height:160px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Floating artifact window ─────────────────────────────────────────── -->
+<div id="artifact-float">
+  <div id="float-toolbar">
+    <div class="float-toolbar-dots">
+      <div class="float-dot dot-close" onclick="closeFloat()" title="Close"></div>
+      <div class="float-dot dot-min"   onclick="minimizeFloat()" title="Minimize"></div>
+      <div class="float-dot dot-max"   onclick="popOutFloat()" title="Pop out"></div>
+    </div>
+    <span id="float-title">App preview</span>
+    <button class="float-btn" onclick="reloadFloat()" title="Reload"><i class="fas fa-rotate-right fa-xs"></i></button>
+    <button class="float-btn" onclick="popOutFloat()" title="Open in new tab"><i class="fas fa-arrow-up-right-from-square fa-xs"></i></button>
+  </div>
+  <iframe id="artifact-frame" frameborder="0"></iframe>
+</div>
+
+<!-- Minimized chip -->
+<div id="float-chip" onclick="restoreFloat()">
+  <i class="fas fa-display"></i>
+  <span id="float-chip-label">App preview</span>
+  <span style="color:var(--text-dim);font-size:.68rem;margin-left:4px">click to restore</span>
+</div>
+
+<!-- ── Toast ──────────────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<!-- ── Consigliere ────────────────────────────────────────────────────────── -->
+<!-- Self-injecting: floating button + panel + proactive alerts/monitoring. -->
+<script src="/consigliere-widget.js"></script>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+var _sid        = null;   // active session id
+var _folder     = null;   // current app folder
+var _generating = false;
+var _msgN       = 0;
+var _prdData    = null;
+var _goalId     = null;   // goal record created at blueprint phase
+var _stopGoalExecution = false;
+var _drag       = { on: false, ox: 0, oy: 0, ex: 0, ey: 0 };
+
+// ── Utils ────────────────────────────────────────────────────────────────────
+function esc(s){ var d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; }
+function H(){ return {'Content-Type':'application/json'}; }
+
+function toast(msg, ok) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = ok===false ? '#7f1d1d' : '#14532d';
+  t.style.color      = ok===false ? '#fca5a5' : '#86efac';
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,160)+'px'; }
+function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMessage(); } }
+function setPrompt(text) { var el=document.getElementById('prompt-input'); el.value=text; el.focus(); autoResize(el); }
+function scrollThread() { var t=document.getElementById('thread'); t.scrollTop=t.scrollHeight; }
+function elapsed(ms) { var s=Math.round(ms/1000); return s<60?s+'s':Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+
+// ── Nav tabs (Sessions / Goals) ──────────────────────────────────────────────
+var _currentGoal = null;
+
+function switchNavTab(tab) {
+  ['sessions','goals'].forEach(function(t) {
+    document.getElementById('nav-tab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('nav-pane-'+t).classList.toggle('active', t===tab);
+  });
+  if(tab==='goals') loadGoals();
+}
+
+var _goalsById = {};  // id → full goal object; avoids serializing into onclick attrs
+
+async function loadGoals() {
+  try {
+    var r = await fetch('/api/goals');
+    var goals = await r.json();
+    _goalsById = {};
+    goals.forEach(function(g){ _goalsById[g.id] = g; });
+    renderGoals(goals);
+  } catch(e) {
+    document.getElementById('goal-list').innerHTML = '<div style="padding:16px;color:var(--text-dim);font-size:.75rem;text-align:center">Failed to load goals</div>';
+  }
+  loadProposals();
+}
+
+async function loadProposals() {
+  try {
+    var r = await fetch('/api/proposals');
+    var props = await r.json();
+    renderProposals(props);
+  } catch(e) { /* proposals optional */ }
+}
+
+function renderProposals(props) {
+  var el = document.getElementById('proposal-list');
+  if(!el) return;
+  if(!props || !props.length) { el.innerHTML = ''; return; }
+  var html = '<div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin:10px 0 6px;padding:0 2px">Suggested by MISO <button onclick="generateProposals()" style="font-size:.6rem;padding:1px 7px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;margin-left:6px">Refresh</button></div>';
+  props.forEach(function(p) {
+    var intent = (p.prd && p.prd.goal) || p.intent || 'Untitled proposal';
+    var gap = p.from_node && p.to_node ? p.from_node+' → '+p.to_node : '';
+    var roi = p.roi ? ' · ROI '+Math.round(p.roi) : '';
+    html += '<div style="background:linear-gradient(135deg,rgba(251,191,36,.07),rgba(59,130,246,.05));border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:10px 11px;margin-bottom:7px">'
+      +'<div style="font-size:.72rem;font-weight:600;color:var(--text-primary);margin-bottom:4px">'+esc(intent.slice(0,90))+'</div>'
+      +(gap ? '<div style="font-size:.62rem;color:var(--text-dim);margin-bottom:6px">Gap: '+esc(gap)+esc(roi)+'</div>' : '')
+      +'<div style="display:flex;gap:6px">'
+      +'<button onclick="approveProposal(\''+p.id+'\')" style="font-size:.65rem;padding:3px 10px;border-radius:7px;border:none;background:#3b82f6;color:#fff;cursor:pointer"><i class="fas fa-check fa-xs"></i> Activate</button>'
+      +'<button onclick="dismissProposal(\''+p.id+'\')" style="font-size:.65rem;padding:3px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer">Dismiss</button>'
+      +'</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+async function generateProposals() {
+  toast('Scanning gaps for proposals…');
+  try {
+    var r = await fetch('/api/proposals/generate', {method:'POST', headers:H()});
+    var d = await r.json();
+    toast('Generated '+d.generated+' proposal(s)');
+    await loadGoals();
+  } catch(e) { toast('Failed to generate proposals', false); }
+}
+
+async function approveProposal(id) {
+  try {
+    var r = await fetch('/api/proposals/'+id+'/approve', {method:'POST', headers:H()});
+    var d = await r.json();
+    toast('Goal activated');
+    await loadGoals();
+    if(d.goal_id) activateGoalContext(d.goal_id);
+  } catch(e) { toast('Failed to approve proposal', false); }
+}
+
+async function dismissProposal(id) {
+  try {
+    await fetch('/api/proposals/'+id+'/dismiss', {method:'POST', headers:H()});
+    await loadGoals();
+  } catch(e) {}
+}
+
+function newGoal() {
+  newChat();
+  switchNavTab('sessions');
+  var inp = document.getElementById('prompt-input');
+  inp.focus();
+  inp.placeholder = 'What outcome do you want? Describe the goal…';
+}
+
+function renderGoals(goals) {
+  var el = document.getElementById('goal-list');
+  if(!goals.length) {
+    el.innerHTML = '<div style="padding:20px 12px;color:var(--text-dim);font-size:.75rem;text-align:center;line-height:1.6">'
+      + 'No goals yet.<br><br>'
+      + '<button onclick="newGoal()" style="font-size:.72rem;padding:6px 14px;border-radius:8px;border:1px solid var(--accent-border);background:var(--accent);color:#fff;cursor:pointer">'
+      + '<i class="fas fa-plus fa-xs"></i> Describe a goal</button></div>';
+    return;
+  }
+  var statusPillClass = {active:'pill-active', draft:'pill-draft', achieved:'pill-achieved', paused:'pill-paused'};
+  el.innerHTML = goals.map(function(g) {
+    var arts = g.artifacts||[];
+    var suggested = (g.prd&&g.prd.suggested_artifacts)||[];
+    var isActive = _goalId===g.id;
+    var isRecurring = g.goal_type === 'recurring';
+
+    // checklist: prefer suggested artifact plan; fall back to built artifacts
+    var planItems = suggested.length
+      ? suggested
+      : arts.map(function(a){ return {title:a.name||a.intent||a.app_folder}; });
+    var builtCount = 0;
+    var checklist = planItems.map(function(a, i) {
+      var built = arts.some(function(f){
+        return (f.intent||f.name||f.app_folder||'').toLowerCase()
+          .indexOf((a.title||'').toLowerCase().slice(0,15)) >= 0;
+      });
+      if(built) builtCount++;
+      return '<div class="goal-artifact-row'+(built?' built':'')+'"><i class="fas '
+        +(built?'fa-circle-check a-check':'fa-circle a-open')+'"></i>'
+        +esc(a.title||('Artifact '+(i+1)))+'</div>';
+    }).join('');
+    if(!checklist && arts.length) {
+      builtCount = arts.length;
+      checklist = arts.map(function(a){
+        return '<div class="goal-artifact-row built"><i class="fas fa-circle-check a-check"></i>'
+          +esc(a.name||a.intent||a.app_folder)+'</div>';
+      }).join('');
+    }
+
+    var totalSteps = planItems.length || arts.length;
+    var allDone = totalSteps > 0 && builtCount >= totalSteps;
+    var statusPill = '<span class="goal-status-pill '+(statusPillClass[g.status]||'pill-draft')+'">'+esc(g.status)+'</span>';
+
+    // Recurring badge
+    var recurBadge = isRecurring
+      ? '<span style="font-size:.6rem;padding:1px 6px;border-radius:8px;background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25);margin-left:4px" title="'+(g.recurrence_source==='process_observer'?'Inferred from process signals':'Recurring goal')+'"><i class="fas fa-rotate fa-xs"></i> '+(g.recurrence_label||'Recurring')+'</span>'
+      : '';
+
+    var progressLabel = isRecurring
+      ? '<span style="font-size:.63rem;color:var(--text-dim);margin-left:auto">'+arts.length+' run'+(arts.length!==1?'s':'')+'</span>'
+      : (totalSteps
+          ? '<span style="font-size:.63rem;color:var(--text-dim);margin-left:auto">'+builtCount+'/'+totalSteps+' built</span>'
+          : '<span style="font-size:.63rem;color:var(--text-dim);margin-left:auto">'+arts.length+' artifact'+(arts.length!==1?'s':'')+'</span>');
+
+    var actionsHtml;
+    if(isRecurring) {
+      // Recurring goals: pause/resume, no "mark achieved"
+      if(g.status === 'paused') {
+        actionsHtml = '<button class="goal-btn primary" onclick="setGoalStatus(\''+esc(g.id)+'\',\'active\')"><i class="fas fa-play fa-xs"></i> Resume</button>'
+          +'<button class="goal-btn" onclick="activateGoalContext(\''+esc(g.id)+'\')"><i class="fas fa-crosshairs fa-xs"></i> Work on this</button>';
+      } else {
+        actionsHtml = '<button class="goal-btn primary" onclick="activateGoalContext(\''+esc(g.id)+'\')"><i class="fas fa-crosshairs fa-xs"></i> Work on this</button>'
+          +'<button class="goal-btn" onclick="setGoalStatus(\''+esc(g.id)+'\',\'paused\')"><i class="fas fa-pause fa-xs"></i> Pause</button>';
+      }
+    } else if(g.status === 'achieved') {
+      actionsHtml = '<span style="font-size:.65rem;color:#4ade80"><i class="fas fa-trophy fa-xs"></i> Achieved</span>'
+        +'<button class="goal-btn" style="margin-left:auto" onclick="setGoalStatus(\''+esc(g.id)+'\',\'active\')"><i class="fas fa-rotate-left fa-xs"></i> Reopen</button>';
+    } else {
+      var achieveBtn = allDone
+        ? '<button class="goal-btn" onclick="setGoalStatus(\''+esc(g.id)+'\',\'achieved\')"><i class="fas fa-trophy fa-xs"></i> Mark achieved</button>'
+        : '<button class="goal-btn" style="opacity:.4;cursor:not-allowed" title="Build all '+totalSteps+' artifacts first"><i class="fas fa-trophy fa-xs"></i> Mark achieved</button>';
+      actionsHtml = '<button class="goal-btn primary" onclick="activateGoalContext(\''+esc(g.id)+'\')"><i class="fas fa-crosshairs fa-xs"></i> Work on this</button>'
+        + achieveBtn;
+    }
+
+    // Criteria status badge
+    var ev = g.last_evaluation;
+    var criteriaHtml = '';
+    if(ev) {
+      var cMet = ev.met;
+      criteriaHtml = '<div style="font-size:.63rem;margin-top:4px;display:flex;align-items:center;gap:5px">'
+        +'<i class="fas '+(cMet?'fa-circle-check':'fa-circle-xmark')+'" style="color:'+(cMet?'#4ade80':'#f87171')+'"></i>'
+        +'<span style="color:'+(cMet?'#4ade80':'var(--text-dim)')+'">'+(cMet?'Criteria met':'Criteria not yet met')+'</span>'
+        +'<button onclick="evaluateGoal(\''+esc(g.id)+'\')" style="margin-left:auto;font-size:.6rem;padding:1px 6px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer">Re-evaluate</button>'
+        +'</div>';
+    } else if(g.status==='active') {
+      criteriaHtml = '<div style="font-size:.63rem;margin-top:4px;color:var(--text-dim)">'
+        +'<button onclick="evaluateGoal(\''+esc(g.id)+'\')" style="font-size:.6rem;padding:1px 6px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer"><i class="fas fa-flask fa-xs"></i> Evaluate criteria</button>'
+        +'</div>';
+    }
+
+    return '<div class="goal-card'+(isActive?' active-goal':'')+(g.status==='achieved'?' achieved':'')+'" data-goal-id="'+esc(g.id)+'">'
+      + '<div class="goal-status-row">'+statusPill+recurBadge+progressLabel+'</div>'
+      + '<div class="goal-intent">'+esc((g.prd&&g.prd.goal)||g.intent)+'</div>'
+      + (g.success_criteria ? '<div class="goal-criteria">'+esc(g.success_criteria.slice(0,120))+'</div>' : '')
+      + criteriaHtml
+      + (checklist && !isRecurring ? '<div class="goal-artifacts">'+checklist+'</div>' : '')
+      + '<div class="goal-actions">'+actionsHtml+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+function activateGoalContext(goalId) {
+  _goalId = goalId;
+  _currentGoal = _goalsById[goalId] || null;
+  document.querySelectorAll('.goal-card').forEach(function(c){
+    c.classList.toggle('active-goal', c.dataset.goalId===goalId);
+  });
+  document.getElementById('goal-context-badge').style.display = goalId ? '' : 'none';
+  // populate PRD panel with this goal's spec
+  if(_currentGoal && _currentGoal.prd) {
+    var prd = _currentGoal.prd;
+    renderPrd(prd, prd.test_spec||{}, _currentGoal.intent||'');
+  }
+  // show Review button whenever a goal context is active
+  document.getElementById('prd-review-btn').style.display = goalId ? '' : 'none';
+  // auto-populate chat input with goal intent so user can immediately trigger the PRD pipeline
+  if(_currentGoal && _currentGoal.intent) {
+    setPrompt(_currentGoal.intent);
+    switchNavTab('sessions');
+  }
+  toast('Goal context set — next build links to this goal');
+}
+
+function clearGoalContext() {
+  _goalId = null; _currentGoal = null;
+  document.querySelectorAll('.goal-card').forEach(function(c){ c.classList.remove('active-goal'); });
+  document.getElementById('goal-context-badge').style.display='none';
+}
+
+// ── Consigliere PRD Review ────────────────────────────────────────────────────
+
+var _activeAssessmentId = null;
+
+async function reviewPrd() {
+  if(!_goalId) { toast('No goal selected', false); return; }
+  var btn = document.getElementById('prd-review-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin fa-xs"></i> Auditing…';
+  var panel = document.getElementById('prd-review-panel');
+  panel.style.display = '';
+  document.getElementById('prd-review-content').innerHTML =
+    '<div style="color:var(--text-dim);font-size:.85rem;padding:10px 0"><i class="fas fa-spinner fa-spin fa-xs"></i> Consigliere is reading the PRD…</div>';
+  try {
+    var r = await fetch('/api/goals/'+_goalId+'/review', {method:'POST', headers:H()});
+    var d = await r.json();
+    if(d.error) throw new Error(d.error);
+    _activeAssessmentId = d.id;
+    renderAssessment(d);
+  } catch(e) {
+    document.getElementById('prd-review-content').innerHTML =
+      '<div style="color:#f87171;font-size:.72rem">Review failed: '+esc(String(e))+'</div>';
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-magnifying-glass fa-xs"></i> Audit Spec';
+  }
+}
+
+function renderAssessment(a) {
+  var verdictColor = {aligned:'#4ade80', misaligned:'#f87171', needs_clarification:'#fbbf24'}[a.verdict] || '#94a3b8';
+  var verdictIcon  = {aligned:'fa-circle-check', misaligned:'fa-circle-xmark', needs_clarification:'fa-circle-question'}[a.verdict] || 'fa-circle';
+
+  var html = '<div style="display:flex;align-items:center;gap:7px;margin-bottom:12px">'
+    +'<i class="fas '+verdictIcon+'" style="color:'+verdictColor+'"></i>'
+    +'<span style="font-weight:600;font-size:.9rem;color:'+verdictColor+'">'+esc(a.verdict||'')+'</span>'
+    +'<span style="flex:1;font-size:.85rem;color:var(--text-dim)">'+esc(a.summary||'')+'</span>'
+    +'</div>';
+
+  if(!a.suggestions || !a.suggestions.length) {
+    html += '<div style="font-size:.85rem;color:var(--text-dim)">No changes suggested — PRD aligns with your intent.</div>';
+  } else {
+    var typeLabel = {
+      intent_drift:'Intent drift', missing_requirement:'Missing requirement',
+      scope_creep:'Scope creep', clarification_needed:'Needs clarification',
+      better_approach:'Better approach'
+    };
+    var impactColor = {high:'#f87171', medium:'#fbbf24', low:'#60a5fa'};
+
+    a.suggestions.forEach(function(s) {
+      var isPending = s.status === 'pending';
+      var isAccepted = s.status === 'accepted';
+      var isRejected = s.status === 'rejected';
+      var statusTag = isAccepted
+        ? '<span style="font-size:.58rem;background:#4ade8020;color:#4ade80;padding:1px 6px;border-radius:4px">Applied</span>'
+        : isRejected
+        ? '<span style="font-size:.58rem;background:#f8717120;color:#f87171;padding:1px 6px;border-radius:4px">Dismissed</span>'
+        : '';
+
+      html += '<div id="suggestion-'+s.id+'" style="border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px;opacity:'+(isRejected?.5:1)+'">'
+        +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">'
+        +'<span style="font-size:.72rem;background:var(--surface-2);padding:2px 8px;border-radius:4px;color:var(--text-dim)">'+esc(typeLabel[s.type]||s.type)+'</span>'
+        +'<span style="font-size:.72rem;color:'+(impactColor[s.impact]||'var(--text-dim)')+'">'+(s.impact||'')+'</span>'
+        +'<span style="font-size:.72rem;color:var(--text-dim)">→ '+esc(s.field||'')+'</span>'
+        +statusTag
+        +'</div>'
+        +'<div style="font-size:.85rem;color:var(--text-primary);margin-bottom:6px;line-height:1.5">'+esc(s.rationale||'')+'</div>'
+        +(s.current_value ? '<div style="font-size:.78rem;color:var(--text-dim);margin-bottom:4px"><b>Now:</b> '+esc((s.current_value||'').slice(0,120))+'</div>' : '')
+        +'<div style="font-size:.78rem;color:#60a5fa;margin-bottom:9px;line-height:1.5"><b>Suggested:</b> '+esc((s.proposed_value||'').slice(0,200))+'</div>'
+        +(isPending
+          ? '<div style="display:flex;gap:6px">'
+            +'<button onclick="applySuggestion(\''+a.id+'\',\''+s.id+'\',\'accept\')" '
+            +'style="font-size:.75rem;padding:4px 12px;border-radius:6px;border:none;background:#3b82f6;color:#fff;cursor:pointer">Apply</button>'
+            +'<button onclick="applySuggestion(\''+a.id+'\',\''+s.id+'\',\'reject\')" '
+            +'style="font-size:.75rem;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer">Dismiss</button>'
+            +'</div>'
+          : '')
+        +'</div>';
+    });
+  }
+
+  document.getElementById('prd-review-content').innerHTML = html;
+}
+
+async function applySuggestion(assessmentId, suggestionId, action) {
+  try {
+    var r = await fetch('/api/assessments/'+assessmentId+'/apply', {
+      method:'POST', headers:H(),
+      body: JSON.stringify({suggestion_id: suggestionId, action: action==='accept'?'accepted':'rejected'})
+    });
+    var d = await r.json();
+    toast(action==='accept' ? '✓ Suggestion applied to PRD' : 'Suggestion dismissed');
+    // Reload assessment to show updated statuses
+    var ar = await fetch('/api/goals/'+_goalId+'/assessments', {headers:H()});
+    var assessments = await ar.json();
+    if(assessments.length) renderAssessment(assessments[0]);
+    // Refresh goal in sidebar (PRD may have changed)
+    await loadGoals();
+    // Re-render the PRD panel if goal has been updated
+    var g = _goalsById[_goalId];
+    if(g && g.prd) renderPrd(g.prd, g.prd.test_spec||{}, g.intent||'');
+  } catch(e) { toast('Failed: '+e, false); }
+}
+
+async function evaluateGoal(goalId) {
+  toast('Evaluating criteria…');
+  try {
+    var r = await fetch('/api/goals/'+goalId+'/evaluate', {method:'POST', headers:H()});
+    var d = await r.json();
+    await loadGoals();
+    toast(d.met ? '✓ Criteria met — '+esc(d.details||'') : '✗ Not yet — '+esc(d.details||''), d.met);
+  } catch(e) { toast('Evaluation failed', false); }
+}
+
+async function setGoalStatus(goalId, status) {
+  await fetch('/api/goals/'+goalId, {method:'PATCH', headers:H(), body:JSON.stringify({status:status})});
+  if(status !== 'active' && _goalId===goalId) clearGoalContext();
+  await loadGoals();
+  toast(status==='achieved' ? 'Goal marked as achieved' : 'Goal reopened');
+}
+
+async function markGoalAchieved(goalId) { await setGoalStatus(goalId, 'achieved'); }
+
+function buildArtifactFromPlan(artifactIndex) {
+  if(!_prdData) return;
+  var artifacts = (_prdData.bp&&_prdData.bp.suggested_artifacts)||[];
+  var art = artifacts[artifactIndex];
+  if(!art) return;
+  // Switch back to sessions tab and pre-fill prompt with the artifact description
+  switchNavTab('sessions');
+  setPrompt(art.description ? art.title+' — '+art.description : art.title);
+  document.getElementById('prompt-input').focus();
+  toast('Ready to build: '+art.title+' (goal context preserved)');
+}
+
+// ── Theme ────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  var light = document.documentElement.classList.toggle('light');
+  document.getElementById('theme-btn').innerHTML = light?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
+  localStorage.setItem('miso_theme', light?'light':'dark');
+}
+if(localStorage.getItem('miso_theme')==='light'){
+  document.documentElement.classList.add('light');
+  document.getElementById('theme-btn').innerHTML='<i class="fas fa-sun"></i>';
+}
+
+// ── Suggestions ──────────────────────────────────────────────────────────────
+var SUGGESTIONS = [
+  ['Tip calculator',  'Tip calculator with bill amount and tip % slider'],
+  ['BMI calculator',  'BMI calculator with height, weight inputs and a gauge'],
+  ['Budget tracker',  'Budget tracker with income vs expenses chart'],
+  ['Quiz app',        'Quiz app with 5 trivia questions and a score screen'],
+  ['Countdown timer', 'Countdown timer with start, pause and reset'],
+  ['Unit converter',  'Unit converter: length, weight and temperature'],
+];
+
+function _chipsHtml() {
+  return '<div class="empty-chips">' +
+    SUGGESTIONS.map(function(s){
+      return '<button class="empty-chip" onclick="setPrompt(\''+s[1].replace(/'/g,"\\'")+'\')">'+ esc(s[0]) +'</button>';
+    }).join('') + '</div>';
+}
+
+// ── Empty state ──────────────────────────────────────────────────────────────
+function showEmpty() {
+  var t = document.getElementById('thread');
+  t.innerHTML = '<div class="thread-empty">'
+    + '<div class="empty-logo">MISO</div>'
+    + '<div class="empty-sub">Describe an app — I\'ll build it and surface the spec</div>'
+    + _chipsHtml()
+    + '</div>';
+  clearFloat(); clearPrd();
+}
+
+function hideEmpty() {
+  var e = document.getElementById('thread');
+  var em = e.querySelector('.thread-empty');
+  if(em) em.remove();
+}
+
+// ── Sessions ─────────────────────────────────────────────────────────────────
+async function loadSessions() {
+  try {
+    var r = await fetch('/api/conversations');
+    var list = await r.json();
+    var el = document.getElementById('session-list');
+    if(!list.length){
+      el.innerHTML='<div style="padding:10px 8px;font-size:.75rem;color:var(--text-dim);text-align:center">No sessions yet</div>';
+      return;
+    }
+    el.innerHTML = list.map(function(s){
+      var active = s.id===_sid?' active':'';
+      return '<div class="session-item'+active+'" data-id="'+esc(s.id)+'" onclick="loadSession(\''+esc(s.id)+'\')">'
+        +'<i class="fas fa-message"></i>'
+        +'<span style="overflow:hidden;text-overflow:ellipsis">'+esc(s.title||'Untitled')+'</span>'
+        +'</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function loadSession(id) {
+  if(_generating) return;
+  _sid=id; _folder=null; _prdData=null;
+  document.querySelectorAll('.session-item').forEach(function(el){ el.classList.toggle('active', el.dataset.id===id); });
+  var t = document.getElementById('thread');
+  t.innerHTML='<div style="padding:24px;text-align:center;color:var(--text-dim);font-size:.8rem"><i class="fas fa-circle-notch fa-spin"></i></div>';
+  try {
+    var r = await fetch('/api/conversations/'+id+'/turns');
+    var turns = await r.json();
+    renderThread(turns);
+  } catch(e) {
+    t.innerHTML='<div style="padding:20px;color:#f87171;font-size:.8rem">Failed to load</div>';
+  }
+}
+
+function renderThread(turns) {
+  if(!turns.length){ showEmpty(); return; }
+  var t = document.getElementById('thread');
+  t.innerHTML='';
+  turns.forEach(function(turn){
+    if(turn.role==='user') { addUserBubble(turn.content); }
+    else {
+      if(turn.app_folder) _folder=turn.app_folder;
+      addMisoBubble(turn.content, turn.score, null, false, turn.app_folder);
+    }
+  });
+  if(_folder){ showFloat(_folder, false); }
+  if(_folder){ fetchPrd(_folder); }
+  scrollThread();
+}
+
+// ── Bubbles ──────────────────────────────────────────────────────────────────
+function addUserBubble(text) {
+  hideEmpty();
+  var t = document.getElementById('thread');
+  var d = document.createElement('div');
+  d.className='msg msg-user';
+  d.innerHTML='<div class="msg-bubble">'+esc(text)+'</div>';
+  t.appendChild(d); scrollThread();
+}
+
+function addMisoBubble(text, score, logLines, streaming, folder) {
+  hideEmpty();
+  var t = document.getElementById('thread');
+  var id = 'msg-'+(++_msgN);
+  var d = document.createElement('div');
+  d.className='msg msg-miso'; d.id=id;
+  if(streaming){
+    d.innerHTML='<div class="msg-avatar"><i class="fas fa-microchip" style="font-size:.58rem"></i></div>'
+      +'<div class="msg-bubble">'
+      +'<div class="thinking-dots"><span class="thinking-dot"></span><span class="thinking-dot"></span><span class="thinking-dot"></span></div>'
+      +'<div class="msg-status-line" id="'+id+'-s"></div>'
+      +'</div>';
+  } else {
+    d.innerHTML = _misoHtml(id, text, score, logLines, folder);
+  }
+  t.appendChild(d); scrollThread();
+  return id;
+}
+
+function _misoHtml(id, text, score, logLines, folder) {
+  var sc = score!=null?' <span class="score-badge">'+Math.round(score)+'</span>':'';
+  var ck = (score==null||score>=60)?'<span class="msg-check">✓</span>':'<span class="msg-err">!</span>';
+  var lid = id+'-log';
+  var logHtml = (logLines&&logLines.filter(Boolean).length)
+    ? '<button class="msg-log-toggle" onclick="toggleLog(\''+lid+'\',this)">Show log</button>'
+      +'<pre class="msg-log" id="'+lid+'">'+esc(logLines.filter(Boolean).join('\n'))+'</pre>'
+    : '';
+  var viewBtn = folder
+    ? '<button class="view-app-btn" onclick="showFloat(\''+esc(folder)+'\', true)">'
+      +'<i class="fas fa-display fa-xs"></i> View app</button>'
+    : '';
+  return '<div class="msg-avatar"><i class="fas fa-microchip" style="font-size:.58rem"></i></div>'
+    +'<div class="msg-bubble">'
+    +'<div class="msg-result">'+ck+' '+esc(text)+sc+'</div>'
+    +viewBtn+logHtml
+    +'</div>';
+}
+
+function updateStatus(id, txt) {
+  var el=document.getElementById(id+'-s'); if(el) el.textContent=txt; scrollThread();
+}
+
+function finalizeBubble(id, text, score, logLines, folder) {
+  var d=document.getElementById(id); if(!d) return;
+  d.innerHTML=_misoHtml(id, text, score, logLines, folder); scrollThread();
+}
+
+function toggleLog(lid, btn) {
+  var el=document.getElementById(lid); if(!el) return;
+  var show=el.style.display!=='block';
+  el.style.display=show?'block':'none';
+  btn.textContent=show?'Hide log':'Show log';
+}
+
+// ── Floating artifact ────────────────────────────────────────────────────────
+function _floatCenter() {
+  var el = document.getElementById('artifact-float');
+  var w  = Math.min(window.innerWidth * 0.7, 980);
+  var h  = Math.min(window.innerHeight * 0.8, 740);
+  el.style.width  = w + 'px';
+  el.style.height = h + 'px';
+  el.style.left   = Math.round((window.innerWidth  - w) / 2) + 'px';
+  el.style.top    = Math.round((window.innerHeight - h) / 2) + 'px';
+}
+
+function showFloat(folder, center) {
+  _folder = folder;
+  var el    = document.getElementById('artifact-float');
+  var frame = document.getElementById('artifact-frame');
+  var chip  = document.getElementById('float-chip');
+  var title = document.getElementById('float-title');
+  var chipL = document.getElementById('float-chip-label');
+
+  chip.classList.remove('visible');
+
+  if(!el.classList.contains('visible') || center) { _floatCenter(); }
+  el.classList.add('visible');
+
+  var url = '/'+folder+'/index.html?_t='+Date.now();
+  if(frame.src !== location.origin+url.split('?')[0]+'?_t='+Date.now().toString().slice(0,-3)+'000') {
+    frame.src = url;
+  }
+  title.textContent = folder;
+  chipL.textContent = folder;
+}
+
+function clearFloat() {
+  _folder=null;
+  document.getElementById('artifact-float').classList.remove('visible');
+  document.getElementById('float-chip').classList.remove('visible');
+  document.getElementById('artifact-frame').src='';
+}
+
+function minimizeFloat() {
+  document.getElementById('artifact-float').classList.remove('visible');
+  document.getElementById('float-chip').classList.add('visible');
+}
+
+function restoreFloat() {
+  if(!_folder) return;
+  document.getElementById('float-chip').classList.remove('visible');
+  document.getElementById('artifact-float').classList.add('visible');
+}
+
+function closeFloat() {
+  document.getElementById('artifact-float').classList.remove('visible');
+  document.getElementById('float-chip').classList.remove('visible');
+}
+
+function reloadFloat() {
+  if(!_folder) return;
+  document.getElementById('artifact-frame').src = '/'+_folder+'/index.html?_t='+Date.now();
+}
+
+function popOutFloat() {
+  if(_folder) window.open('/'+_folder+'/index.html', '_blank');
+}
+
+// Drag
+var _floatEl = null;
+document.getElementById('float-toolbar').addEventListener('mousedown', function(e){
+  if(e.target.closest('.float-dot,.float-btn')) return;
+  _floatEl = document.getElementById('artifact-float');
+  _drag.on=true;
+  _drag.ox=e.clientX; _drag.oy=e.clientY;
+  _drag.ex=parseInt(_floatEl.style.left)||0;
+  _drag.ey=parseInt(_floatEl.style.top)||0;
+  e.preventDefault();
+});
+document.addEventListener('mousemove', function(e){
+  if(!_drag.on||!_floatEl) return;
+  _floatEl.style.left = Math.max(0, _drag.ex+(e.clientX-_drag.ox))+'px';
+  _floatEl.style.top  = Math.max(0, _drag.ey+(e.clientY-_drag.oy))+'px';
+});
+document.addEventListener('mouseup', function(){ _drag.on=false; });
+
+// ── PRD panel ────────────────────────────────────────────────────────────────
+function clearPrd() {
+  _prdData=null;
+  document.getElementById('prd-body').innerHTML=
+    '<div class="prd-placeholder"><i class="fas fa-file-code"></i><span>Spec populates after your first build</span></div>';
+  document.getElementById('prd-rebuild-btn').classList.remove('ready');
+}
+
+async function fetchPrd(folder) {
+  try {
+    var r = await fetch('/'+folder+'/miso.json');
+    if(!r.ok) return;
+    var d = await r.json();
+    renderPrd(d.blueprint||{}, d.test_spec||d.blueprint&&d.blueprint.test_spec||{}, d.intent||'');
+  } catch(e){}
+}
+
+function renderPrd(bp, spec, intent) {
+  _prdData={bp:bp, spec:spec, intent:intent};
+  var libs  = (bp.libraries||[]).map(function(l){return l.name;});
+  var comps = (bp.key_components||[]);
+  var inters= spec.interactions||[];
+  var artifacts = bp.suggested_artifacts||[];
+
+  // Goal header
+  var goalHtml = '';
+  if(bp.goal||bp.success_criteria) {
+    goalHtml = '<div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.18);border-radius:8px;padding:10px 12px;margin-bottom:10px">'
+      + (bp.goal ? '<div style="font-size:.73rem;font-weight:700;color:var(--text-strong);margin-bottom:3px">🎯 '+esc(bp.goal)+'</div>' : '')
+      + (bp.success_criteria ? '<div style="font-size:.67rem;color:var(--text-dim);line-height:1.45">'+esc(bp.success_criteria)+'</div>' : '')
+      + '</div>';
+  }
+
+  var html = goalHtml
+    + _pv('Title', bp.title||'')
+    + _pv('Complexity', bp.complexity||'moderate')
+    + (comps.length ? _pv('Components', comps.join(' · ')) : '')
+    + (bp.data_flow  ? _pv('Data flow',  bp.data_flow)  : '')
+    + (libs.length   ? _pv('Libraries',  libs.join(', ')) : '')
+    + (inters.length ? '<div class="prd-field"><div class="prd-label">Interactions</div>'
+        +'<div class="prd-interactions">'+inters.map(function(i){
+            return '<div class="prd-interaction">'+esc(i.label||(i.action+' '+(i.selector||'')))+'</div>';
+          }).join('')+'</div></div>' : '')
+    + (spec.pass_criteria ? _pv('Pass criteria', spec.pass_criteria) : '');
+
+  // Artifact plan
+  if(artifacts.length > 1) {
+    html += '<div class="prd-artifact-plan" id="goal-artifact-plan">'
+      + '<div class="prd-plan-head">Goal plan — '+artifacts.length+' artifacts</div>';
+    artifacts.forEach(function(a, i) {
+      var isNow = !!a.build_now;
+      var builtFolders = (_currentGoal&&_currentGoal.artifacts)||[];
+      var matchedFolder = builtFolders.find(function(f){ return (f.intent||'').toLowerCase().indexOf((a.title||'').toLowerCase().slice(0,20))>=0; });
+      var isBuilt = !!matchedFolder;
+      var builtName = matchedFolder ? (matchedFolder.app_folder||matchedFolder.name||'').replace(/_/g,' ') : '';
+      html += '<div class="prd-artifact-item'+(isNow?' now':'')+'" id="plan-item-'+i+'">'
+        + '<div class="prd-artifact-num">'+(i+1)+'</div>'
+        + '<div class="prd-artifact-info">'
+        +   '<div class="prd-artifact-title">'+esc(a.title||'')+'</div>'
+        +   '<div class="prd-artifact-desc">'+esc(a.description||'')+'</div>'
+        + '</div>';
+      if(isBuilt) {
+        html += '<span class="prd-artifact-built-badge" id="plan-badge-'+i+'"><i class="fas fa-check-circle fa-xs"></i> '+(builtName||'Built')+'</span>';
+      } else if(isNow) {
+        html += '<span style="font-size:.62rem;color:#818cf8;font-weight:600;padding:2px 7px;background:rgba(99,102,241,.12);border-radius:6px" id="plan-badge-'+i+'">Up next</span>';
+      } else {
+        html += '<span style="font-size:.62rem;color:var(--text-dim);padding:2px 7px;background:var(--surface);border:1px solid var(--border);border-radius:6px" id="plan-badge-'+i+'">Queued</span>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('prd-body').innerHTML = html;
+  document.getElementById('prd-rebuild-btn').classList.add('ready');
+  document.getElementById('prd-build-btn').classList.add('ready');
+  document.getElementById('prd-review-btn').style.display = '';
+  // update button label: "Achieve Goal" for multi-artifact plans
+  var label = document.getElementById('prd-build-label');
+  if(label) label.textContent = artifacts.length > 1 ? 'Achieve Goal' : 'Build App';
+  // auto-trigger audit whenever a new spec renders (non-blocking)
+  if(_goalId) { setTimeout(reviewPrd, 400); }
+}
+
+function _pv(label, value) {
+  return '<div class="prd-field"><div class="prd-label">'+label+'</div>'
+    +'<div class="prd-value">'+esc(value)+'</div></div>';
+}
+
+// Inject a recurrence callout banner below the PRD body
+function _renderRecurrenceCallout(label, source, poMatch) {
+  // remove any existing callout
+  var old = document.getElementById('recurrence-callout');
+  if(old) old.remove();
+  var sourceNote = source==='process_observer'
+    ? 'Inferred from process signals'
+    : source==='llm+process_observer'
+    ? 'Confirmed by process signals'
+    : 'Detected from intent';
+  var poHtml = poMatch
+    ? '<div style="font-size:.64rem;color:var(--text-dim);margin-top:4px"><i class="fas fa-wave-square fa-xs"></i> Signal: <b>'+esc(poMatch.gap)+'</b> · '+poMatch.freq_per_day+' times/day · ROI '+poMatch.roi+'</div>'
+    : '';
+  var div = document.createElement('div');
+  div.id = 'recurrence-callout';
+  div.style.cssText = 'margin:8px 0;padding:10px 12px;border-radius:8px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.22)';
+  div.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+    + '<i class="fas fa-rotate" style="color:#fbbf24;font-size:.75rem"></i>'
+    + '<span style="font-size:.72rem;font-weight:700;color:#fbbf24">Recurring goal</span>'
+    + '<span style="font-size:.62rem;color:var(--text-dim);margin-left:auto">'+esc(sourceNote)+'</span>'
+    + '</div>'
+    + '<div style="font-size:.71rem;color:var(--text);margin-bottom:6px">'
+    + 'Suggested cadence: <b>'+esc(label||'Periodic')+'</b>'
+    + '</div>'
+    + poHtml
+    + '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'
+    + ['*/30 * * * *','0 * * * *','0 */6 * * *','0 9 * * *','0 9 * * 1','0 9 1 * *'].map(function(c){
+        var l = {'*/30 * * * *':'30 min','0 * * * *':'Hourly','0 */6 * * *':'6 hrs','0 9 * * *':'Daily','0 9 * * 1':'Weekly','0 9 1 * *':'Monthly'}[c]||c;
+        return '<button onclick="_setRecurrenceCron(\''+c+'\',\''+l+'\')" style="font-size:.63rem;padding:2px 8px;border-radius:6px;border:1px solid rgba(251,191,36,.3);background:transparent;color:#fbbf24;cursor:pointer">'+l+'</button>';
+      }).join('')
+    + '<button onclick="_setGoalTypeOneOff()" style="font-size:.63rem;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;margin-left:auto">One-off</button>'
+    + '</div>';
+  var body = document.getElementById('prd-body');
+  if(body) body.appendChild(div);
+}
+
+function _setRecurrenceCron(cron, label) {
+  if(_goalId) {
+    fetch('/api/goals/'+_goalId, {method:'PATCH', headers:H(), body:JSON.stringify({goal_type:'recurring', recurrence_cron:cron, recurrence_label:label})});
+  }
+  var callout = document.getElementById('recurrence-callout');
+  if(callout) {
+    var btn = callout.querySelector('[data-selected]');
+    // update display
+    var desc = callout.querySelector('b');
+    if(desc) desc.textContent = label;
+  }
+  toast('Cadence set: '+label);
+}
+
+function _setGoalTypeOneOff() {
+  if(_goalId) {
+    fetch('/api/goals/'+_goalId, {method:'PATCH', headers:H(), body:JSON.stringify({goal_type:'one_off', recurrence_cron:'', recurrence_label:''})});
+  }
+  var callout = document.getElementById('recurrence-callout');
+  if(callout) callout.remove();
+  toast('Switched to one-off goal');
+}
+
+function rebuildFromPrd() {
+  if(!_prdData) return;
+  var bp = _prdData.bp||{};
+  var parts = ['Rebuild "'+( bp.title||'app')+'" as a '+(bp.complexity||'moderate')+' app.'];
+  if((bp.key_components||[]).length) parts.push('Components: '+(bp.key_components).join(', ')+'.');
+  if(bp.data_flow) parts.push('Data flow: '+bp.data_flow+'.');
+  setPrompt(parts.join(' ').trim());
+  document.getElementById('prompt-input').focus();
+}
+
+// ── New chat ─────────────────────────────────────────────────────────────────
+function newChat() {
+  if(_generating) return;
+  _sid=null; _folder=null; _prdData=null; _goalId=null;
+  showEmpty();
+  document.getElementById('prd-body').innerHTML = '<div class="prd-placeholder"><i class="fas fa-file-code"></i><span>Describe a goal and MISO will plan the artifacts needed to achieve it</span></div>';
+  document.getElementById('prd-rebuild-btn').classList.remove('ready');
+  document.getElementById('prd-build-btn').classList.remove('ready');
+  document.getElementById('prd-review-btn').style.display = 'none';
+  document.getElementById('prd-review-panel').style.display = 'none';
+  document.querySelectorAll('.session-item').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('prompt-input').focus();
+}
+
+// ── SSE stream reader helper ──────────────────────────────────────────────────
+async function _readSse(res, onEvent) {
+  var reader=res.body.getReader(), dec=new TextDecoder(), buf='';
+  while(true){
+    var ch=await reader.read(); if(ch.done) break;
+    buf+=dec.decode(ch.value,{stream:true});
+    var lines=buf.split('\n'); buf=lines.pop();
+    for(var i=0;i<lines.length;i++){
+      var line=lines[i].trim();
+      if(!line.startsWith('data:')) continue;
+      var d; try{d=JSON.parse(line.slice(5).trim());}catch(e){continue;}
+      try{ onEvent(d); }catch(e2){ console.error('SSE handler error',e2); }
+    }
+  }
+}
+
+// ── Phase 1: Blueprint — describe → get spec for review ──────────────────────
+async function sendMessage() {
+  if(_generating) return;
+  var input = document.getElementById('prompt-input');
+  var text  = input.value.trim(); if(!text) return;
+
+  // If we already have an approved spec, go straight to build
+  if(_prdData && _sid) { buildFromApprovedPrd(); return; }
+
+  _generating=true;
+  input.value=''; input.style.height='auto';
+  document.getElementById('send-btn').disabled=true;
+
+  addUserBubble(text);
+  var bid = addMisoBubble('', null, null, true, null);
+  var cid = _sid||'new';
+  var t0  = Date.now();
+  var log = [];
+
+  var ticker = setInterval(function(){
+    updateStatus(bid,'Building spec '+elapsed(Date.now()-t0)+'…');
+  }, 1000);
+
+  try {
+    var res = await fetch('/api/conversations/'+cid+'/blueprint',{
+      method:'POST', headers:H(), body:JSON.stringify({message:text}),
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    await _readSse(res, function(d){
+      if(d.type==='session_id'){ _sid=d.session_id; }
+      if(d.content||d.status){ log.push(d.content||d.status); updateStatus(bid,d.content||d.status); }
+      if(d.type==='BLUEPRINT_READY'||d.type==='BLUEPRINT_COMPLETE'){
+        var bp = d.blueprint||{};
+        if(bp && bp.title) renderPrd(bp, bp.test_spec||{}, text);
+        if(d.session_id) _sid=d.session_id;
+        if(d.goal_id) _goalId=d.goal_id;
+        // Show recurrence callout if detected (LLM or PO inference)
+        if(d.goal_type==='recurring'||bp.goal_type==='recurring') {
+          _renderRecurrenceCallout(d.recurrence_label||bp.recurrence_label||(bp.recurrence&&bp.recurrence.description)||null, d.recurrence_source||'llm', d.blueprint&&d.blueprint._po_match||null);
+        }
+      }
+    });
+  } catch(e) {
+    clearInterval(ticker);
+    finalizeBubble(bid,'Error: '+e.message, 0, log, null);
+    toast('Failed: '+e.message, false);
+    _generating=false;
+    document.getElementById('send-btn').disabled=false;
+    return;
+  }
+
+  clearInterval(ticker);
+  finalizeBubble(bid, _prdData?'Spec ready — review and click Build App':'Spec generation failed', null, log, null);
+  _generating=false;
+  document.getElementById('send-btn').disabled=false;
+  loadSessions();
+}
+
+// ── Phase 2: Build — user approved spec, auto-chain all goal artifacts ───────
+async function buildFromApprovedPrd() {
+  if(_generating) return;
+  if(!_sid) { toast('Start a conversation first', false); return; }
+  if(!_prdData) { toast('Generate a spec first', false); return; }
+
+  var bp = _prdData.bp;
+  var allArtifacts = bp.suggested_artifacts||[];
+  var queued = allArtifacts.filter(function(a){ return !a.build_now; });
+
+  _generating=true;
+  _stopGoalExecution=false;
+  document.getElementById('prd-build-btn').disabled=true;
+  document.getElementById('send-btn').disabled=true;
+  if(queued.length) document.getElementById('prd-stop-btn').style.display='';
+
+  // mark first artifact as "building"
+  _setPlanBadge(0, 'building');
+
+  var bid = addMisoBubble('', null, null, true, null);
+  var t0 = Date.now();
+  var log=[]; var ok=false; var finalScore=null; var finalFolder=null; var qaResult=null;
+
+  var ticker = setInterval(function(){
+    updateStatus(bid,'Building '+elapsed(Date.now()-t0)+'…');
+  }, 1000);
+
+  try {
+    var res = await fetch('/api/conversations/'+_sid+'/message',{
+      method:'POST', headers:H(),
+      body:JSON.stringify({message: bp.title||'Build the app per the spec', approved_blueprint: bp, goal_id: _goalId||undefined}),
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    await _readSse(res, function(d){
+      if(d.type==='session_id'){ _sid=d.session_id; }
+      if(d.content||d.status){ log.push(d.content||d.status); updateStatus(bid,d.content||d.status); }
+      if(d.type==='ARTIFACT_READY'&&d.local_route){
+        var f=d.local_route.replace(/^\//,'').split('/')[0];
+        finalFolder=f; showFloat(f, true);
+      }
+      if(d.type==='GENERATION_COMPLETE'){
+        if(d.app_folder) finalFolder=d.app_folder;
+        if(d.blueprint) renderPrd(d.blueprint, d.blueprint.test_spec||{}, bp.title||'');
+        if(d.qa_score!=null) qaResult={passed:d.qa_passed, score:d.qa_score, issues:d.qa_issues||[]};
+      }
+      if(d.type==='CONVERSATION_TURN_COMPLETE'){
+        ok=true; finalScore=d.score; _sid=d.session_id||_sid;
+        if(d.app_folder) finalFolder=d.app_folder;
+        if(finalFolder) document.getElementById('artifact-frame').src='/'+finalFolder+'/index.html?_t='+Date.now();
+        if(finalFolder&&!_prdData) fetchPrd(finalFolder);
+      }
+    });
+  } catch(e) {
+    clearInterval(ticker);
+    finalizeBubble(bid,'Error: '+e.message, 0, log, null);
+    toast('Build failed: '+e.message, false);
+    _setPlanBadge(0, 'failed');
+    _finishGoalExecution();
+    return;
+  }
+
+  clearInterval(ticker);
+  var builtMsg = ok ? 'App built' : 'Ended without artifact';
+  if(ok && qaResult) builtMsg += ' · QA '+(qaResult.passed?'✓ pass':'✗ fail')+' ('+Math.round(qaResult.score)+'/100)';
+  finalizeBubble(bid, builtMsg, finalScore, log, finalFolder);
+  _setPlanBadge(0, ok ? 'done' : 'failed', ok ? finalFolder : null);
+  if(!ok) { toast('Build failed — goal execution stopped', false); _finishGoalExecution(); return; }
+
+  loadGoals();
+
+  // ── auto-chain remaining artifacts (user already approved the goal) ─────────
+  for(var qi=0; qi<queued.length; qi++) {
+    if(_stopGoalExecution) { toast('Goal execution stopped after artifact '+(qi+1)); break; }
+    var artIdx = allArtifacts.indexOf(queued[qi]);
+    _setPlanBadge(artIdx, 'building');
+    var artResult = await _buildArtifactAutonomous(queued[qi], qi+1, queued.length, artIdx);
+    var artOk = !!artResult;
+    _setPlanBadge(artIdx, artOk ? 'done' : 'failed', artOk && typeof artResult==='string' ? artResult : null);
+    await loadGoals();
+    if(!artOk) { toast('Artifact failed — stopping goal execution', false); break; }
+  }
+
+  _finishGoalExecution();
+}
+
+function _finishGoalExecution() {
+  _generating=false;
+  _stopGoalExecution=false;
+  document.getElementById('prd-build-btn').disabled=false;
+  document.getElementById('send-btn').disabled=false;
+  document.getElementById('prd-stop-btn').style.display='none';
+  loadSessions();
+  loadGoals();
+}
+
+// Update the visual badge on an artifact plan item
+function _setPlanBadge(idx, state, name) {
+  var badge = document.getElementById('plan-badge-'+idx);
+  if(!badge) return;
+  var styles = {
+    building: 'color:#818cf8;font-weight:700;background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.3)',
+    done:     'color:#4ade80;font-weight:700;background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.3)',
+    failed:   'color:#f87171;font-weight:700;background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.3)',
+  };
+  var label = name ? name.replace(/_/g,' ') : null;
+  var icons = {
+    building: '<i class="fas fa-spinner fa-spin fa-xs"></i> Building…',
+    done:     '<i class="fas fa-check-circle fa-xs"></i> '+(label||'Built'),
+    failed:   '<i class="fas fa-times-circle fa-xs"></i> Failed'
+  };
+  if(styles[state]) {
+    badge.style.cssText = 'font-size:.62rem;padding:2px 7px;border-radius:6px;border:1px solid;'+styles[state];
+    badge.innerHTML = icons[state]||state;
+  }
+}
+
+// Build a single artifact autonomously (no user interaction required)
+async function _buildArtifactAutonomous(art, queueIdx, queueTotal, planIdx) {
+  var label = art.title + (art.description ? ' — '+art.description.slice(0,80) : '');
+  var bid = addMisoBubble('', null, null, true, null);
+  updateStatus(bid, 'Auto-building ('+queueIdx+'/'+queueTotal+'): '+art.title+'…');
+  var t0=Date.now();
+  var ticker=setInterval(function(){ updateStatus(bid,'Building '+art.title+' '+elapsed(Date.now()-t0)+'…'); }, 1000);
+  var log=[]; var ok=false; var finalScore=null; var finalFolder=null; var qaResult=null;
+
+  try {
+    var res = await fetch('/api/conversations/'+_sid+'/message', {
+      method:'POST', headers:H(),
+      body:JSON.stringify({message: label, goal_id: _goalId||undefined})
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    await _readSse(res, function(d){
+      if(d.type==='session_id') _sid=d.session_id;
+      if(d.content||d.status){ log.push(d.content||d.status); updateStatus(bid,d.content||d.status); }
+      if(d.type==='ARTIFACT_READY'&&d.local_route){
+        finalFolder=d.local_route.replace(/^\//,'').split('/')[0]; showFloat(finalFolder, true);
+      }
+      if(d.type==='GENERATION_COMPLETE'){
+        if(d.app_folder) finalFolder=d.app_folder;
+        if(d.qa_score!=null) qaResult={passed:d.qa_passed, score:d.qa_score};
+      }
+      if(d.type==='CONVERSATION_TURN_COMPLETE'){
+        ok=true; finalScore=d.score; _sid=d.session_id||_sid;
+        if(d.app_folder) finalFolder=d.app_folder;
+        if(finalFolder) document.getElementById('artifact-frame').src='/'+finalFolder+'/index.html?_t='+Date.now();
+      }
+    });
+  } catch(e) {
+    clearInterval(ticker);
+    finalizeBubble(bid,'Error building '+art.title+': '+e.message, 0, log, null);
+    return false;
+  }
+
+  clearInterval(ticker);
+  var msg = ok ? art.title+' built' : art.title+' — ended without artifact';
+  if(ok&&qaResult) msg += ' · QA '+(qaResult.passed?'✓ pass':'✗ fail')+' ('+Math.round(qaResult.score)+'/100)';
+  finalizeBubble(bid, msg, finalScore, log, finalFolder);
+  return ok ? (finalFolder || true) : false;
+}
+
+// Consigliere — handled entirely by consigliere-widget.js (self-injecting)
+
+// ── Brain panel ───────────────────────────────────────────────────────────────
+var _brainOpen = false;
+
+function toggleBrain() {
+  _brainOpen = !_brainOpen;
+  document.getElementById('brain-body').style.display = _brainOpen ? '' : 'none';
+  document.getElementById('brain-chevron').style.transform = _brainOpen ? 'rotate(180deg)' : '';
+  if(_brainOpen) loadBrain();
+}
+
+async function loadBrain() {
+  try {
+    var r = await fetch('/api/brain/reflect');
+    var d = await r.json();
+    var count = document.getElementById('brain-event-count');
+    if(count) count.textContent = d.total_events ? '· '+d.total_events+' events' : '';
+
+    var goals = d.goals||{};
+    var lines = [];
+    if(d.artifacts_last_30d) lines.push('<b>'+d.artifacts_last_30d+'</b> artifacts built (30d)'+(d.avg_artifact_score?' · avg score '+d.avg_artifact_score:''));
+    if(goals.active||goals.draft) lines.push('<b>'+((goals.active||0)+(goals.draft||0))+'</b> active goals'+(goals.achieved?' · '+goals.achieved+' achieved':''));
+    if(d.signals_total) lines.push('<b>'+d.signals_total+'</b> process signals observed');
+    if(d.open_gaps) lines.push('<b>'+d.open_gaps+'</b> open gaps detected');
+    if(d.top_open_gaps&&d.top_open_gaps.length) lines.push('Highest ROI: '+d.top_open_gaps[0].gap+' ('+d.top_open_gaps[0].roi+')');
+    if(d.top_domains&&d.top_domains.length) lines.push('Top domain: '+d.top_domains[0].domain+' ('+d.top_domains[0].signals+' signals)');
+    document.getElementById('brain-reflect').innerHTML = lines.join('<br>') || '<span style="color:var(--text-dim)">No activity yet</span>';
+
+    var evEl = document.getElementById('brain-events');
+    if(d.recent_events&&d.recent_events.length) {
+      var typeIcon = {
+        goal_created:'fa-bullseye', artifact_built:'fa-cube', signal_observed:'fa-wave-square',
+        gap_detected:'fa-triangle-exclamation', goal_status_changed:'fa-circle-dot',
+        blueprint_generated:'fa-file-lines', criteria_evaluated:'fa-check-double',
+        trigger_fired:'fa-bolt', proposal_created:'fa-lightbulb',
+      };
+      var typeColor = {
+        goal_created:'#818cf8', artifact_built:'#4ade80', signal_observed:'#60a5fa',
+        gap_detected:'#fbbf24', goal_status_changed:'#a3a3a3', blueprint_generated:'#c084fc',
+        criteria_evaluated:'#34d399', trigger_fired:'#f97316',
+      };
+      evEl.innerHTML = d.recent_events.slice(0,12).map(function(e){
+        var icon = typeIcon[e.type]||'fa-circle';
+        var color = typeColor[e.type]||'var(--text-dim)';
+        var when = _reltime(e.ts);
+        var label = e.label ? esc(e.label.slice(0,50)) : esc(e.type);
+        return '<div style="display:flex;align-items:flex-start;gap:6px;padding:3px 0;border-bottom:1px solid var(--border)">'
+          +'<i class="fas '+icon+' fa-xs" style="color:'+color+';margin-top:2px;min-width:10px"></i>'
+          +'<div><div style="font-size:.65rem;color:var(--text)">'+label+'</div>'
+          +'<div style="font-size:.6rem;color:var(--text-dim)">'+esc(e.type.replace(/_/g,' '))+' · '+when+'</div></div>'
+          +'</div>';
+      }).join('');
+    } else {
+      evEl.innerHTML = '<div style="font-size:.65rem;color:var(--text-dim);padding:4px 0">No events yet — start building</div>';
+    }
+  } catch(e) {
+    document.getElementById('brain-reflect').textContent = 'Failed to load Brain';
+  }
+}
+
+function _reltime(ts) {
+  var s = Math.floor(Date.now()/1000 - ts);
+  if(s < 60) return s+'s ago';
+  if(s < 3600) return Math.floor(s/60)+'m ago';
+  if(s < 86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+
+// Expose brain context for inline use (e.g., from process map)
+async function getBrainContext(intent) {
+  try {
+    var r = await fetch('/api/brain/context?intent='+encodeURIComponent(intent));
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+// ── Import Code ──────────────────────────────────────────────────────────────
+
+var _importFiles = [];
+var _importConvId = null;
+var _importContext = '';
+var _IMAGE_EXTS = ['png','jpg','jpeg','gif','webp'];
+
+function _isImageFile(f) {
+  return _IMAGE_EXTS.indexOf(f.name.split('.').pop().toLowerCase()) >= 0;
+}
+
+function openImportModal() {
+  _importFiles = [];
+  _importConvId = null;
+  _importContext = '';
+  document.getElementById('import-file-input').value = '';
+  document.getElementById('import-name').value = '';
+  document.getElementById('import-intent').value = '';
+  document.getElementById('import-dropzone-label').innerHTML =
+    'Drop files here or click to browse<br><span style="font-size:.72rem;color:var(--text-dim);opacity:.7">.zip, .py, .js, .ts, .html, .go, .rs, .sql · .png, .jpg, .gif, .webp</span>';
+  document.getElementById('import-submit-btn').disabled = true;
+  document.getElementById('import-submit-btn').style.opacity = '.4';
+  document.getElementById('import-submit-label').innerHTML = '<i class="fas fa-magnifying-glass fa-xs"></i> Analyze &amp; Generate PRD';
+  document.getElementById('import-chat-panel').style.display = 'none';
+  document.getElementById('import-chat-thread').innerHTML = '';
+  var modal = document.getElementById('import-modal');
+  modal.style.display = 'flex';
+}
+
+function closeImportModal() {
+  document.getElementById('import-modal').style.display = 'none';
+}
+
+function handleImportDrop(e) {
+  e.preventDefault();
+  document.getElementById('import-dropzone').style.borderColor = 'var(--border-2)';
+  handleImportFiles(e.dataTransfer.files);
+}
+
+function handleImportFiles(files) {
+  _importFiles = Array.from(files);
+  if(!_importFiles.length) return;
+  var names = _importFiles.map(function(f){ return f.name; });
+  var totalKb = Math.round(_importFiles.reduce(function(s,f){ return s+f.size; }, 0) / 1024);
+  document.getElementById('import-dropzone-label').innerHTML =
+    '<i class="fas fa-check-circle" style="color:#4ade80"></i> '
+    + esc(names.slice(0,3).join(', ')) + (names.length > 3 ? ' +' + (names.length-3) + ' more' : '')
+    + '<br><span style="font-size:.7rem;opacity:.6">' + names.length + ' file(s) · ' + totalKb + ' KB</span>';
+  document.getElementById('import-submit-btn').disabled = false;
+  document.getElementById('import-submit-btn').style.opacity = '1';
+}
+
+async function submitImport() {
+  if(!_importFiles.length) return;
+  var btn = document.getElementById('import-submit-btn');
+  var lbl = document.getElementById('import-submit-label');
+  btn.disabled = true;
+  lbl.innerHTML = '<i class="fas fa-spinner fa-spin fa-xs"></i> Analyzing…';
+
+  var name   = document.getElementById('import-name').value.trim();
+  var intent = document.getElementById('import-intent').value.trim() || 'reverse engineer a PRD from this codebase';
+
+  var isImage = _importFiles.length === 1 && _isImageFile(_importFiles[0]);
+  var endpoint = isImage ? '/apps/multimodal_ingest/image' : '/apps/multimodal_ingest/codebase';
+
+  var form = new FormData();
+  if(isImage) {
+    form.append('file', _importFiles[0]);
+  } else {
+    _importFiles.forEach(function(f){ form.append('files', f); });
+  }
+  if(name)   form.append('name', name);
+  if(intent) form.append('intent', intent);
+
+  try {
+    var r = await fetch(endpoint, { method: 'POST', body: form });
+    var d = await r.json();
+    if(d.error || r.status >= 400) throw new Error(d.detail || d.error || 'Analysis failed');
+
+    var a = d.analysis || {};
+    var projectName = d.name || d.filename || name || 'uploaded file';
+    var parts = [];
+
+    if(isImage) {
+      if(a.plain_summary || a.description) parts.push(a.plain_summary || a.description);
+      if(a.what_it_does) parts.push(a.what_it_does);
+    } else {
+      if(a.purpose)     parts.push('Purpose: ' + a.purpose);
+      if(a.description) parts.push(a.description);
+      if(a.components && a.components.length)
+        parts.push('Components: ' + a.components.slice(0,6).map(function(c){ return typeof c==='string'?c:(c.name||c); }).join(', ') + '.');
+      if(a.tech_stack && a.tech_stack.length)
+        parts.push('Stack: ' + a.tech_stack.slice(0,6).join(', ') + '.');
+      if(d.file_count) parts.push('(' + d.file_count + ' files, ' + (d.total_lines||'?') + ' lines)');
+    }
+
+    _importContext = '"' + projectName + '": ' + parts.join(' ');
+    _importConvId  = 'import_' + Math.random().toString(36).slice(2,8) + '_' + Date.now();
+
+    // Show button reset + open chat panel
+    lbl.innerHTML = '<i class="fas fa-check-circle fa-xs"></i> Analyzed — ask MISO or generate PRD';
+    btn.disabled = false;
+    btn.style.background = '#10b981';
+
+    var chatPanel = document.getElementById('import-chat-panel');
+    chatPanel.style.display = '';
+    _appendImportMsg('miso', (a.plain_summary || a.what_it_does || 'Analysis complete.') + ' Ask me anything about this, or click "Generate PRD" to proceed.');
+
+    // Override button to generate PRD
+    btn.onclick = function() {
+      closeImportModal();
+      var prdParts = [isImage
+        ? 'I uploaded an image called "' + projectName + '". ' + _importContext + ' Generate a PRD for building this as an app.'
+        : 'I uploaded a codebase called "' + projectName + '". ' + _importContext + ' Using this analysis, reverse engineer a complete PRD.'];
+      switchNavTab('sessions');
+      setPrompt(prdParts.join(' '));
+      setTimeout(sendMessage, 100);
+    };
+
+  } catch(e) {
+    lbl.innerHTML = '<i class="fas fa-magnifying-glass fa-xs"></i> Analyze &amp; Generate PRD';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    toast('Import failed: ' + String(e.message || e), false);
+  }
+}
+
+function _appendImportMsg(role, text) {
+  var thread = document.getElementById('import-chat-thread');
+  var isUser = role === 'user';
+  var div = document.createElement('div');
+  div.style.cssText = 'padding:8px 10px;border-radius:10px;line-height:1.5;' +
+    (isUser ? 'background:var(--accent-dim);color:var(--text);align-self:flex-end;margin-left:20%'
+            : 'background:var(--surface-2);color:var(--text);margin-right:20%');
+  div.textContent = text;
+  thread.appendChild(div);
+  thread.scrollTop = thread.scrollHeight;
+}
+
+async function sendImportChat() {
+  var inp = document.getElementById('import-chat-input');
+  var msg = (inp.value || '').trim();
+  if(!msg) return;
+  inp.value = '';
+  _appendImportMsg('user', msg);
+
+  var context = _importContext ? 'Context about uploaded file: ' + _importContext + '\n\nUser question: ' + msg : msg;
+  try {
+    var r = await fetch('/apps/consigliere_agent/chat', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ message: context, conversation_id: _importConvId || 'import' })
+    });
+    var d = await r.json();
+    _appendImportMsg('miso', d.response || d.error || 'No response');
+  } catch(e) {
+    _appendImportMsg('miso', 'Could not reach MISO: ' + e.message);
+  }
+}
+
+// close modal on backdrop click
+document.getElementById('import-modal').addEventListener('click', function(e){
+  if(e.target === this) closeImportModal();
+});
+
+// ── Image Generation Modal ────────────────────────────────────────────────────
+
+function openImageGenModal() {
+  document.getElementById('imggen-intent').value = '';
+  document.getElementById('imggen-result').style.display = 'none';
+  document.getElementById('imggen-submit-label').innerHTML = '<i class="fas fa-star fa-xs"></i> Generate';
+  document.getElementById('imggen-submit-btn').disabled = false;
+  document.getElementById('imggen-modal').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('imggen-intent').focus(); }, 50);
+}
+function closeImageGenModal() {
+  document.getElementById('imggen-modal').style.display = 'none';
+}
+
+async function submitImageGen() {
+  var intent = document.getElementById('imggen-intent').value.trim();
+  if(!intent) return;
+  var style  = document.getElementById('imggen-style').value;
+  var btn    = document.getElementById('imggen-submit-btn');
+  var lbl    = document.getElementById('imggen-submit-label');
+  btn.disabled = true;
+  lbl.innerHTML = '<i class="fas fa-spinner fa-spin fa-xs"></i> Generating…';
+  document.getElementById('imggen-result').style.display = 'none';
+
+  try {
+    var r = await fetch('/apps/image_gen/generate', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ intent, style_preset: style, goal_id: _goalId || null })
+    });
+    var d = await r.json();
+    if(d.error) throw new Error(d.error);
+
+    var img = document.getElementById('imggen-img');
+    img.src = d.url + '?t=' + Date.now();
+    document.getElementById('imggen-meta').textContent =
+      d.provider + ' · $' + d.cost_usd.toFixed(4) + ' · ' + (d.generation_ms/1000).toFixed(1) + 's';
+    document.getElementById('imggen-result').style.display = '';
+    lbl.innerHTML = '<i class="fas fa-star fa-xs"></i> Generate';
+    btn.disabled = false;
+  } catch(e) {
+    toast('Image generation failed: ' + e.message, false);
+    lbl.innerHTML = '<i class="fas fa-star fa-xs"></i> Generate';
+    btn.disabled = false;
+  }
+}
+
+function useImageInGoal() {
+  var img = document.getElementById('imggen-img');
+  var url = img.src.replace(/\?t=\d+$/, '');
+  var intent = document.getElementById('imggen-intent').value.trim();
+  // Strip origin prefix to get relative path
+  try { url = new URL(url).pathname; } catch(e) {}
+  closeImageGenModal();
+  // Paste reference into prompt so user can include it in next build message
+  var inp = document.getElementById('prompt-input');
+  var prefix = intent ? 'Use this image (generated: "' + intent + '"): ' : 'Use this image: ';
+  inp.value = prefix + url;
+  autoResize(inp);
+  inp.focus();
+  // Switch to sessions tab so they see the chat
+  switchNavTab('sessions');
+}
+
+document.getElementById('imggen-modal').addEventListener('click', function(e){
+  if(e.target === this) closeImageGenModal();
+});
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+showEmpty();
+loadSessions();
+loadGoals();
+
+// URL pre-fill: /dashboard?prompt=... navigates here from process map gap cards
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var pre = params.get('prompt');
+  if(pre) {
+    var inp = document.getElementById('prompt-input');
+    inp.value = decodeURIComponent(pre);
+    autoResize(inp);
+    inp.focus();
+    // clear param without reload
+    history.replaceState({}, '', '/dashboard');
+  }
+})();
+
+document.getElementById('prompt-input').focus();
+</script>
+</body>
+</html>
