@@ -563,8 +563,7 @@
     _thinking   = true;
     setBtn(true);
 
-    const ctx     = buildPageContext();
-    const message = ctx ? `${q}\n\n[Context: ${ctx}]` : q;
+    const ctx = buildPageContext();
 
     appendBubble('user', q);
     saveMsg('user', q);
@@ -576,7 +575,7 @@
       const res  = await fetch(`${API}/apps/consigliere_agent/chat`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ message, conversation_id: ensureConvId() }),
+        body:    JSON.stringify({ message: q, context: ctx || null, conversation_id: ensureConvId() }),
       });
       const data = await res.json();
 
@@ -601,16 +600,53 @@
 
   function buildPageContext() {
     const parts = [];
-    // Page location
-    const hash  = location.hash.replace('#','');
-    const title = document.title.replace(/MISO[^—]*—\s*/,'').trim();
-    if (title) parts.push(`User is looking at: ${title}${hash ? ` (${hash})` : ''}`);
 
-    // Any selected text
+    try {
+      // Active goal / PRD
+      const goal = window._currentGoal;
+      if (goal && goal.intent) {
+        parts.push(`Active goal: "${goal.intent.slice(0, 150)}" [status=${goal.status || 'active'}, type=${goal.goal_type || 'one_off'}]`);
+      }
+      if (window._prdData) {
+        const bp = window._prdData.bp || window._prdData;
+        if (bp && bp.title) parts.push(`PRD open: "${bp.title}"`);
+        if (bp && bp.artifact_type) parts.push(`Artifact type: ${bp.artifact_type}`);
+      }
+      if (window._generating) parts.push('Status: build or spec generation is currently in progress');
+
+      // Active nav tab — look for the highlighted nav button
+      const activeNavBtn = document.querySelector('[id$="-nav-btn"][style*="color:var(--accent)"], [id$="-nav-btn"][style*="color: var(--accent)"]');
+      if (activeNavBtn) parts.push(`Dashboard tab: ${activeNavBtn.title || activeNavBtn.textContent?.trim()}`);
+
+      // Import modal open
+      const importModal = document.getElementById('import-modal');
+      if (importModal && importModal.style.display !== 'none') {
+        parts.push('User has the Import Code modal open');
+        if (window._importContext) parts.push(`Import context: ${String(window._importContext).slice(0, 200)}`);
+      }
+
+      // Image gen modal open
+      const imgModal = document.getElementById('imggen-modal');
+      if (imgModal && imgModal.style.display !== 'none') {
+        parts.push('User is in the image generation modal');
+        const imgIntent = document.getElementById('imggen-intent');
+        if (imgIntent && imgIntent.value.trim()) parts.push(`Image intent: "${imgIntent.value.trim().slice(0, 100)}"`);
+      }
+
+      // PRD review panel visible
+      const reviewPanel = document.getElementById('prd-review-panel');
+      if (reviewPanel && reviewPanel.style.display !== 'none') parts.push('User is reviewing a spec audit');
+
+      // Prompt box has draft text
+      const promptInput = document.getElementById('prompt-input');
+      const draft = promptInput?.value?.trim();
+      if (draft && draft.length > 10) parts.push(`Draft in prompt box: "${draft.slice(0, 120)}"`);
+    } catch (_) {}
+
+    // Selected text anywhere on page
     const sel = window.getSelection?.()?.toString?.()?.trim?.();
-    if (sel && sel.length < 500) parts.push(`Selected text: "${sel}"`);
+    if (sel && sel.length > 3 && sel.length < 500) parts.push(`Selected text: "${sel}"`);
 
-    // WM context hint (don't block on this)
     return parts.join('\n') || '';
   }
 
