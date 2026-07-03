@@ -1781,25 +1781,28 @@ async function submitImport() {
     _importContext = '"' + projectName + '": ' + parts.join(' ');
     _importConvId  = 'import_' + Math.random().toString(36).slice(2,8) + '_' + Date.now();
 
-    // Show button reset + open chat panel
-    lbl.innerHTML = '<i class="fas fa-check-circle fa-xs"></i> Analyzed — ask MISO or generate PRD';
-    btn.disabled = false;
-    btn.style.background = '#10b981';
-
+    // Show summary in chat panel briefly
     var chatPanel = document.getElementById('import-chat-panel');
     chatPanel.style.display = '';
-    _appendImportMsg('miso', (a.plain_summary || a.what_it_does || 'Analysis complete.') + ' Ask me anything about this, or click "Generate PRD" to proceed.');
+    _appendImportMsg('miso', (a.plain_summary || a.what_it_does || a.purpose || 'Analysis complete.') + ' Generating PRD now…');
 
-    // Override button to generate PRD
-    btn.onclick = function() {
+    // Build goal text using generate_prompt from analysis (most specific)
+    var generatePrompt = a.generate_prompt || a.generate_spec || null;
+    var goalText = generatePrompt
+      ? 'Build "' + projectName + '": ' + generatePrompt
+      : (isImage
+          ? 'I uploaded an image called "' + projectName + '". ' + _importContext + ' Generate a PRD for building this as an app.'
+          : 'I uploaded a codebase called "' + projectName + '". ' + _importContext + ' Reverse engineer a complete PRD from this analysis.');
+
+    // Auto-submit goal after brief pause so summary is visible
+    lbl.innerHTML = '<i class="fas fa-spinner fa-spin fa-xs"></i> Generating PRD…';
+    btn.disabled = true;
+    setTimeout(function() {
       closeImportModal();
-      var prdParts = [isImage
-        ? 'I uploaded an image called "' + projectName + '". ' + _importContext + ' Generate a PRD for building this as an app.'
-        : 'I uploaded a codebase called "' + projectName + '". ' + _importContext + ' Using this analysis, reverse engineer a complete PRD.'];
       switchNavTab('sessions');
-      setPrompt(prdParts.join(' '));
-      setTimeout(sendMessage, 100);
-    };
+      setPrompt(goalText);
+      sendMessage();
+    }, 1800);
 
   } catch(e) {
     lbl.innerHTML = '<i class="fas fa-magnifying-glass fa-xs"></i> Analyze &amp; Generate PRD';
