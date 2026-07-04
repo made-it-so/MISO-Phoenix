@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MISO Admin</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #09090b;
+  --surface:  #18181b;
+  --s2:       #27272a;
+  --s3:       #3f3f46;
+  --border:   rgba(255,255,255,.07);
+  --text:     #e4e4e7;
+  --muted:    #71717a;
+  --dim:      #52525b;
+  --accent:   #7c3aed;
+  --accent2:  #a855f7;
+  --green:    #4ade80;
+  --red:      #f87171;
+  --amber:    #fbbf24;
+  --blue:     #60a5fa;
+  --nav-w:    220px;
+  --chat-w:   400px;
+}
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px; height: 100vh; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+/* ── Top bar ── */
+#topbar {
+  height: 48px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0;
+}
+#topbar .logo { font-size: .95rem; font-weight: 800; letter-spacing: -.03em; color: #fff; }
+#topbar .logo span { color: var(--accent2); }
+#topbar .sep { color: var(--dim); }
+#topbar .subtitle { color: var(--muted); font-size: .75rem; }
+#topbar .spacer { flex: 1; }
+.status-pill {
+  display: flex; align-items: center; gap: 5px;
+  font-size: .7rem; color: var(--muted);
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+.status-dot.green  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-dot.red    { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+.status-dot.amber  { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+#last-updated { font-size: .65rem; color: var(--dim); }
+.refresh-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 6px; padding: 4px 10px; font-size: .7rem; cursor: pointer;
+}
+.refresh-btn:hover { border-color: var(--accent); color: var(--accent2); }
+
+/* ── Body layout ── */
+#body { display: flex; flex: 1; overflow: hidden; }
+
+/* ── Left nav ── */
+#nav {
+  width: var(--nav-w); background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; padding: 12px 0;
+}
+.nav-section { padding: 4px 16px 2px; font-size: .6rem; color: var(--dim);
+  text-transform: uppercase; letter-spacing: .08em; margin-top: 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 16px; cursor: pointer; color: var(--muted);
+  font-size: .8rem; border-left: 2px solid transparent;
+  transition: all .1s; user-select: none;
+}
+.nav-item:hover { background: var(--s2); color: var(--text); }
+.nav-item.active { color: var(--accent2); border-left-color: var(--accent2); background: rgba(168,85,247,.06); }
+.nav-item .icon { font-size: .9rem; width: 18px; text-align: center; }
+.nav-badge {
+  margin-left: auto; background: var(--red); color: #fff;
+  font-size: .6rem; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+}
+.nav-badge.amber { background: var(--amber); color: #000; }
+.nav-badge.green { background: var(--green); color: #000; }
+
+/* ── Main content ── */
+#main {
+  flex: 1; overflow-y: auto; padding: 24px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+#main::-webkit-scrollbar { width: 4px; }
+#main::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 2px; }
+
+.page { display: none; flex-direction: column; gap: 20px; }
+.page.active { display: flex; }
+
+.page-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+.page-sub   { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+
+/* ── Cards ── */
+.card-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px; display: flex; flex-direction: column; gap: 6px;
+}
+.card.wide { grid-column: span 2; }
+.card.full { grid-column: 1 / -1; }
+.card-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+.card-value { font-size: 1.6rem; font-weight: 700; color: #fff; line-height: 1; }
+.card-value.green  { color: var(--green); }
+.card-value.red    { color: var(--red); }
+.card-value.amber  { color: var(--amber); }
+.card-value.blue   { color: var(--blue); }
+.card-sub { font-size: .72rem; color: var(--muted); }
+
+/* ── Gauge bar ── */
+.gauge-wrap { margin-top: 6px; }
+.gauge-track {
+  height: 6px; background: var(--s3); border-radius: 3px; overflow: hidden;
+}
+.gauge-fill {
+  height: 100%; border-radius: 3px; background: var(--green);
+  transition: width .4s ease;
+}
+.gauge-fill.amber { background: var(--amber); }
+.gauge-fill.red   { background: var(--red); }
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%; border-collapse: collapse; font-size: .78rem;
+}
+th {
+  text-align: left; padding: 8px 12px; font-size: .65rem; font-weight: 600;
+  color: var(--dim); text-transform: uppercase; letter-spacing: .07em;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+td {
+  padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,.04);
+  color: var(--text); vertical-align: middle;
+}
+tr:hover td { background: rgba(255,255,255,.02); }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .65rem; font-weight: 700;
+}
+.badge.green  { background: rgba(74,222,128,.12); color: var(--green); }
+.badge.red    { background: rgba(248,113,113,.12); color: var(--red); }
+.badge.amber  { background: rgba(251,191,36,.12);  color: var(--amber); }
+.badge.blue   { background: rgba(96,165,250,.12);  color: var(--blue); }
+.badge.purple { background: rgba(168,85,247,.12);  color: var(--accent2); }
+.badge.gray   { background: var(--s2); color: var(--muted); }
+
+.fail-bar { display: flex; align-items: center; gap: 8px; }
+.fail-track { flex: 1; height: 4px; background: var(--s3); border-radius: 2px; max-width: 80px; }
+.fail-fill  { height: 100%; border-radius: 2px; }
+
+/* ── Findings ── */
+.finding {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start;
+}
+.finding.critical { border-left: 3px solid var(--red); }
+.finding.warning  { border-left: 3px solid var(--amber); }
+.finding-icon { font-size: 1rem; flex-shrink: 0; padding-top: 1px; }
+.finding-body { flex: 1; }
+.finding-title { font-weight: 600; color: var(--text); font-size: .8rem; }
+.finding-rec   { color: var(--muted); font-size: .75rem; margin-top: 3px; line-height: 1.5; }
+
+/* ── Goals ── */
+.goal-row {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;
+}
+.goal-row:hover { border-color: var(--s3); }
+.goal-intent { flex: 1; font-size: .82rem; color: var(--text); line-height: 1.4; }
+.goal-id     { font-size: .65rem; color: var(--dim); font-family: monospace; }
+.progress-bar { width: 80px; height: 4px; background: var(--s3); border-radius: 2px; flex-shrink: 0; }
+.progress-fill { height: 100%; border-radius: 2px; background: var(--accent2); }
+
+/* ── Flywheel step ── */
+.fw-step {
+  background: rgba(168,85,247,.06); border: 1px solid rgba(168,85,247,.2);
+  border-radius: 8px; padding: 10px 14px; font-size: .8rem; color: var(--accent2);
+  display: flex; align-items: center; gap: 8px;
+}
+.fw-spinner {
+  width: 12px; height: 12px; border: 2px solid rgba(168,85,247,.3);
+  border-top-color: var(--accent2); border-radius: 50%;
+  animation: spin .7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Quick actions ── */
+.actions-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.action-btn {
+  background: var(--s2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 7px 14px; font-size: .78rem; cursor: pointer;
+  transition: all .1s;
+}
+.action-btn:hover { background: var(--s3); border-color: var(--accent); color: var(--accent2); }
+.action-btn:disabled { opacity: .4; cursor: default; }
+.action-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.action-btn.primary:hover { background: var(--accent2); }
+
+/* ── Chat panel ── */
+#chat-panel {
+  width: var(--chat-w); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; flex-shrink: 0; background: var(--bg);
+}
+#chat-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+#chat-header .title { font-size: .85rem; font-weight: 700; color: #fff; flex: 1; }
+#chat-header .mode-badge {
+  font-size: .65rem; background: rgba(168,85,247,.15); color: var(--accent2);
+  padding: 2px 8px; border-radius: 10px; font-weight: 600;
+}
+#chat-clear { background: none; border: none; color: var(--dim); cursor: pointer; font-size: .75rem; }
+#chat-clear:hover { color: var(--muted); }
+#chat-msgs {
+  flex: 1; overflow-y: auto; padding: 14px 14px; display: flex;
+  flex-direction: column; gap: 10px;
+}
+#chat-msgs::-webkit-scrollbar { width: 3px; }
+#chat-msgs::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 2px; }
+.cm-user {
+  align-self: flex-end; background: #4c1d95; color: #e9d5ff;
+  border-radius: 12px 12px 2px 12px; padding: 8px 12px;
+  max-width: 88%; font-size: .8rem; line-height: 1.55; word-break: break-word;
+}
+.cm-bot {
+  align-self: flex-start; background: var(--surface); color: var(--text);
+  border-radius: 12px 12px 12px 2px; padding: 10px 12px;
+  max-width: 95%; font-size: .8rem; line-height: 1.6; word-break: break-word;
+  border: 1px solid var(--border);
+}
+.cm-sys {
+  align-self: center; color: var(--dim); font-size: .7rem; font-style: italic;
+}
+.cm-thinking {
+  align-self: flex-start; display: flex; gap: 4px; align-items: center; padding: 4px 0;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim);
+  animation: pulse 1.2s ease-in-out infinite; }
+.dot:nth-child(2) { animation-delay: .2s; }
+.dot:nth-child(3) { animation-delay: .4s; }
+@keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
+#chat-suggestions {
+  padding: 0 14px 8px; display: flex; gap: 6px; flex-wrap: wrap;
+}
+.suggestion {
+  background: var(--s2); border: 1px solid var(--border); color: var(--muted);
+  border-radius: 20px; padding: 4px 10px; font-size: .7rem; cursor: pointer;
+  white-space: nowrap; transition: all .1s;
+}
+.suggestion:hover { border-color: var(--accent); color: var(--accent2); }
+#chat-input-row {
+  padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px;
+}
+#chat-input {
+  flex: 1; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: inherit; font-size: .8rem;
+  padding: 8px 12px; resize: none; outline: none; transition: border-color .15s;
+  line-height: 1.4; height: 36px; max-height: 120px; overflow-y: auto;
+}
+#chat-input:focus { border-color: var(--accent); }
+#chat-send {
+  background: var(--accent); border: none; color: #fff; border-radius: 10px;
+  width: 36px; height: 36px; cursor: pointer; font-size: .9rem; flex-shrink: 0;
+  transition: opacity .15s;
+}
+#chat-send:disabled { opacity: .4; }
+#chat-send:hover:not(:disabled) { background: var(--accent2); }
+
+/* ── Section header ── */
+.sec-hdr {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;
+}
+.sec-title { font-size: .8rem; font-weight: 600; color: var(--text); }
+.sec-sub   { font-size: .7rem; color: var(--muted); }
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center; padding: 40px 20px; color: var(--dim);
+}
+.empty-state .icon { font-size: 2rem; opacity: .3; margin-bottom: 8px; }
+.empty-state .text { font-size: .8rem; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div id="topbar">
+  <span class="logo">MISO<span> Admin</span></span>
+  <span class="sep">/</span>
+  <span class="subtitle">System Control</span>
+  <div class="spacer"></div>
+  <div class="status-pill">
+    <div class="status-dot" id="health-dot"></div>
+    <span id="health-label">checking…</span>
+  </div>
+  <span id="last-updated" style="margin-left:8px"></span>
+  <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
+</div>
+
+<div id="body">
+  <!-- Left nav -->
+  <nav id="nav">
+    <div class="nav-section">System</div>
+    <div class="nav-item active" data-page="overview" onclick="navTo('overview')">
+      <span class="icon">⬡</span> Overview
+    </div>
+    <div class="nav-item" data-page="inquisitor" onclick="navTo('inquisitor')">
+      <span class="icon">🔍</span> Inquisitor
+      <span class="nav-badge" id="nav-findings-badge" style="display:none">0</span>
+    </div>
+    <div class="nav-item" data-page="flywheel" onclick="navTo('flywheel')">
+      <span class="icon">⚙</span> Flywheel
+    </div>
+
+    <div class="nav-section">Data</div>
+    <div class="nav-item" data-page="goals" onclick="navTo('goals')">
+      <span class="icon">◎</span> Goals
+    </div>
+    <div class="nav-item" data-page="providers" onclick="navTo('providers')">
+      <span class="icon">⚡</span> Providers
+    </div>
+    <div class="nav-item" data-page="costs" onclick="navTo('costs')">
+      <span class="icon">$</span> Costs
+    </div>
+
+    <div class="nav-section" style="margin-top:auto"></div>
+    <div class="nav-item" id="nav-settings" onclick="openSettings()">
+      <span class="icon">⚙</span> Settings
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main id="main">
+
+    <!-- Overview -->
+    <div id="page-overview" class="page active">
+      <div>
+        <div class="page-title">Overview</div>
+        <div class="page-sub" id="overview-ts">Loading…</div>
+      </div>
+      <div class="card-grid" id="overview-cards">
+        <div class="card"><div class="card-label">API Health</div><div class="card-value" id="ov-health">—</div></div>
+        <div class="card"><div class="card-label">Today's Spend</div><div class="card-value" id="ov-spend">—</div><div class="gauge-wrap"><div class="gauge-track"><div class="gauge-fill" id="ov-spend-bar" style="width:0%"></div></div></div><div class="card-sub" id="ov-spend-sub"></div></div>
+        <div class="card"><div class="card-label">Flywheel</div><div class="card-value" id="ov-fw">—</div><div class="card-sub" id="ov-fw-sub"></div></div>
+        <div class="card"><div class="card-label">Active Goals</div><div class="card-value blue" id="ov-goals">—</div></div>
+        <div class="card"><div class="card-label">Critical Findings</div><div class="card-value" id="ov-critical">—</div></div>
+        <div class="card"><div class="card-label">Tasks Done (total)</div><div class="card-value green" id="ov-tasks">—</div></div>
+      </div>
+      <div id="ov-fw-step" style="display:none" class="fw-step">
+        <div class="fw-spinner"></div>
+        <span id="ov-fw-step-text">Running…</span>
+      </div>
+      <div class="sec-hdr"><span class="sec-title">Quick Actions</span></div>
+      <div class="actions-row">
+        <button class="action-btn primary" onclick="runInquisitor()">🔍 Run Inquisitor</button>
+        <button class="action-btn" onclick="runFlywheel()">⚙ Trigger Flywheel</button>
+        <button class="action-btn" onclick="navTo('goals')">◎ View Goals</button>
+        <button class="action-btn" onclick="navTo('providers')">⚡ Provider Health</button>
+      </div>
+    </div>
+
+    <!-- Inquisitor -->
+    <div id="page-inquisitor" class="page">
+      <div class="sec-hdr">
+        <div>
+          <div class="page-title">Inquisitor</div>
+          <div class="page-sub">Self-analysis findings — runs every 6h</div>
+        </div>
+        <button class="action-btn primary" onclick="runInquisitor()">↻ Run Now</button>
+      </div>
+      <div class="card-grid">
+        <div class="card"><div class="card-label">Total Findings</div><div class="card-value" id="inq-total">—</div></div>
+        <div class="card"><div class="card-label">Critical</div><div class="card-value red" id="inq-critical">—</div></div>
+        <div class="card"><div class="card-label">Warnings</div><div class="card-value amber" id="inq-warnings">—</div></div>
+        <div class="card"><div class="card-label">Roadmap Items Created</div><div class="card-value blue" id="inq-roadmap">—</div></div>
+      </div>
+      <div id="inq-findings-list" style="display:flex;flex-direction:column;gap:8px">
+        <div class="empty-state"><div class="icon">🔍</div><div class="text">Click "Run Now" to analyze the system.</div></div>
+      </div>
+    </div>
+
+    <!-- Flywheel -->
+    <div id="page-flywheel" class="page">
+      <div class="sec-hdr">
+        <div>
+          <div class="page-title">Meta-Flywheel</div>
+          <div class="page-sub">Continuous self-optimization — 12 flywheels registered</div>
+        </div>
+        <button class="action-btn primary" onclick="runFlywheel()">▶ Run Cycle</button>
+      </div>
+      <div class="card-grid">
+        <div class="card"><div class="card-label">Status</div><div class="card-value" id="fw-status">—</div></div>
+        <div class="card"><div class="card-label">Current Step</div><div class="card-value" id="fw-step" style="font-size:.85rem;line-height:1.3">—</div></div>
+        <div class="card"><div class="card-label">Cycles Run</div><div class="card-value blue" id="fw-cycles">—</div></div>
+        <div class="card"><div class="card-label">Converging</div><div class="card-value green" id="fw-converging">—</div></div>
+        <div class="card"><div class="card-label">Plateaued</div><div class="card-value amber" id="fw-plateaued">—</div></div>
+        <div class="card"><div class="card-label">System ETA</div><div class="card-value" id="fw-eta">—</div></div>
+      </div>
+      <div class="sec-hdr" style="margin-top:4px"><span class="sec-title">Optimization Ladder</span><span class="sec-sub">Ranked by Weitzman expected value</span></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Flywheel</th><th>Δ Mean</th><th>P(success)</th><th>Runs</th><th>Freq</th><th>ETA</th><th>Status</th></tr></thead>
+            <tbody id="fw-ladder-tbody"><tr><td colspan="7" style="text-align:center;color:var(--dim);padding:20px">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goals -->
+    <div id="page-goals" class="page">
+      <div class="sec-hdr">
+        <div>
+          <div class="page-title">Goals</div>
+          <div class="page-sub" id="goals-sub">Loading…</div>
+        </div>
+      </div>
+      <div id="goals-list" style="display:flex;flex-direction:column;gap:8px">
+        <div class="empty-state"><div class="icon">◎</div><div class="text">Loading goals…</div></div>
+      </div>
+    </div>
+
+    <!-- Providers -->
+    <div id="page-providers" class="page">
+      <div>
+        <div class="page-title">Provider Health</div>
+        <div class="page-sub">Failure rates, latency, cost per provider</div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Provider</th><th>Model</th><th>Calls</th><th>Fail Rate</th><th>Avg Latency</th><th>Avg Cost</th><th>Health</th></tr></thead>
+            <tbody id="providers-tbody"><tr><td colspan="7" style="text-align:center;color:var(--dim);padding:20px">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Costs -->
+    <div id="page-costs" class="page">
+      <div>
+        <div class="page-title">Cost Monitor</div>
+        <div class="page-sub">LLM spend tracking</div>
+      </div>
+      <div class="card-grid">
+        <div class="card"><div class="card-label">Today's Spend</div><div class="card-value" id="cost-spent">—</div><div class="gauge-wrap"><div class="gauge-track"><div class="gauge-fill" id="cost-bar" style="width:0%"></div></div></div></div>
+        <div class="card"><div class="card-label">Daily Cap</div><div class="card-value" id="cost-cap">—</div></div>
+        <div class="card"><div class="card-label">Remaining</div><div class="card-value green" id="cost-remaining">—</div></div>
+        <div class="card"><div class="card-label">% Used</div><div class="card-value" id="cost-pct">—</div></div>
+        <div class="card"><div class="card-label">Per-Call Cap</div><div class="card-value amber" id="cost-call-cap">—</div></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Chat panel -->
+  <div id="chat-panel">
+    <div id="chat-header">
+      <span class="title">Consigliere</span>
+      <span class="mode-badge">Admin</span>
+      <button id="chat-clear" onclick="clearChat()">Clear</button>
+    </div>
+    <div id="chat-msgs">
+      <div class="cm-sys">Ask anything about your MISO system — I have full context.</div>
+    </div>
+    <div id="chat-suggestions">
+      <span class="suggestion" onclick="quickAsk('What are the biggest issues right now?')">Top issues</span>
+      <span class="suggestion" onclick="quickAsk('Summarize provider health and what to fix.')">Provider health</span>
+      <span class="suggestion" onclick="quickAsk('What goals should I focus on today?')">Today\'s focus</span>
+      <span class="suggestion" onclick="quickAsk('How is the flywheel performing?')">Flywheel status</span>
+    </div>
+    <div id="chat-input-row">
+      <textarea id="chat-input" placeholder="Ask MISO…" rows="1"
+        onkeydown="chatKey(event)" oninput="autoResize(this)"></textarea>
+      <button id="chat-send" onclick="sendChat()">↑</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;width:400px;display:flex;flex-direction:column;gap:16px">
+    <div style="font-size:.9rem;font-weight:700">Settings</div>
+    <div>
+      <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:4px">MISO API Host</label>
+      <input id="setting-host" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:.8rem;outline:none" placeholder="https://miso.stemcultivation.com">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveSettings()" style="background:var(--accent);border:none;color:#fff;border-radius:8px;padding:8px 18px;font-size:.8rem;cursor:pointer">Save</button>
+      <button onclick="closeSettings()" style="background:var(--s2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 14px;font-size:.8rem;cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── Config ────────────────────────────────────────────────────────────────────
+let HOST = localStorage.getItem('miso_host') || 'https://miso.stemcultivation.com';
+let _chatConvId = 'admin_' + Date.now();
+let _chatBusy   = false;
+let _currentPage = 'overview';
+let _systemCtx  = '';  // injected into chat for context
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const r = await fetch(HOST + path, {
+    headers: { 'Content-Type': 'application/json', ...opts.headers },
+    ...opts,
+  });
+  if (!r.ok) throw new Error(`${r.status} ${path}`);
+  return r.json();
+}
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
+function navTo(page) {
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  document.querySelectorAll('.page').forEach(el => {
+    el.classList.toggle('active', el.id === 'page-' + page);
+  });
+  _currentPage = page;
+  updateCtxForPage(page);
+}
+
+function updateCtxForPage(page) {
+  const labels = {
+    overview:   'User is viewing the MISO Admin Overview dashboard.',
+    inquisitor: 'User is viewing the Inquisitor self-analysis findings.',
+    flywheel:   'User is viewing the Meta-Flywheel optimization status and ladder.',
+    goals:      'User is viewing the Goals list.',
+    providers:  'User is viewing Provider Health stats (failure rates, latency, cost).',
+    costs:      'User is viewing Cost Monitor (LLM spend tracking).',
+  };
+  _systemCtx = labels[page] || '';
+}
+
+// ── Data refresh ──────────────────────────────────────────────────────────────
+async function refreshAll() {
+  document.getElementById('last-updated').textContent = 'Refreshing…';
+  await Promise.allSettled([
+    loadHealth(),
+    loadCosts(),
+    loadFlywheel(),
+    loadGoals(),
+    loadProviders(),
+    loadInquisitor(),
+  ]);
+  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+}
+
+async function loadHealth() {
+  try {
+    const d = await api('/health');
+    const ok = d.status === 'healthy';
+    document.getElementById('health-dot').className = 'status-dot ' + (ok ? 'green' : 'red');
+    document.getElementById('health-label').textContent = ok ? 'Healthy' : 'Degraded';
+    document.getElementById('ov-health').textContent = ok ? '✓ OK' : '✗ Down';
+    document.getElementById('ov-health').className = 'card-value ' + (ok ? 'green' : 'red');
+    document.getElementById('overview-ts').textContent = 'Load: ' + (d.load?.[0]?.toFixed(2) || '—');
+  } catch(e) {
+    document.getElementById('health-dot').className = 'status-dot red';
+    document.getElementById('health-label').textContent = 'Unreachable';
+  }
+}
+
+async function loadCosts() {
+  try {
+    const d = await api('/apps/cost_monitor_api/llm/summary');
+    const pct = d.pct_used || 0;
+    const cls = pct > 80 ? 'red' : pct > 60 ? 'amber' : '';
+
+    // Overview cards
+    const spendEl = document.getElementById('ov-spend');
+    spendEl.textContent = '$' + d.spent_usd.toFixed(2);
+    spendEl.className = 'card-value ' + cls;
+    document.getElementById('ov-spend-bar').style.width = pct + '%';
+    document.getElementById('ov-spend-bar').className = 'gauge-fill ' + cls;
+    document.getElementById('ov-spend-sub').textContent = `$${d.remaining_usd.toFixed(2)} left of $${d.cap_usd}`;
+
+    // Costs page
+    document.getElementById('cost-spent').textContent = '$' + d.spent_usd.toFixed(2);
+    document.getElementById('cost-cap').textContent = '$' + d.cap_usd;
+    document.getElementById('cost-remaining').textContent = '$' + d.remaining_usd.toFixed(2);
+    document.getElementById('cost-pct').textContent = pct.toFixed(1) + '%';
+    document.getElementById('cost-pct').className = 'card-value ' + cls;
+    document.getElementById('cost-bar').style.width = pct + '%';
+    document.getElementById('cost-bar').className = 'gauge-fill ' + cls;
+    document.getElementById('cost-call-cap').textContent = '$' + (d.call_cap_usd || '—');
+  } catch(e) { console.warn('costs', e); }
+}
+
+async function loadFlywheel() {
+  try {
+    const d = await api('/apps/meta_flywheel_agent/status');
+    const s = d.state || {};
+    const running = s.running;
+
+    document.getElementById('ov-fw').textContent = running ? '▶ Running' : '■ Idle';
+    document.getElementById('ov-fw').className = 'card-value ' + (running ? 'green' : 'amber');
+    document.getElementById('ov-fw-sub').textContent = s.current_step || (running ? 'Processing…' : 'Waiting for next cycle');
+
+    const stepEl = document.getElementById('ov-fw-step');
+    if (running && s.current_step) {
+      stepEl.style.display = 'flex';
+      document.getElementById('ov-fw-step-text').textContent = s.current_step;
+    } else {
+      stepEl.style.display = 'none';
+    }
+
+    document.getElementById('fw-status').textContent = running ? '▶ Running' : '■ Idle';
+    document.getElementById('fw-status').className = 'card-value ' + (running ? 'green' : 'amber');
+    document.getElementById('fw-step').textContent = s.current_step || '—';
+    document.getElementById('fw-cycles').textContent = s.cycle_count ?? '—';
+    document.getElementById('fw-converging').textContent = (d.converging || []).length;
+    document.getElementById('fw-plateaued').textContent = (d.plateaued || []).length;
+    const eta = d.system_eta;
+    document.getElementById('fw-eta').textContent = eta != null ? (eta < 0 ? 'Overdue' : eta.toFixed(0) + 'h') : '—';
+    document.getElementById('fw-eta').className = 'card-value ' + (eta != null && eta < 0 ? 'amber' : '');
+  } catch(e) { console.warn('flywheel', e); }
+
+  try {
+    const ld = await api('/apps/meta_flywheel_agent/ladder');
+    const ladder = ld.ladder || [];
+    const tbody = document.getElementById('fw-ladder-tbody');
+    if (!ladder.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:20px">No ladder data</td></tr>'; return; }
+    tbody.innerHTML = ladder.slice(0, 15).map(r => {
+      const paused = r.paused;
+      const conf = ((r.confidence || 0) * 100).toFixed(0);
+      return `<tr>
+        <td><div style="font-weight:600">${esc(r.name)}</div><div style="font-size:.65rem;color:var(--dim)">${esc(r.flywheel_id)}</div></td>
+        <td>${r.delta_mean?.toFixed(1) ?? '—'}</td>
+        <td>${((r.p_success||0)*100).toFixed(0)}%</td>
+        <td>${r.n_runs ?? 0}</td>
+        <td>${r.recommended_freq_h?.toFixed(0) ?? '—'}h</td>
+        <td>${r.eta?.toFixed(0) ?? '—'}h</td>
+        <td><span class="badge ${paused ? 'gray' : conf > 50 ? 'green' : 'amber'}">${paused ? 'Paused' : conf + '% conf'}</span></td>
+      </tr>`;
+    }).join('');
+  } catch(e) { console.warn('ladder', e); }
+}
+
+async function loadGoals() {
+  try {
+    const [goals, snap] = await Promise.all([
+      api('/apps/chief_of_staff/goals'),
+      api('/apps/morning_briefing/snapshot'),
+    ]);
+    const active = goals.filter(g => g.status === 'active' || g.status === 'draft').length;
+    document.getElementById('ov-goals').textContent = active;
+    document.getElementById('goals-sub').textContent = `${goals.length} total · ${active} active`;
+    document.getElementById('ov-tasks').textContent = snap.tasks_completed_total ?? '—';
+
+    const STATUS_CLS = { active: 'green', achieved: 'blue', draft: 'amber', failed: 'red', cancelled: 'gray' };
+    const list = document.getElementById('goals-list');
+    if (!goals.length) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">◎</div><div class="text">No goals yet.</div></div>';
+      return;
+    }
+    list.innerHTML = goals.map(g => `
+      <div class="goal-row" onclick="quickAsk('Tell me about goal: ${esc(g.intent.slice(0,80))}')">
+        <div class="goal-intent">
+          <div>${esc(g.intent.slice(0,120))}${g.intent.length > 120 ? '…' : ''}</div>
+          <div class="goal-id">${g.id}</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${g.progress_pct||0}%"></div></div>
+        <span class="badge ${STATUS_CLS[g.status] || 'gray'}">${g.status}</span>
+      </div>
+    `).join('');
+  } catch(e) { console.warn('goals', e); }
+}
+
+async function loadProviders() {
+  try {
+    const data = await api('/apps/inquisitor/weak-providers');
+    const tbody = document.getElementById('providers-tbody');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:20px">No provider data</td></tr>'; return; }
+
+    tbody.innerHTML = data.map(p => {
+      const fr = p.fail_rate;
+      const cls = fr > .4 ? 'red' : fr > .2 ? 'amber' : 'green';
+      const health = fr > .4 ? 'Critical' : fr > .2 ? 'Degraded' : 'Healthy';
+      const latMs = p.avg_latency_ms;
+      const lat = latMs > 30000 ? (latMs/1000).toFixed(0)+'s' : latMs > 1000 ? (latMs/1000).toFixed(1)+'s' : latMs.toFixed(0)+'ms';
+      const cost = p.avg_cost_usd > 0 ? '$'+p.avg_cost_usd.toFixed(5) : 'Free';
+      return `<tr>
+        <td><span class="badge ${cls === 'green' ? 'blue' : cls}">${esc(p.provider)}</span></td>
+        <td style="font-family:monospace;font-size:.75rem">${esc(p.model)}</td>
+        <td>${p.calls}</td>
+        <td>
+          <div class="fail-bar">
+            <div class="fail-track"><div class="fail-fill" style="width:${(fr*100).toFixed(0)}%;background:var(--${cls})"></div></div>
+            <span style="color:var(--${cls})">${(fr*100).toFixed(0)}%</span>
+          </div>
+        </td>
+        <td>${lat}</td>
+        <td>${cost}</td>
+        <td><span class="badge ${cls}">${health}</span></td>
+      </tr>`;
+    }).join('');
+  } catch(e) { console.warn('providers', e); }
+}
+
+async function loadInquisitor() {
+  try {
+    const d = await api('/apps/inquisitor/findings');
+    if (d.message) return; // not run yet
+
+    const s = d.summary || {};
+    document.getElementById('inq-total').textContent = s.total_findings ?? '—';
+    document.getElementById('inq-critical').textContent = s.critical ?? '—';
+    document.getElementById('inq-warnings').textContent = s.warning ?? '—';
+    document.getElementById('inq-roadmap').textContent = s.items_generated ?? '—';
+    document.getElementById('ov-critical').textContent = s.critical ?? '—';
+    document.getElementById('ov-critical').className = 'card-value ' + ((s.critical || 0) > 0 ? 'red' : 'green');
+
+    const badge = document.getElementById('nav-findings-badge');
+    if ((s.critical || 0) > 0) {
+      badge.textContent = s.critical;
+      badge.style.display = 'inline';
+    }
+
+    const list = document.getElementById('inq-findings-list');
+    const findings = d.findings || [];
+    if (!findings.length) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">✓</div><div class="text">No findings — system looks good.</div></div>';
+      return;
+    }
+    list.innerHTML = findings.map(f => `
+      <div class="finding ${f.severity}">
+        <div class="finding-icon">${f.severity === 'critical' ? '🔴' : '🟡'}</div>
+        <div class="finding-body">
+          <div class="finding-title">${esc(f.provider ? f.provider+'/'+f.model : f.type)}</div>
+          <div class="finding-rec">${esc(f.recommendation || '')}</div>
+        </div>
+        <span class="badge ${f.severity === 'critical' ? 'red' : 'amber'}">${f.severity}</span>
+      </div>
+    `).join('');
+  } catch(e) { console.warn('inquisitor', e); }
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+async function runInquisitor() {
+  appendSys('Running inquisitor analysis…');
+  try {
+    const d = await api('/apps/inquisitor/analyze', { method: 'POST' });
+    await loadInquisitor();
+    refreshAll();
+    appendBot(`Inquisitor complete: **${d.summary?.total_findings || 0} findings** (${d.summary?.critical || 0} critical, ${d.summary?.warning || 0} warnings). ${d.summary?.items_generated || 0} roadmap items created.`);
+  } catch(e) { appendSys('Error: ' + e.message); }
+}
+
+async function runFlywheel() {
+  appendSys('Starting flywheel cycle…');
+  try {
+    const d = await api('/apps/meta_flywheel_agent/run', { method: 'POST', body: JSON.stringify({ flywheels: null }) });
+    appendBot(d.message || 'Flywheel cycle queued.');
+    setTimeout(loadFlywheel, 3000);
+  } catch(e) { appendSys('Error: ' + e.message); }
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+function chatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+  autoResize(e.target);
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function appendUser(text) {
+  clearEmpty();
+  const d = document.createElement('div');
+  d.className = 'cm-user'; d.textContent = text;
+  document.getElementById('chat-msgs').appendChild(d);
+  scrollChat();
+}
+
+function appendBot(text) {
+  const d = document.createElement('div');
+  d.className = 'cm-bot';
+  d.innerHTML = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`([^`]+)`/g,'<code style="background:var(--s2);padding:1px 4px;border-radius:3px;font-size:.75rem">$1</code>')
+    .replace(/\n/g,'<br>');
+  document.getElementById('chat-msgs').appendChild(d);
+  scrollChat();
+}
+
+function appendSys(text) {
+  clearEmpty();
+  const d = document.createElement('div');
+  d.className = 'cm-sys'; d.textContent = text;
+  document.getElementById('chat-msgs').appendChild(d);
+  scrollChat();
+}
+
+function clearEmpty() {
+  document.querySelectorAll('#chat-msgs .cm-sys').forEach(e => {
+    if (e.textContent.includes('Ask anything')) e.remove();
+  });
+}
+
+function showThinking() {
+  const d = document.createElement('div');
+  d.className = 'cm-thinking'; d.id = '__thinking__';
+  d.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  document.getElementById('chat-msgs').appendChild(d);
+  scrollChat();
+  return d;
+}
+
+function scrollChat() {
+  const m = document.getElementById('chat-msgs');
+  m.scrollTop = m.scrollHeight;
+}
+
+function clearChat() {
+  document.getElementById('chat-msgs').innerHTML = '<div class="cm-sys">Chat cleared.</div>';
+  _chatConvId = 'admin_' + Date.now();
+}
+
+function quickAsk(text) {
+  document.getElementById('chat-input').value = text;
+  sendChat();
+}
+
+async function sendChat() {
+  if (_chatBusy) return;
+  const inp = document.getElementById('chat-input');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = ''; inp.style.height = '';
+
+  appendUser(msg);
+  const thinking = showThinking();
+  _chatBusy = true;
+  document.getElementById('chat-send').disabled = true;
+
+  const context = [
+    'MISO Admin Dashboard.',
+    _systemCtx,
+    'System context: healthy API, flywheel running, inquisitor self-monitoring active.',
+  ].filter(Boolean).join(' ');
+
+  try {
+    const d = await api('/apps/consigliere_agent/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message: msg, conversation_id: _chatConvId, context }),
+    });
+    thinking.remove();
+    if (d.error) throw new Error(d.error);
+    appendBot(d.response || '(no response)');
+  } catch(e) {
+    thinking.remove();
+    appendSys('Error: ' + e.message);
+  } finally {
+    _chatBusy = false;
+    document.getElementById('chat-send').disabled = false;
+  }
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('setting-host').value = HOST;
+  document.getElementById('settings-modal').style.display = 'flex';
+}
+function closeSettings() {
+  document.getElementById('settings-modal').style.display = 'none';
+}
+function saveSettings() {
+  HOST = document.getElementById('setting-host').value.trim().replace(/\/$/, '');
+  localStorage.setItem('miso_host', HOST);
+  closeSettings();
+  refreshAll();
+}
+
+// ── Util ──────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+refreshAll();
+setInterval(refreshAll, 30000);
+</script>
+</body>
+</html>
