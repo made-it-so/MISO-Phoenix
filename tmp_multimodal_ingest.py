@@ -349,6 +349,113 @@ def _build_downstream_payload(analysis: dict, entity_name: str, source_label: st
     }
 
 
+# -- Cross-agent notification -------------------------------------------------
+
+def _notify_consigliere(alert: dict):
+    """Fire-and-forget: POST alert into the Consigliere SSE stream."""
+    try:
+        payload = json.dumps(alert).encode()
+        req = _ur.Request(
+            "http://localhost:8000/apps/consigliere_agent/push",
+            data=payload, headers={"Content-Type": "application/json"}, method="POST"
+        )
+        with _ur.urlopen(req, timeout=5) as _r:
+            pass
+    except Exception:
+        pass
+
+
+# -- Background analysis tasks ------------------------------------------------
+
+async def _run_codebase_bg(job_id: str, all_files: dict, ordered: list,
+                            label: str, entity_name: str, intent: Optional[str]):
+    """Analyze codebase in background, push SSE notification when done."""
+    try:
+        chunk_results = await asyncio.gather(*[
+            _analyze_file_chunk(fname, all_files[fname]) for fname in ordered[:20]
+        ])
+        chunk_cost = sum(cr.get("cost", 0) for cr in chunk_results)
+        synth_llm  = await _run_llm(_build_synthesis_prompt(label, list(chunk_results), intent, is_codebase=True))
+        analysis   = synth_llm.get("parsed") or {}
+        downstream = _build_downstream_payload(analysis, entity_name, label, all_files)
+        issues      = analysis.get("issues", [])
+        high_issues = [i for i in issues if i.get("severity") == "high"]
+        tech        = ", ".join(analysis.get("tech_stack", [])[:6])
+        tasks_made  = len(downstream.get("tasks_created", []))
+        summary_parts = []
+        if analysis.get("purpose"):   summary_parts.append(analysis["purpose"])
+        if tech:                       summary_parts.append(f"Stack: {tech}.")
+        if high_issues:                summary_parts.append(f"{len(high_issues)} high-severity issue(s) found.")
+        if tasks_made:                 summary_parts.append(f"{tasks_made} task(s) added to roadmap.")
+        _notify_consigliere({
+            "type":            "ingest_complete",
+            "title":           f'Analysis complete: "{label}"',
+            "body":            " ".join(summary_parts) or "Codebase analyzed.",
+            "job_id":          job_id,
+            "generate_prompt": analysis.get("generate_prompt", ""),
+            "label":           label,
+            "file_count":      len(all_files),
+        })
+    except Exception as exc:
+        _notify_consigliere({
+            "type":   "ingest_error",
+            "title":  f'Analysis failed: "{label}"',
+            "body":   str(exc)[:200],
+            "job_id": job_id,
+        })
+
+
+async def _run_drop_bg(job_id: str, text_files: dict, image_files: list,
+                       label: str, intent: Optional[str]):
+    """Analyze drop upload in background, push SSE notification when done."""
+    try:
+        analysis_result: dict = {}
+
+        if text_files:
+            ordered = sorted(text_files.keys(), key=lambda f: (f not in ("README.md", "readme.txt", "main.py"), f))
+            chunk_results = await asyncio.gather(*[
+                _analyze_file_chunk(fname, text_files[fname]) for fname in ordered[:20]
+            ])
+            synth_llm       = await _run_llm(_build_drop_synthesis_prompt(label, list(chunk_results), intent))
+            analysis_result = synth_llm.get("parsed") or {}
+            entity_name = re.sub(r'[^a-z0-9_]', '_', label.lower())[:40] or "upload"
+            _propose_world_model_facts(analysis_result.get("world_model_facts", []), entity_name, f"drop/{label}")
+            _create_tasks(
+                [{"title": s, "vector": "macro_architecture", "priority": 5}
+                 for s in analysis_result.get("suggested_next_steps", [])],
+                f"drop/{label}",
+            )
+
+        if image_files:
+            async def _analyze_image_bg(img: dict) -> str:
+                try:
+                    llm = await _run_llm(
+                        f"Describe this image in 2-3 plain sentences. Goal: {intent or 'understand what this shows'}",
+                        image_b64=img["b64"], mime=img["mime"]
+                    )
+                    return f"{img['name']}: {llm.get('raw', '')[:300]}"
+                except Exception:
+                    return f"{img['name']}: (analysis failed)"
+            await asyncio.gather(*[_analyze_image_bg(img) for img in image_files[:3]])
+
+        steps = analysis_result.get("suggested_next_steps", [])
+        _notify_consigliere({
+            "type":            "ingest_complete",
+            "title":           f'Analysis complete: "{label}"',
+            "body":            analysis_result.get("plain_summary") or analysis_result.get("what_it_does") or "Files analyzed.",
+            "job_id":          job_id,
+            "generate_prompt": steps[0] if steps else "",
+            "label":           label,
+        })
+    except Exception as exc:
+        _notify_consigliere({
+            "type":   "ingest_error",
+            "title":  f'Analysis failed: "{label}"',
+            "body":   str(exc)[:200],
+            "job_id": job_id,
+        })
+
+
 # -- Endpoints ----------------------------------------------------------------
 
 @router.post("/code")
@@ -421,27 +528,17 @@ async def ingest_codebase(
     total_lines = sum(len(c.splitlines()) for c in all_files.values())
     languages   = list({_ext_to_lang(Path(f).suffix.lower()) for f in all_files})
 
-    # Parallel per-file analysis (cap at 20 files)
-    chunk_results = await asyncio.gather(*[
-        _analyze_file_chunk(fname, all_files[fname]) for fname in ordered[:20]
-    ])
-    chunk_cost = sum(cr.get("cost", 0) for cr in chunk_results)
+    job_id = str(uuid.uuid4())[:8]
+    asyncio.create_task(_run_codebase_bg(job_id, all_files, ordered, label, entity_name, intent))
 
-    # Synthesis pass
-    synth_llm  = await _run_llm(_build_synthesis_prompt(label, list(chunk_results), intent, is_codebase=True))
-    analysis   = synth_llm.get("parsed") or {}
-    total_cost = chunk_cost + synth_llm.get("cost_usd", 0)
-
-    downstream = _build_downstream_payload(analysis, entity_name, label, all_files)
-
-    return {
-        "id": str(uuid.uuid4())[:8], "type": "codebase", "name": label,
-        "file_count": len(all_files), "files": list(all_files.keys()),
-        "total_lines": total_lines, "languages": languages, "analysis": analysis,
-        "raw_llm": synth_llm["raw"][:500] if not analysis else None,
-        "cost_usd": round(total_cost, 6), "provider": synth_llm.get("provider", ""),
-        "chunks": len(chunk_results), "timestamp": time.time(), **downstream,
-    }
+    return JSONResponse({
+        "id": job_id, "status": "processing", "type": "codebase",
+        "name": label, "file_count": len(all_files),
+        "files": list(all_files.keys())[:10],
+        "total_lines": total_lines, "languages": languages,
+        "message": "Analysis running in background. You will be notified when complete.",
+        "timestamp": time.time(),
+    })
 
 
 @router.post("/image")
@@ -549,65 +646,18 @@ async def drop_anything(
         (upload.filename or "upload").rsplit(".", 1)[0]
     )
 
-    analysis_result: dict = {}
-    wm_proposals: list    = []
-    tasks_created: list   = []
-    total_cost = 0.0
+    job_id = str(uuid.uuid4())[:8]
+    asyncio.create_task(_run_drop_bg(job_id, text_files, image_files, label, intent))
 
-    if text_files:
-        ordered = sorted(text_files.keys(), key=lambda f: (f not in ("README.md", "readme.txt", "main.py"), f))
-
-        # Parallel per-file analysis (cap at 20 files)
-        chunk_results = await asyncio.gather(*[
-            _analyze_file_chunk(fname, text_files[fname]) for fname in ordered[:20]
-        ])
-        total_cost = sum(cr.get("cost", 0) for cr in chunk_results)
-
-        # Synthesis pass
-        synth_llm       = await _run_llm(_build_drop_synthesis_prompt(label, list(chunk_results), intent))
-        analysis_result = synth_llm.get("parsed") or {}
-        total_cost     += synth_llm.get("cost_usd", 0)
-
-        entity_name   = re.sub(r'[^a-z0-9_]', '_', label.lower())[:40] or "upload"
-        wm_proposals  = _propose_world_model_facts(analysis_result.get("world_model_facts", []), entity_name, f"drop/{label}")
-        tasks_created = _create_tasks(
-            [{"title": s, "vector": "macro_architecture", "priority": 5}
-             for s in analysis_result.get("suggested_next_steps", [])],
-            f"drop/{label}",
-        )
-
-    # Parallel image analysis (cap at 3)
-    async def _analyze_image(img: dict) -> str:
-        img_prompt = (
-            f"Describe what is shown in this image in 2-3 plain sentences. "
-            f"Goal: {intent or 'understand what this shows'}"
-        )
-        try:
-            llm = await _run_llm(img_prompt, image_b64=img["b64"], mime=img["mime"])
-            return f"{img['name']}: {llm.get('raw', '')[:300]}"
-        except Exception:
-            return f"{img['name']}: (analysis failed)"
-
-    image_analyses: list[str] = []
-    if image_files:
-        image_analyses = list(await asyncio.gather(*[_analyze_image(img) for img in image_files[:3]]))
-
-    return {
-        "id": str(uuid.uuid4())[:8], "type": "drop", "name": label,
+    return JSONResponse({
+        "id": job_id, "status": "processing", "type": "drop",
+        "name": label,
         "file_count": len(text_files) + len(image_files),
         "text_files": len(text_files), "image_files": len(image_files),
         "skipped_files": len(skipped), "total_kb": total_bytes // 1024,
-        "plain_summary":  analysis_result.get("plain_summary", ""),
-        "what_it_does":   analysis_result.get("what_it_does", ""),
-        "interesting_things": analysis_result.get("interesting_things", []),
-        "tech_stack":     analysis_result.get("tech_stack", []),
-        "suggested_next_steps": analysis_result.get("suggested_next_steps", []),
-        "image_analyses": image_analyses,
-        "world_model_proposals": wm_proposals,
-        "tasks_created":  tasks_created,
-        "is_agent":       analysis_result.get("is_agent", False),
-        "cost_usd":       round(total_cost, 6),
-    }
+        "message": "Analysis running in background. You will be notified when complete.",
+        "timestamp": time.time(),
+    })
 
 
 @router.get("/health")

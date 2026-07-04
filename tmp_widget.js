@@ -339,6 +339,29 @@
     'Summarise what you know about my current work',
   ];
 
+  // ── Brief Me button (separate from quick pills) ─────────────────────────────
+  async function triggerBrief() {
+    const btn = document.getElementById('__miso_brief_btn__');
+    if (btn) { btn.disabled = true; btn.textContent = 'Briefing…'; }
+    try {
+      const res  = await fetch(`${API}/apps/consigliere_agent/brief`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ focus: buildPageContext() }),
+      });
+      const data = await res.json();
+      if (data.brief) {
+        appendBubble('assistant', formatReply({ response: data.brief }), true);
+        scrollBottom();
+      }
+    } catch (e) {
+      appendBubble('assistant', '<em>Could not reach Brief endpoint.</em>', true);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Brief Me'; }
+      if (!_open) open();
+    }
+  }
+
   // ── Identity loading ───────────────────────────────────────────────────────
   async function loadIdentity() {
     try {
@@ -404,7 +427,14 @@
 
         <!-- Input area -->
         <div class="__miso_input_area__">
-          <div class="__quick_pills__" id="__miso_pills__"></div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;">
+            <div class="__quick_pills__" id="__miso_pills__" style="flex:1;"></div>
+            <button id="__miso_brief_btn__"
+              onclick="window.__MISO_CONS__.triggerBrief()"
+              style="flex-shrink:0;font-size:11px;padding:4px 12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;border-radius:20px;cursor:pointer;color:#fff;font-weight:600;white-space:nowrap;">
+              Brief Me
+            </button>
+          </div>
           <textarea class="__miso_textarea__" id="__miso_input__" rows="2"
             placeholder="Ask MISO anything — decisions, priorities, risks…"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window.__MISO_CONS__.send();}">
@@ -488,30 +518,36 @@
   function renderAlertRows() {
     const panel = document.getElementById('__miso_alerts_panel__');
     if (!_alerts.length) {
-      panel.innerHTML = '<div style="font-size:12px;color:#52525b;padding:4px 0;">No open questions.</div>';
+      panel.innerHTML = '<div style="font-size:12px;color:#52525b;padding:4px 0;">No alerts right now.</div>';
       return;
     }
-    panel.innerHTML = _alerts.map(a => `
+    panel.innerHTML = _alerts.map((a, idx) => {
+      const title = a.title || a.text || 'Alert';
+      const body  = a.body  || '';
+      const typeLabel = {
+        meeting_brief:  'Meeting',
+        critical_alert: 'Critical',
+        action_email:   'Email',
+        manual_brief:   'Briefing',
+      }[a.type] || 'Alert';
+      return `
       <div class="__alert_row__">
-        <button class="__alert_dismiss__" onclick="window.__MISO_CONS__.dismissAlert(${a.id})">Resolve</button>
-        <div class="at">Open question</div>
-        <div class="adesc">${_esc(a.text || '')}</div>
+        <button class="__alert_dismiss__" onclick="window.__MISO_CONS__.dismissAlert(${idx})">Dismiss</button>
+        <div class="at">${_esc(typeLabel)}: ${_esc(title)}</div>
+        ${body ? `<div class="adesc">${_esc(body)}</div>` : ''}
         <button style="margin-top:6px;font-size:11px;padding:2px 8px;background:#1c1c26;border:1px solid #3f3f46;border-radius:6px;cursor:pointer;color:#a1a1aa;"
-          onclick="window.__MISO_CONS__.reask('${_esc((a.text||'').replace(/'/g,''))}')">
-          Ask about this →
+          onclick="window.__MISO_CONS__.reask(${JSON.stringify(title)})">
+          Tell me more →
         </button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
-  async function dismissAlert(id) {
-    await fetch(`${API}/apps/consigliere_agent/questions/${id}`, {
-      method:  'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ resolved: true }),
-    });
-    _alerts = _alerts.filter(a => a.id !== id);
+  function dismissAlert(idx) {
+    _alerts.splice(idx, 1);
     updateBadge(_alerts.length);
     renderAlertRows();
+    if (!_alerts.length && _alertsExpanded) toggleAlerts();
   }
 
   function reask(question) {
@@ -521,8 +557,55 @@
     document.getElementById('__miso_input__').focus();
   }
 
+  // ── SSE subscription ───────────────────────────────────────────────────────
+  let _sseRetryTimer = null;
+
+  function subscribeSSE() {
+    if (typeof EventSource === 'undefined') return;
+    const es = new EventSource(`${API}/apps/consigliere_agent/stream`);
+
+    es.onmessage = function(e) {
+      let msg;
+      try { msg = JSON.parse(e.data); } catch { return; }
+      if (!msg || msg.type === 'ping' || msg.type === 'connected') return;
+
+      // Ingest complete: show analysis summary — user decides what to do next
+      if (msg.type === 'ingest_complete') {
+        const lbl = (msg.label || msg.title || 'upload').replace(/^Analysis complete: /, '').replace(/^"|"$/g, '');
+        const summary = msg.body || '';
+        const fc = msg.file_count ? ` (${msg.file_count} files)` : '';
+        const summaryHtml = `<div style="font-size:12px;color:#a1a1aa;line-height:1.6">
+          <strong style="color:#4ade80">Analysis ready: ${_esc(lbl)}${_esc(fc)}</strong><br>${_esc(summary)}
+          <br><span style="color:#71717a;font-size:11px">Head to chat to describe what you want to build.</span></div>`;
+        appendBubble('assistant', summaryHtml, true);
+        open();
+        scrollBottom();
+        return;
+      }
+
+      // Push into alerts list and notify
+      _alerts.push(msg);
+      updateBadge(_alerts.length);
+      if (_alertsExpanded) renderAlertRows();
+
+      // Flash the button label briefly
+      const btn = document.getElementById('__miso_btn__');
+      if (btn && !_open) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = `<span style="font-size:16px;">🧠</span>New alert`;
+        setTimeout(() => { btn.innerHTML = orig; }, 3000);
+      }
+    };
+
+    es.onerror = function() {
+      es.close();
+      clearTimeout(_sseRetryTimer);
+      _sseRetryTimer = setTimeout(subscribeSSE, 15000);
+    };
+  }
+
   async function pollAlerts() {
-    // questions endpoint not implemented — badge stays silent
+    // replaced by SSE subscription in boot()
   }
 
   function updateBadge(count) {
@@ -735,14 +818,73 @@
   }
 
   // ── Public API (exposed so onclick= handlers work) ─────────────────────────
-  window.__MISO_CONS__ = { toggle, open, close, send, toggleAlerts, dismissAlert, reask, feedback, loadIdentity };
+  window.__MISO_CONS__ = { toggle, open, close, send, toggleAlerts, dismissAlert, reask, feedback, loadIdentity, triggerBrief };
+
+  // ── Draggable panel ────────────────────────────────────────────────────────
+  function _makeDraggable() {
+    const panel  = document.getElementById('__miso_panel__');
+    const header = panel.querySelector('.__miso_header__');
+    if (!header) return;
+
+    header.style.cursor = 'grab';
+    header.title = 'Drag to move';
+
+    // Restore saved position from previous session
+    const saved = sessionStorage.getItem('miso_cons_pos');
+    if (saved) {
+      try {
+        const { top, left } = JSON.parse(saved);
+        panel.style.top    = top  + 'px';
+        panel.style.left   = left + 'px';
+        panel.style.bottom = 'auto';
+        panel.style.right  = 'auto';
+      } catch {}
+    }
+
+    let _dragging = false, _ox = 0, _oy = 0;
+
+    header.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.close-btn')) return;
+      _dragging = true;
+      header.style.cursor = 'grabbing';
+      header.setPointerCapture(e.pointerId);
+
+      // Switch from bottom/right to top/left coordinates so we can freely move
+      const rect = panel.getBoundingClientRect();
+      panel.style.top    = rect.top  + 'px';
+      panel.style.left   = rect.left + 'px';
+      panel.style.bottom = 'auto';
+      panel.style.right  = 'auto';
+      _ox = e.clientX - rect.left;
+      _oy = e.clientY - rect.top;
+      e.preventDefault();
+    });
+
+    header.addEventListener('pointermove', (e) => {
+      if (!_dragging) return;
+      const maxLeft = window.innerWidth  - panel.offsetWidth;
+      const maxTop  = window.innerHeight - panel.offsetHeight;
+      panel.style.left = Math.max(0, Math.min(maxLeft, e.clientX - _ox)) + 'px';
+      panel.style.top  = Math.max(0, Math.min(maxTop,  e.clientY - _oy)) + 'px';
+    });
+
+    header.addEventListener('pointerup', () => {
+      if (!_dragging) return;
+      _dragging = false;
+      header.style.cursor = 'grab';
+      sessionStorage.setItem('miso_cons_pos', JSON.stringify({
+        top:  parseInt(panel.style.top,  10),
+        left: parseInt(panel.style.left, 10),
+      }));
+    });
+  }
 
   // ── Boot ───────────────────────────────────────────────────────────────────
   function boot() {
     build();
+    _makeDraggable();
     loadIdentity();   // async — updates names once loaded
-    pollAlerts();
-    setInterval(pollAlerts, ALERT_POLL);
+    subscribeSSE();   // proactive alerts via SSE
   }
 
   if (document.readyState === 'loading') {

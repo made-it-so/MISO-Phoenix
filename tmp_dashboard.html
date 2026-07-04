@@ -186,6 +186,10 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .msg-result { display: flex; align-items: center; gap: 8px; font-size: .82rem; flex-wrap: wrap; }
 .msg-check { color: #4ade80; font-weight: 700; }
 .msg-err   { color: #f87171; font-weight: 700; }
+/* Conversational (Consigliere) bubble body — no builder chrome */
+.msg-body { font-size: .84rem; line-height: 1.65; color: var(--text); word-break: break-word; overflow-wrap: break-word; }
+.msg-body strong { color: var(--text-strong); }
+.msg-body code { background: var(--surface-3); padding: 1px 5px; border-radius: 4px; font-size: .8em; font-family: monospace; }
 .score-badge { background: var(--surface-3); border: 1px solid var(--border-2); border-radius: 5px; padding: 1px 7px; font-size: .68rem; color: var(--text-faint); font-family: monospace; }
 
 .view-app-btn {
@@ -333,7 +337,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
     </div>
     <div class="nav-stubs">
       <div class="nav-stub" title="Sessions"><i class="fas fa-clock-rotate-left"></i></div>
-      <div class="nav-stub" title="New"><i class="fas fa-plus"></i></div>
+      <div class="nav-stub" title="New chat" onclick="newChat()" style="cursor:pointer"><i class="fas fa-plus"></i></div>
+      <div class="nav-stub" title="Toggle theme" onclick="toggleTheme()" style="cursor:pointer" id="theme-stub"><i class="fas fa-moon" id="theme-stub-icon"></i></div>
     </div>
     <div id="session-area">
       <div class="nav-tabs">
@@ -368,6 +373,13 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
   <div id="chat-col">
     <div id="thread"></div>
     <div id="input-area">
+      <div id="quick-pills" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+        <button onclick="_triggerBrief()" style="font-size:.72rem;padding:4px 12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;border-radius:20px;cursor:pointer;color:#fff;font-weight:600;white-space:nowrap;flex-shrink:0">Brief Me</button>
+        <button onclick="setPrompt('What should I prioritise right now?')" class="empty-chip" style="font-size:.72rem">Priorities</button>
+        <button onclick="setPrompt('What am I missing or not seeing clearly?')" class="empty-chip" style="font-size:.72rem">Blind spots</button>
+        <button onclick="setPrompt(&quot;What's the strongest argument against what I'm doing?&quot;)" class="empty-chip" style="font-size:.72rem">Devil's advocate</button>
+        <button onclick="setPrompt('Summarise what you know about my current work and goals')" class="empty-chip" style="font-size:.72rem">Summarise</button>
+      </div>
       <div id="prompt-wrap">
         <button id="import-code-btn" onclick="openImportModal()" title="Import code or image to reverse-engineer a PRD"
           style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border-2);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:color .15s,border-color .15s"
@@ -381,7 +393,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
           onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border-2)'">
           <i class="fas fa-image" style="font-size:.68rem"></i>
         </button>
-        <textarea id="prompt-input" rows="1" placeholder="What outcome do you want? Describe the goal…"
+        <textarea id="prompt-input" rows="1" placeholder="Ask MISO — strategy, decisions, goals, or describe what you want to build…"
           oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
         <button id="send-btn" onclick="sendMessage()">
           <i class="fas fa-arrow-up" style="font-size:.74rem"></i>
@@ -429,7 +441,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 
           <button id="import-submit-btn" onclick="submitImport()" disabled
             style="width:100%;background:var(--accent);border:none;color:#fff;font-size:.82rem;font-weight:600;padding:10px;border-radius:10px;cursor:pointer;opacity:.4;transition:opacity .15s">
-            <span id="import-submit-label"><i class="fas fa-magnifying-glass fa-xs"></i> Analyze &amp; Generate PRD</span>
+            <span id="import-submit-label"><i class="fas fa-magnifying-glass fa-xs"></i> Upload &amp; Analyze</span>
           </button>
 
           <!-- ── Post-analysis Ask MISO chat ──────────────────────────────── -->
@@ -515,14 +527,25 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
       <button id="prd-review-btn" onclick="reviewPrd()" title="Automated spec audit — checks if the generated spec matches your stated goal intent" style="display:none;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:.65rem;padding:4px 9px;border-radius:6px;cursor:pointer">
         <i class="fas fa-magnifying-glass fa-xs"></i> Audit Spec
       </button>
+      <button id="prd-colosseum-btn" onclick="runColosseum()" title="Colosseum: generate two competing approaches and pick the best one" style="display:none;background:transparent;border:1px solid rgba(239,68,68,.4);color:#f87171;font-size:.65rem;padding:4px 9px;border-radius:6px;cursor:pointer">
+        ⚔ Colosseum
+      </button>
     </div>
     <!-- ── Consigliere assessment panel ──────────────────────────────────── -->
     <div id="prd-review-panel" style="display:none;border-bottom:1px solid var(--border);padding:16px 18px;background:rgba(251,191,36,.04);max-height:45%;overflow-y:auto;flex-shrink:0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-size:.7rem;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:.06em"><i class="fas fa-magnifying-glass fa-xs"></i> Spec Audit</span>
-        <button onclick="document.getElementById('prd-review-panel').style.display='none'" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.75rem;padding:0 2px" title="Dismiss">✕</button>
+        <button onclick="closePrdReview()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.75rem;padding:0 2px" title="Close (pending suggestions saved to roadmap)">✕</button>
       </div>
       <div id="prd-review-content"></div>
+    </div>
+    <!-- ── Colosseum panel ───────────────────────────────────────────────── -->
+    <div id="colosseum-panel" style="display:none;border-bottom:1px solid var(--border);padding:16px 18px;background:rgba(239,68,68,.03);max-height:55%;overflow-y:auto;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:.7rem;font-weight:700;color:#f87171;text-transform:uppercase;letter-spacing:.06em">⚔ Colosseum</span>
+        <button onclick="document.getElementById('colosseum-panel').style.display='none'" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.75rem;padding:0 2px">✕</button>
+      </div>
+      <div id="colosseum-content"></div>
     </div>
     <div id="prd-body">
       <div class="prd-placeholder">
@@ -575,11 +598,12 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 
 <!-- ── Consigliere ────────────────────────────────────────────────────────── -->
 <!-- Self-injecting: floating button + panel + proactive alerts/monitoring. -->
-<script src="/consigliere-widget.js"></script>
+<!-- consigliere-widget removed: Consigliere is now the main chat -->
 
 <script>
 // ── State ────────────────────────────────────────────────────────────────────
-var _sid        = null;   // active session id
+var _sid        = null;   // build session id (blueprint pipeline)
+var _consSessionId = null; // Consigliere conversation id
 var _folder     = null;   // current app folder
 var _generating = false;
 var _msgN       = 0;
@@ -763,9 +787,7 @@ function renderGoals(goals) {
       actionsHtml = '<span style="font-size:.65rem;color:#4ade80"><i class="fas fa-trophy fa-xs"></i> Achieved</span>'
         +'<button class="goal-btn" style="margin-left:auto" onclick="setGoalStatus(\''+esc(g.id)+'\',\'active\')"><i class="fas fa-rotate-left fa-xs"></i> Reopen</button>';
     } else {
-      var achieveBtn = allDone
-        ? '<button class="goal-btn" onclick="setGoalStatus(\''+esc(g.id)+'\',\'achieved\')"><i class="fas fa-trophy fa-xs"></i> Mark achieved</button>'
-        : '<button class="goal-btn" style="opacity:.4;cursor:not-allowed" title="Build all '+totalSteps+' artifacts first"><i class="fas fa-trophy fa-xs"></i> Mark achieved</button>';
+      var achieveBtn = '<button class="goal-btn" onclick="setGoalStatus(\''+esc(g.id)+'\',\'achieved\')"><i class="fas fa-trophy fa-xs"></i> Mark achieved</button>';
       actionsHtml = '<button class="goal-btn primary" onclick="activateGoalContext(\''+esc(g.id)+'\')"><i class="fas fa-crosshairs fa-xs"></i> Work on this</button>'
         + achieveBtn;
     }
@@ -811,6 +833,7 @@ function activateGoalContext(goalId) {
   }
   // show Review button whenever a goal context is active
   document.getElementById('prd-review-btn').style.display = goalId ? '' : 'none';
+  document.getElementById('prd-colosseum-btn').style.display = goalId ? '' : 'none';
   // auto-populate chat input with goal intent so user can immediately trigger the PRD pipeline
   if(_currentGoal && _currentGoal.intent) {
     setPrompt(_currentGoal.intent);
@@ -828,6 +851,7 @@ function clearGoalContext() {
 // ── Consigliere PRD Review ────────────────────────────────────────────────────
 
 var _activeAssessmentId = null;
+var _activeAssessment   = null;
 
 async function reviewPrd() {
   if(!_goalId) { toast('No goal selected', false); return; }
@@ -852,45 +876,66 @@ async function reviewPrd() {
 }
 
 function renderAssessment(a) {
+  _activeAssessment = a;
+
   var verdictColor = {aligned:'#4ade80', misaligned:'#f87171', needs_clarification:'#fbbf24'}[a.verdict] || '#94a3b8';
   var verdictIcon  = {aligned:'fa-circle-check', misaligned:'fa-circle-xmark', needs_clarification:'fa-circle-question'}[a.verdict] || 'fa-circle';
+  var suggestions  = a.suggestions || [];
+  var pending      = suggestions.filter(function(s){ return s.status==='pending'; });
+  var allResolved  = suggestions.length > 0 && pending.length === 0;
 
+  var typeLabel  = {intent_drift:'Intent drift', missing_requirement:'Missing requirement', scope_creep:'Scope creep', clarification_needed:'Needs clarification', better_approach:'Better approach'};
+  var impactColor = {high:'#f87171', medium:'#fbbf24', low:'#60a5fa'};
+
+  // Header row
   var html = '<div style="display:flex;align-items:center;gap:7px;margin-bottom:12px">'
     +'<i class="fas '+verdictIcon+'" style="color:'+verdictColor+'"></i>'
     +'<span style="font-weight:600;font-size:.9rem;color:'+verdictColor+'">'+esc(a.verdict||'')+'</span>'
     +'<span style="flex:1;font-size:.85rem;color:var(--text-dim)">'+esc(a.summary||'')+'</span>'
+    +(pending.length > 0
+      ? '<button onclick="acceptAllSuggestions()" style="font-size:.72rem;padding:3px 12px;border-radius:6px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-weight:600;white-space:nowrap" id="accept-all-btn">Accept All ('+pending.length+')</button>'
+      : '')
     +'</div>';
 
-  if(!a.suggestions || !a.suggestions.length) {
-    html += '<div style="font-size:.85rem;color:var(--text-dim)">No changes suggested — PRD aligns with your intent.</div>';
-  } else {
-    var typeLabel = {
-      intent_drift:'Intent drift', missing_requirement:'Missing requirement',
-      scope_creep:'Scope creep', clarification_needed:'Needs clarification',
-      better_approach:'Better approach'
-    };
-    var impactColor = {high:'#f87171', medium:'#fbbf24', low:'#60a5fa'};
+  // No suggestions at all
+  if(!suggestions.length) {
+    html += '<div style="font-size:.82rem;color:var(--text-dim)">No changes suggested — PRD aligns with your intent.</div>'
+      +'<button onclick="reviewPrd()" style="margin-top:8px;font-size:.72rem;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer">Re-audit</button>';
 
-    a.suggestions.forEach(function(s) {
-      var isPending = s.status === 'pending';
+  // All resolved — stable end state
+  } else if(allResolved) {
+    var nApplied   = suggestions.filter(function(s){ return s.status==='accepted'; }).length;
+    var nDismissed = suggestions.filter(function(s){ return s.status==='rejected'; }).length;
+    html += '<div style="font-size:.82rem;color:#4ade80;margin-bottom:10px">'
+      +'<i class="fas fa-circle-check fa-xs"></i> PRD is stable — '+nApplied+' applied'
+      +(nDismissed ? ', '+nDismissed+' dismissed' : '')+'.</div>'
+      +'<div style="display:flex;gap:8px">'
+      +'<button onclick="reviewPrd()" style="font-size:.72rem;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer">Re-audit</button>'
+      +(nDismissed ? '<button onclick="flywheelDismissed()" style="font-size:.72rem;padding:3px 10px;border-radius:6px;border:1px solid rgba(74,222,128,.3);background:transparent;color:#4ade80;cursor:pointer">Save dismissed → Roadmap</button>' : '')
+      +'</div>';
+
+  // Has pending suggestions — render each card
+  } else {
+    suggestions.forEach(function(s) {
+      var isPending  = s.status === 'pending';
       var isAccepted = s.status === 'accepted';
       var isRejected = s.status === 'rejected';
-      var statusTag = isAccepted
-        ? '<span style="font-size:.58rem;background:#4ade8020;color:#4ade80;padding:1px 6px;border-radius:4px">Applied</span>'
+      var statusTag  = isAccepted
+        ? '<span style="font-size:.58rem;background:#4ade8020;color:#4ade80;padding:1px 6px;border-radius:4px;margin-left:4px">Applied ✓</span>'
         : isRejected
-        ? '<span style="font-size:.58rem;background:#f8717120;color:#f87171;padding:1px 6px;border-radius:4px">Dismissed</span>'
+        ? '<span style="font-size:.58rem;background:#f8717120;color:#f87171;padding:1px 6px;border-radius:4px;margin-left:4px">Dismissed</span>'
         : '';
-
-      html += '<div id="suggestion-'+s.id+'" style="border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px;opacity:'+(isRejected?.5:1)+'">'
+      html += '<div id="suggestion-'+s.id+'" style="border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px;opacity:'+(isRejected ? 0.5 : 1)+'">'
         +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">'
-        +'<span style="font-size:.72rem;background:var(--surface-2);padding:2px 8px;border-radius:4px;color:var(--text-dim)">'+esc(typeLabel[s.type]||s.type)+'</span>'
+        +'<span style="font-size:.72rem;background:var(--surface-2);padding:2px 8px;border-radius:4px;color:var(--text-dim)">'+esc(typeLabel[s.type]||s.type||'')+'</span>'
         +'<span style="font-size:.72rem;color:'+(impactColor[s.impact]||'var(--text-dim)')+'">'+(s.impact||'')+'</span>'
         +'<span style="font-size:.72rem;color:var(--text-dim)">→ '+esc(s.field||'')+'</span>'
         +statusTag
         +'</div>'
-        +'<div style="font-size:.85rem;color:var(--text-primary);margin-bottom:6px;line-height:1.5">'+esc(s.rationale||'')+'</div>'
+        +'<div style="font-size:.85rem;color:var(--text);margin-bottom:6px;line-height:1.5">'+esc(s.rationale||'')+'</div>'
         +(s.current_value ? '<div style="font-size:.78rem;color:var(--text-dim);margin-bottom:4px"><b>Now:</b> '+esc((s.current_value||'').slice(0,120))+'</div>' : '')
         +'<div style="font-size:.78rem;color:#60a5fa;margin-bottom:9px;line-height:1.5"><b>Suggested:</b> '+esc((s.proposed_value||'').slice(0,200))+'</div>'
+        +'<div id="suggestion-actions-'+s.id+'">'
         +(isPending
           ? '<div style="display:flex;gap:6px">'
             +'<button onclick="applySuggestion(\''+a.id+'\',\''+s.id+'\',\'accept\')" '
@@ -899,6 +944,7 @@ function renderAssessment(a) {
             +'style="font-size:.75rem;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer">Dismiss</button>'
             +'</div>'
           : '')
+        +'</div>'
         +'</div>';
     });
   }
@@ -907,23 +953,226 @@ function renderAssessment(a) {
 }
 
 async function applySuggestion(assessmentId, suggestionId, action) {
+  var isAccept = action === 'accept';
+
+  // Instant in-place DOM feedback — no waiting, no full re-render
+  var actionsDiv = document.getElementById('suggestion-actions-'+suggestionId);
+  var card       = document.getElementById('suggestion-'+suggestionId);
+  if(actionsDiv) actionsDiv.innerHTML = isAccept
+    ? '<span style="font-size:.75rem;color:#4ade80"><i class="fas fa-check-circle fa-xs"></i> Applied</span>'
+    : '<span style="font-size:.75rem;color:#71717a">Dismissed</span>';
+  if(card && !isAccept) card.style.opacity = '0.5';
+
+  // Update the status badge in the header row of the card
+  var statusSpan = card ? card.querySelector('[style*="background:#4ade80"], [style*="background:#f87171"]') : null;
+  if(!statusSpan && card) {
+    // inject badge next to field label
+    var fieldSpan = card.querySelector('[style*="var(--text-dim)"]');
+    if(fieldSpan) {
+      var badge = document.createElement('span');
+      badge.style.cssText = 'font-size:.58rem;padding:1px 6px;border-radius:4px;margin-left:4px;'
+        +(isAccept ? 'background:#4ade8020;color:#4ade80' : 'background:#f8717120;color:#f87171');
+      badge.textContent = isAccept ? 'Applied ✓' : 'Dismissed';
+      fieldSpan.after(badge);
+    }
+  }
+
+  // Update Accept All button count
+  if(_activeAssessment && _activeAssessment.suggestions) {
+    var s = _activeAssessment.suggestions.find(function(x){ return x.id===suggestionId; });
+    if(s) s.status = isAccept ? 'accepted' : 'rejected';
+    var remaining = _activeAssessment.suggestions.filter(function(x){ return x.status==='pending'; }).length;
+    var acceptAllBtn = document.getElementById('accept-all-btn');
+    if(remaining === 0) {
+      // All done — re-render to show stable end state
+      renderAssessment(_activeAssessment);
+    } else if(acceptAllBtn) {
+      acceptAllBtn.textContent = 'Accept All ('+remaining+')';
+    }
+  }
+
   try {
-    var r = await fetch('/api/assessments/'+assessmentId+'/apply', {
+    await fetch('/api/assessments/'+assessmentId+'/apply', {
       method:'POST', headers:H(),
-      body: JSON.stringify({suggestion_id: suggestionId, action: action==='accept'?'accepted':'rejected'})
+      body: JSON.stringify({suggestion_id: suggestionId, action: isAccept ? 'accepted' : 'rejected'})
     });
-    var d = await r.json();
-    toast(action==='accept' ? '✓ Suggestion applied to PRD' : 'Suggestion dismissed');
-    // Reload assessment to show updated statuses
-    var ar = await fetch('/api/goals/'+_goalId+'/assessments', {headers:H()});
-    var assessments = await ar.json();
-    if(assessments.length) renderAssessment(assessments[0]);
-    // Refresh goal in sidebar (PRD may have changed)
+    if(isAccept) {
+      await loadGoals();
+      var g = _goalsById[_goalId];
+      if(g && g.prd) renderPrd(g.prd, g.prd.test_spec||{}, g.intent||'');
+    }
+  } catch(e) {
+    toast('Failed to save: '+e, false);
+    // Revert DOM on failure
+    if(actionsDiv) actionsDiv.innerHTML = '<div style="display:flex;gap:6px">'
+      +'<button onclick="applySuggestion(\''+assessmentId+'\',\''+suggestionId+'\',\'accept\')" style="font-size:.75rem;padding:4px 12px;border-radius:6px;border:none;background:#3b82f6;color:#fff;cursor:pointer">Apply</button>'
+      +'<button onclick="applySuggestion(\''+assessmentId+'\',\''+suggestionId+'\',\'reject\')" style="font-size:.75rem;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer">Dismiss</button>'
+      +'</div>';
+    if(card && !isAccept) card.style.opacity = '1';
+    if(s) s.status = 'pending';
+  }
+}
+
+async function acceptAllSuggestions() {
+  if(!_activeAssessment) return;
+  var pending = (_activeAssessment.suggestions||[]).filter(function(s){ return s.status==='pending'; });
+  if(!pending.length) return;
+  var btn = event.currentTarget;
+  if(btn) { btn.disabled=true; btn.textContent='Applying…'; }
+  try {
+    await Promise.all(pending.map(function(s) {
+      return fetch('/api/assessments/'+_activeAssessment.id+'/apply', {
+        method:'POST', headers:H(),
+        body: JSON.stringify({suggestion_id: s.id, action: 'accepted'})
+      });
+    }));
+    // Update local state — no re-fetch, no loop
+    pending.forEach(function(s){ s.status = 'accepted'; });
+    toast('✓ All '+pending.length+' suggestion'+(pending.length!==1?'s':'')+' applied');
+    renderAssessment(_activeAssessment);
     await loadGoals();
-    // Re-render the PRD panel if goal has been updated
     var g = _goalsById[_goalId];
     if(g && g.prd) renderPrd(g.prd, g.prd.test_spec||{}, g.intent||'');
-  } catch(e) { toast('Failed: '+e, false); }
+  } catch(e) {
+    toast('Accept all failed: '+e, false);
+    if(btn) { btn.disabled=false; btn.textContent='Accept All ('+pending.length+')'; }
+  }
+}
+
+// ── Colosseum ─────────────────────────────────────────────────────────────────
+
+var _activeBattle = null;
+
+async function runColosseum() {
+  if(!_goalId) { toast('No goal selected', false); return; }
+  var btn = document.getElementById('prd-colosseum-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin fa-xs"></i> Battling…';
+  var panel = document.getElementById('colosseum-panel');
+  panel.style.display = '';
+  document.getElementById('colosseum-content').innerHTML =
+    '<div style="color:var(--text-dim);font-size:.85rem;padding:10px 0"><i class="fas fa-spinner fa-spin fa-xs"></i> Generating two competing approaches…</div>';
+  document.getElementById('prd-review-panel').style.display = 'none';
+  try {
+    var r = await fetch('/apps/challenger_agent/battle', {method:'POST', headers:H(), body:JSON.stringify({goal_id:_goalId})});
+    var d = await r.json();
+    if(d.error || d.detail) throw new Error(d.detail || d.error);
+    _activeBattle = d;
+    renderColosseum(d);
+  } catch(e) {
+    document.getElementById('colosseum-content').innerHTML =
+      '<div style="color:#f87171;font-size:.75rem">Colosseum failed: '+esc(String(e))+'</div>';
+  } finally {
+    btn.disabled = false; btn.innerHTML = '⚔ Colosseum';
+  }
+}
+
+function renderColosseum(b) {
+  var v = b.verdict || {};
+  var winner = v.winner || '';
+  var cScore = v.conservative_score != null ? v.conservative_score : '?';
+  var aScore = v.ambitious_score    != null ? v.ambitious_score    : '?';
+  var con = b.conservative || {};
+  var amb = b.ambitious    || {};
+
+  function card(label, data, side, score, isWinner) {
+    var borderColor = isWinner ? 'rgba(74,222,128,.4)' : 'var(--border)';
+    var bg          = isWinner ? 'rgba(74,222,128,.04)' : 'var(--surface-2)';
+    var badge       = isWinner ? '<span style="font-size:.58rem;background:#4ade8020;color:#4ade80;padding:2px 8px;border-radius:4px;margin-left:6px">Judge\'s pick ✓</span>' : '';
+    var features    = (data.key_features||[]).slice(0,4).map(function(f){ return '<li style="font-size:.76rem;color:var(--text-faint);line-height:1.5">'+esc(f)+'</li>'; }).join('');
+    var extras      = (data.differentiators||data.excluded_scope||[]).slice(0,2).map(function(f){ return '<li style="font-size:.72rem;color:var(--text-dim);line-height:1.4">'+esc(f)+'</li>'; }).join('');
+    return '<div style="flex:1;min-width:0;border:1px solid '+borderColor+';border-radius:10px;padding:12px 14px;background:'+bg+'">'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">'
+      +'<span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:'+(isWinner?'#4ade80':'var(--text-dim)')+'">'+label+'</span>'
+      +'<span style="font-size:.7rem;color:var(--text-dim);background:var(--surface-3);padding:1px 7px;border-radius:4px">'+score+'/10</span>'
+      +badge
+      +'</div>'
+      +'<div style="font-size:.8rem;font-weight:600;color:var(--text-strong);margin-bottom:4px">'+esc(data.title||'')+'</div>'
+      +'<div style="font-size:.76rem;color:var(--text-dim);line-height:1.5;margin-bottom:8px">'+esc(data.summary||data.approach||'')+'</div>'
+      +(features ? '<ul style="padding-left:14px;margin-bottom:6px">'+features+'</ul>' : '')
+      +(extras   ? '<ul style="padding-left:14px;opacity:.7">'+extras+'</ul>' : '')
+      +'<div style="margin-top:10px">'
+      +'<button onclick="applyColosseumWinner(\''+b.id+'\',\''+side+'\')" '
+      +'style="font-size:.73rem;padding:4px 14px;border-radius:6px;border:none;background:'+(isWinner?'#3b82f6':'var(--surface-3)')+';color:'+(isWinner?'#fff':'var(--text-dim)')+';cursor:pointer;font-weight:'+(isWinner?'600':'400')+'">'
+      +(isWinner ? 'Use this approach →' : 'Use anyway')
+      +'</button>'
+      +'</div>'
+      +'</div>';
+  }
+
+  var html = '<div style="display:flex;gap:10px;margin-bottom:12px">'
+    + card('Conservative', con, 'conservative', cScore, winner==='conservative')
+    + card('Ambitious',    amb, 'ambitious',    aScore, winner==='ambitious')
+    +'</div>'
+    +'<div style="font-size:.76rem;color:var(--text-dim);border-top:1px solid var(--border);padding-top:10px">'
+    +(v.rationale ? '<b style="color:var(--text-faint)">Verdict:</b> '+esc(v.rationale) : '')
+    +(v.key_tradeoff ? '<br><b style="color:var(--text-faint)">Tradeoff:</b> '+esc(v.key_tradeoff) : '')
+    +'</div>';
+
+  document.getElementById('colosseum-content').innerHTML = html;
+}
+
+async function applyColosseumWinner(battleId, winner) {
+  try {
+    var r = await fetch('/apps/challenger_agent/battle/'+battleId+'/apply', {
+      method:'POST', headers:H(), body:JSON.stringify({winner:winner})
+    });
+    var d = await r.json();
+    if(d.error) throw new Error(d.error);
+    toast('⚔ '+winner.charAt(0).toUpperCase()+winner.slice(1)+' approach applied to PRD');
+    document.getElementById('colosseum-panel').style.display = 'none';
+    await loadGoals();
+    var g = _goalsById[_goalId];
+    if(g && g.prd) renderPrd(g.prd, g.prd.test_spec||{}, g.intent||'');
+  } catch(e) { toast('Apply failed: '+e, false); }
+}
+
+async function closePrdReview() {
+  // Auto-save any still-pending suggestions as deferred roadmap tasks before closing
+  if(_activeAssessment) {
+    var stillPending = (_activeAssessment.suggestions||[]).filter(function(s){ return s.status==='pending'; });
+    if(stillPending.length) {
+      await Promise.all(stillPending.map(async function(s) {
+        try {
+          await fetch('/api/tasks', {
+            method:'POST', headers:H(),
+            body: JSON.stringify({
+              title:       '[Deferred] '+(s.field ? s.field+': ' : '')+(s.rationale||'').slice(0,80),
+              description: (s.proposed_value||s.rationale||'').slice(0,500)
+                +'\n\nDeferred from audit of goal '+(_goalId||''),
+              priority:    s.impact==='high' ? 7 : s.impact==='medium' ? 5 : 3,
+              vector:      'micro_quality',
+            })
+          });
+        } catch(_) {}
+      }));
+      toast(stillPending.length+' unreviewed suggestion'+(stillPending.length!==1?'s':'')+' saved to roadmap');
+    }
+  }
+  document.getElementById('prd-review-panel').style.display='none';
+}
+
+async function flywheelDismissed() {
+  if(!_activeAssessment) return;
+  var dismissed = (_activeAssessment.suggestions||[]).filter(function(s){ return s.status==='rejected'; });
+  if(!dismissed.length) { toast('No dismissed suggestions to save', false); return; }
+  var created = 0;
+  await Promise.all(dismissed.map(async function(s) {
+    try {
+      await fetch('/api/tasks', {
+        method:'POST', headers:H(),
+        body: JSON.stringify({
+          title:       '[Deferred] '+(s.field ? s.field+': ' : '')+(s.rationale||'').slice(0,80),
+          description: (s.proposed_value||s.rationale||'').slice(0,500)
+            +'\n\nDeferred from audit of goal '+(_goalId||''),
+          priority:    s.impact==='high' ? 7 : s.impact==='medium' ? 5 : 3,
+          vector:      'micro_quality',
+        })
+      });
+      created++;
+    } catch(_) {}
+  }));
+  toast('Flywheel: '+created+' deferred suggestion'+(created!==1?'s':'')+' added to roadmap');
+  document.getElementById('prd-review-panel').style.display='none';
 }
 
 async function evaluateGoal(goalId) {
@@ -960,22 +1209,27 @@ function buildArtifactFromPlan(artifactIndex) {
 // ── Theme ────────────────────────────────────────────────────────────────────
 function toggleTheme() {
   var light = document.documentElement.classList.toggle('light');
-  document.getElementById('theme-btn').innerHTML = light?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
+  var icon = light ? 'fa-sun' : 'fa-moon';
+  document.getElementById('theme-btn').innerHTML = '<i class="fas '+icon+'"></i>';
+  var stub = document.getElementById('theme-stub-icon');
+  if(stub) stub.className = 'fas ' + icon;
   localStorage.setItem('miso_theme', light?'light':'dark');
 }
 if(localStorage.getItem('miso_theme')==='light'){
   document.documentElement.classList.add('light');
   document.getElementById('theme-btn').innerHTML='<i class="fas fa-sun"></i>';
+  var _stub = document.getElementById('theme-stub-icon');
+  if(_stub) _stub.className = 'fas fa-sun';
 }
 
 // ── Suggestions ──────────────────────────────────────────────────────────────
 var SUGGESTIONS = [
-  ['Tip calculator',  'Tip calculator with bill amount and tip % slider'],
-  ['BMI calculator',  'BMI calculator with height, weight inputs and a gauge'],
-  ['Budget tracker',  'Budget tracker with income vs expenses chart'],
-  ['Quiz app',        'Quiz app with 5 trivia questions and a score screen'],
-  ['Countdown timer', 'Countdown timer with start, pause and reset'],
-  ['Unit converter',  'Unit converter: length, weight and temperature'],
+  ['What should I prioritise?',   "What should I prioritise right now?"],
+  ['Anything I'm missing?',       "What am I missing or not seeing clearly?"],
+  ['Strongest counter-argument',  "What's the strongest argument against what I'm doing?"],
+  ['Summarise my work',           "Summarise what you know about my current work and goals"],
+  ['What should I worry about?',  "Is there anything I should be worried about?"],
+  ['Build something',             "I want to build "],
 ];
 
 function _chipsHtml() {
@@ -990,7 +1244,7 @@ function showEmpty() {
   var t = document.getElementById('thread');
   t.innerHTML = '<div class="thread-empty">'
     + '<div class="empty-logo">MISO</div>'
-    + '<div class="empty-sub">Describe an app — I\'ll build it and surface the spec</div>'
+    + '<div class="empty-sub">Strategic counsel, decisions, priorities — or describe what you want to build</div>'
     + _chipsHtml()
     + '</div>';
   clearFloat(); clearPrd();
@@ -1003,20 +1257,29 @@ function hideEmpty() {
 }
 
 // ── Sessions ─────────────────────────────────────────────────────────────────
-async function loadSessions() {
+function _saveConsSession(preview) {
   try {
-    var r = await fetch('/api/conversations');
-    var list = await r.json();
-    var el = document.getElementById('session-list');
-    if(!list.length){
+    var sessions = JSON.parse(localStorage.getItem('miso_cons_sessions') || '[]');
+    if(!sessions.find(function(s){ return s.id === _consSessionId; })) {
+      sessions.unshift({id: _consSessionId, preview: String(preview||'').slice(0,60), ts: Date.now()});
+      localStorage.setItem('miso_cons_sessions', JSON.stringify(sessions.slice(0,20)));
+    }
+  } catch(e){}
+}
+
+function loadSessions() {
+  var el = document.getElementById('session-list');
+  try {
+    var sessions = JSON.parse(localStorage.getItem('miso_cons_sessions') || '[]');
+    if(!sessions.length) {
       el.innerHTML='<div style="padding:10px 8px;font-size:.75rem;color:var(--text-dim);text-align:center">No sessions yet</div>';
       return;
     }
-    el.innerHTML = list.map(function(s){
-      var active = s.id===_sid?' active':'';
+    el.innerHTML = sessions.map(function(s){
+      var active = s.id===_consSessionId?' active':'';
       return '<div class="session-item'+active+'" data-id="'+esc(s.id)+'" onclick="loadSession(\''+esc(s.id)+'\')">'
         +'<i class="fas fa-message"></i>'
-        +'<span style="overflow:hidden;text-overflow:ellipsis">'+esc(s.title||'Untitled')+'</span>'
+        +'<span style="overflow:hidden;text-overflow:ellipsis">'+esc(s.preview||'Session')+'</span>'
         +'</div>';
     }).join('');
   } catch(e) {}
@@ -1024,14 +1287,24 @@ async function loadSessions() {
 
 async function loadSession(id) {
   if(_generating) return;
-  _sid=id; _folder=null; _prdData=null;
+  _consSessionId = id;
   document.querySelectorAll('.session-item').forEach(function(el){ el.classList.toggle('active', el.dataset.id===id); });
   var t = document.getElementById('thread');
   t.innerHTML='<div style="padding:24px;text-align:center;color:var(--text-dim);font-size:.8rem"><i class="fas fa-circle-notch fa-spin"></i></div>';
   try {
-    var r = await fetch('/api/conversations/'+id+'/turns');
+    var r = await fetch('/apps/consigliere_agent/history/'+encodeURIComponent(id));
     var turns = await r.json();
-    renderThread(turns);
+    t.innerHTML = '';
+    if(!turns.length){ showEmpty(); return; }
+    turns.forEach(function(turn){
+      if(turn.role==='user') { addUserBubble(turn.content); }
+      else {
+        var bid = addMisoBubble('', null, null, false, null);
+        var el = document.getElementById(bid);
+        if(el) el.innerHTML = _consBubbleHtml(turn.content);
+      }
+    });
+    scrollThread();
   } catch(e) {
     t.innerHTML='<div style="padding:20px;color:#f87171;font-size:.8rem">Failed to load</div>';
   }
@@ -1276,6 +1549,7 @@ function renderPrd(bp, spec, intent) {
   document.getElementById('prd-rebuild-btn').classList.add('ready');
   document.getElementById('prd-build-btn').classList.add('ready');
   document.getElementById('prd-review-btn').style.display = '';
+  document.getElementById('prd-colosseum-btn').style.display = '';
   // update button label: "Achieve Goal" for multi-artifact plans
   var label = document.getElementById('prd-build-label');
   if(label) label.textContent = artifacts.length > 1 ? 'Achieve Goal' : 'Build App';
@@ -1360,13 +1634,15 @@ function rebuildFromPrd() {
 // ── New chat ─────────────────────────────────────────────────────────────────
 function newChat() {
   if(_generating) return;
-  _sid=null; _folder=null; _prdData=null; _goalId=null;
+  _consSessionId = null; _sid=null; _folder=null; _prdData=null; _goalId=null;
   showEmpty();
   document.getElementById('prd-body').innerHTML = '<div class="prd-placeholder"><i class="fas fa-file-code"></i><span>Describe a goal and MISO will plan the artifacts needed to achieve it</span></div>';
   document.getElementById('prd-rebuild-btn').classList.remove('ready');
   document.getElementById('prd-build-btn').classList.remove('ready');
   document.getElementById('prd-review-btn').style.display = 'none';
   document.getElementById('prd-review-panel').style.display = 'none';
+  document.getElementById('prd-colosseum-btn').style.display = 'none';
+  document.getElementById('colosseum-panel').style.display = 'none';
   document.querySelectorAll('.session-item').forEach(function(el){ el.classList.remove('active'); });
   document.getElementById('prompt-input').focus();
 }
@@ -1388,61 +1664,90 @@ async function _readSse(res, onEvent) {
 }
 
 // ── Phase 1: Blueprint — describe → get spec for review ──────────────────────
+// ── Markdown → safe HTML (for Consigliere responses) ─────────────────────────
+function _mdToHtml(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`([^`\n]+)`/g,'<code style="background:var(--surface-2);padding:1px 4px;border-radius:3px;font-size:.8em;font-family:monospace">$1</code>')
+    .replace(/\n/g,'<br>');
+}
+
+function _consBubbleHtml(text) {
+  return '<div class="msg-avatar"><i class="fas fa-microchip" style="font-size:.58rem"></i></div>'
+    +'<div class="msg-bubble"><div class="msg-body">'+_mdToHtml(text)+'</div></div>';
+}
+
 async function sendMessage() {
   if(_generating) return;
   var input = document.getElementById('prompt-input');
   var text  = input.value.trim(); if(!text) return;
 
-  // If we already have an approved spec, go straight to build
-  if(_prdData && _sid) { buildFromApprovedPrd(); return; }
+  _generating = true;
+  input.value = ''; input.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
 
-  _generating=true;
-  input.value=''; input.style.height='auto';
-  document.getElementById('send-btn').disabled=true;
+  if(!_consSessionId) {
+    _consSessionId = 'cons_' + Math.random().toString(36).slice(2,10) + '_' + Date.now();
+  }
 
   addUserBubble(text);
   var bid = addMisoBubble('', null, null, true, null);
-  var cid = _sid||'new';
-  var t0  = Date.now();
-  var log = [];
 
-  var ticker = setInterval(function(){
-    updateStatus(bid,'Building spec '+elapsed(Date.now()-t0)+'…');
-  }, 1000);
+  var ctx = [];
+  if(_currentGoal && _currentGoal.intent) ctx.push('Active goal: "'+_currentGoal.intent.slice(0,150)+'" [status='+(_currentGoal.status||'active')+']');
+  if(_prdData && _prdData.bp && _prdData.bp.title) ctx.push('PRD open: "'+_prdData.bp.title+'"');
+  if(_goalId) ctx.push('Goal ID: '+_goalId);
 
   try {
-    var res = await fetch('/api/conversations/'+cid+'/blueprint',{
-      method:'POST', headers:H(), body:JSON.stringify({message:text}),
+    var r = await fetch('/apps/consigliere_agent/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: text, context: ctx.join('\n')||null, conversation_id: _consSessionId})
     });
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    await _readSse(res, function(d){
-      if(d.type==='session_id'){ _sid=d.session_id; }
-      if(d.content||d.status){ log.push(d.content||d.status); updateStatus(bid,d.content||d.status); }
-      if(d.type==='BLUEPRINT_READY'||d.type==='BLUEPRINT_COMPLETE'){
-        var bp = d.blueprint||{};
-        if(bp && bp.title) renderPrd(bp, bp.test_spec||{}, text);
-        if(d.session_id) _sid=d.session_id;
-        if(d.goal_id) _goalId=d.goal_id;
-        // Show recurrence callout if detected (LLM or PO inference)
-        if(d.goal_type==='recurring'||bp.goal_type==='recurring') {
-          _renderRecurrenceCallout(d.recurrence_label||bp.recurrence_label||(bp.recurrence&&bp.recurrence.description)||null, d.recurrence_source||'llm', d.blueprint&&d.blueprint._po_match||null);
-        }
-      }
-    });
+    var d = await r.json();
+    if(d.error) throw new Error(d.error);
+    if(d.conversation_id) _consSessionId = d.conversation_id;
+    var el = document.getElementById(bid);
+    if(el) { el.innerHTML = _consBubbleHtml(d.response || 'No response'); scrollThread(); }
+    _saveConsSession(text);
+    loadSessions();
+    loadGoals();
   } catch(e) {
-    clearInterval(ticker);
-    finalizeBubble(bid,'Error: '+e.message, 0, log, null);
+    finalizeBubble(bid, 'Error: '+e.message, 0, [], null);
     toast('Failed: '+e.message, false);
-    _generating=false;
-    document.getElementById('send-btn').disabled=false;
-    return;
+  } finally {
+    _generating = false;
+    document.getElementById('send-btn').disabled = false;
   }
+}
 
-  clearInterval(ticker);
-  finalizeBubble(bid, _prdData?'Spec ready — review and click Build App':'Spec generation failed', null, log, null);
-  _generating=false;
-  document.getElementById('send-btn').disabled=false;
-  loadSessions();
+async function _triggerBrief() {
+  if(_generating) return;
+  if(!_consSessionId) _consSessionId = 'cons_' + Math.random().toString(36).slice(2,10) + '_' + Date.now();
+  addUserBubble('Brief me');
+  var bid = addMisoBubble('', null, null, true, null);
+  _generating = true;
+  document.getElementById('send-btn').disabled = true;
+  try {
+    var ctx = [];
+    if(_currentGoal && _currentGoal.intent) ctx.push('Active goal: "'+_currentGoal.intent.slice(0,150)+'"');
+    var r = await fetch('/apps/consigliere_agent/brief', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({focus: ctx.join('\n')||null})
+    });
+    var d = await r.json();
+    var el = document.getElementById(bid);
+    if(el) { el.innerHTML = _consBubbleHtml(d.brief || d.response || 'No brief available'); scrollThread(); }
+    _saveConsSession('Brief Me');
+    loadSessions();
+  } catch(e) {
+    finalizeBubble(bid, 'Brief unavailable: '+e.message, 0, [], null);
+  } finally {
+    _generating = false;
+    document.getElementById('send-btn').disabled = false;
+  }
 }
 
 // ── Phase 2: Build — user approved spec, auto-chain all goal artifacts ───────
@@ -1704,7 +2009,7 @@ function openImportModal() {
     'Drop files here or click to browse<br><span style="font-size:.72rem;color:var(--text-dim);opacity:.7">.zip, .py, .js, .ts, .html, .go, .rs, .sql · .png, .jpg, .gif, .webp</span>';
   document.getElementById('import-submit-btn').disabled = true;
   document.getElementById('import-submit-btn').style.opacity = '.4';
-  document.getElementById('import-submit-label').innerHTML = '<i class="fas fa-magnifying-glass fa-xs"></i> Analyze &amp; Generate PRD';
+  document.getElementById('import-submit-label').innerHTML = '<i class="fas fa-magnifying-glass fa-xs"></i> Upload &amp; Analyze';
   document.getElementById('import-chat-panel').style.display = 'none';
   document.getElementById('import-chat-thread').innerHTML = '';
   var modal = document.getElementById('import-modal');
@@ -1761,6 +2066,13 @@ async function submitImport() {
     var d = await r.json();
     if(d.error || r.status >= 400) throw new Error(d.detail || d.error || 'Analysis failed');
 
+    // Fire-and-forget: analysis running in background, SSE will trigger auto-submit when done
+    if(d.status === 'processing') {
+      closeImportModal();
+      toast('Analyzing "' + esc(d.name || name || 'upload') + '" in background — MISO will notify you when ready.', true);
+      return;
+    }
+
     var a = d.analysis || {};
     var projectName = d.name || d.filename || name || 'uploaded file';
     var parts = [];
@@ -1784,28 +2096,13 @@ async function submitImport() {
     // Show summary in chat panel briefly
     var chatPanel = document.getElementById('import-chat-panel');
     chatPanel.style.display = '';
-    _appendImportMsg('miso', (a.plain_summary || a.what_it_does || a.purpose || 'Analysis complete.') + ' Generating PRD now…');
+    _appendImportMsg('miso', (a.plain_summary || a.what_it_does || a.purpose || 'Analysis complete.') + ' Describe what you want to build in chat.');
 
-    // Build goal text using generate_prompt from analysis (most specific)
-    var generatePrompt = a.generate_prompt || a.generate_spec || null;
-    var goalText = generatePrompt
-      ? 'Build "' + projectName + '": ' + generatePrompt
-      : (isImage
-          ? 'I uploaded an image called "' + projectName + '". ' + _importContext + ' Generate a PRD for building this as an app.'
-          : 'I uploaded a codebase called "' + projectName + '". ' + _importContext + ' Reverse engineer a complete PRD from this analysis.');
-
-    // Auto-submit goal after brief pause so summary is visible
-    lbl.innerHTML = '<i class="fas fa-spinner fa-spin fa-xs"></i> Generating PRD…';
-    btn.disabled = true;
-    setTimeout(function() {
-      closeImportModal();
-      switchNavTab('sessions');
-      setPrompt(goalText);
-      sendMessage();
-    }, 1800);
+    lbl.innerHTML = '<i class="fas fa-check fa-xs"></i> Analysis ready';
+    setTimeout(function() { closeImportModal(); }, 1500);
 
   } catch(e) {
-    lbl.innerHTML = '<i class="fas fa-magnifying-glass fa-xs"></i> Analyze &amp; Generate PRD';
+    lbl.innerHTML = '<i class="fas fa-magnifying-glass fa-xs"></i> Upload &amp; Analyze';
     btn.disabled = false;
     btn.style.opacity = '1';
     toast('Import failed: ' + String(e.message || e), false);
@@ -1936,6 +2233,44 @@ loadGoals();
 })();
 
 document.getElementById('prompt-input').focus();
+
+// ── Consigliere SSE — push alerts into main chat thread ──────────────────────
+(function() {
+  if(typeof EventSource === 'undefined') return;
+  var _retry = null;
+  function connect() {
+    var es = new EventSource('/apps/consigliere_agent/stream');
+    es.onmessage = function(e) {
+      var msg; try { msg = JSON.parse(e.data); } catch { return; }
+      if(!msg || msg.type === 'ping' || msg.type === 'connected') return;
+
+      if(msg.type === 'ingest_complete') {
+        var lbl = (msg.label || 'upload').replace(/^Analysis complete: /,'').replace(/^"|"$/g,'');
+        var fc  = msg.file_count ? ' ('+msg.file_count+' files)' : '';
+        var sum = msg.body || '';
+        // Show as a system bubble in the current thread
+        var bid = addMisoBubble('', null, null, false, null);
+        var el = document.getElementById(bid);
+        if(el) {
+          el.innerHTML = '<div class="msg-avatar"><i class="fas fa-microchip" style="font-size:.58rem"></i></div>'
+            +'<div class="msg-bubble"><div class="msg-result" style="white-space:normal;line-height:1.65">'
+            +'<strong style="color:#4ade80">Analysis ready: '+esc(lbl)+esc(fc)+'</strong><br>'
+            +esc(sum)+'<br><span style="font-size:.8em;color:var(--text-dim)">Describe what you want to build below.</span>'
+            +'</div></div>';
+          scrollThread();
+        }
+        switchNavTab('sessions');
+        return;
+      }
+
+      if(msg.title || msg.body) {
+        toast((msg.title ? msg.title+': ' : '')+(msg.body||'').slice(0,120), true);
+      }
+    };
+    es.onerror = function() { es.close(); clearTimeout(_retry); _retry = setTimeout(connect, 15000); };
+  }
+  connect();
+})();
 </script>
 </body>
 </html>
