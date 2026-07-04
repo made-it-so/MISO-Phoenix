@@ -24,6 +24,22 @@
   --nav-w:    220px;
   --chat-w:   400px;
 }
+body.light {
+  --bg:       #f8f8f9;
+  --surface:  #ffffff;
+  --s2:       #f1f1f3;
+  --s3:       #e2e2e6;
+  --border:   rgba(0,0,0,.08);
+  --text:     #18181b;
+  --muted:    #71717a;
+  --dim:      #a1a1aa;
+  --green:    #16a34a;
+  --red:      #dc2626;
+  --amber:    #d97706;
+  --blue:     #2563eb;
+}
+body.light #topbar .logo { color: #18181b; }
+body.light .cm-user { background: #ede9fe; color: #4c1d95; }
 body {
   background: var(--bg); color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -291,15 +307,20 @@ tr:hover td { background: rgba(255,255,255,.02); }
 
 <!-- Top bar -->
 <div id="topbar">
-  <span class="logo">MISO<span> Admin</span></span>
+  <a href="/" style="text-decoration:none"><span class="logo">MISO<span> Admin</span></span></a>
   <span class="sep">/</span>
-  <span class="subtitle">System Control</span>
+  <div style="display:flex;gap:4px">
+    <a href="/" class="refresh-btn" style="text-decoration:none">Home</a>
+    <a href="/dashboard" class="refresh-btn" style="text-decoration:none">Forge</a>
+    <a href="/consigliere" class="refresh-btn" style="text-decoration:none">Consigliere</a>
+  </div>
   <div class="spacer"></div>
   <div class="status-pill">
     <div class="status-dot" id="health-dot"></div>
     <span id="health-label">checking…</span>
   </div>
   <span id="last-updated" style="margin-left:8px"></span>
+  <button class="refresh-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark">☀</button>
   <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
 </div>
 
@@ -684,9 +705,22 @@ async function loadProviders() {
     if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:20px">No provider data</td></tr>'; return; }
 
     tbody.innerHTML = data.map(p => {
+      // none/none = budget gate hits (not a real provider)
+      if (p.provider === 'none' && p.model === 'none') {
+        return `<tr>
+          <td><span class="badge gray">budget gate</span></td>
+          <td style="color:var(--dim);font-size:.75rem">—</td>
+          <td>${p.calls}</td>
+          <td><div class="fail-bar"><div class="fail-track"><div class="fail-fill" style="width:100%;background:var(--dim)"></div></div><span style="color:var(--dim)">100%</span></div></td>
+          <td>${p.avg_latency_ms.toFixed(0)}ms</td>
+          <td>Free</td>
+          <td><span class="badge gray" title="Daily spend cap reached — not a provider failure">Cap hit</span></td>
+        </tr>`;
+      }
       const fr = p.fail_rate;
-      const cls = fr > .4 ? 'red' : fr > .2 ? 'amber' : 'green';
-      const health = fr > .4 ? 'Critical' : fr > .2 ? 'Degraded' : 'Healthy';
+      // Critical >50%, Warning 20-50%, Healthy <20%
+      const cls = fr > .5 ? 'red' : fr > .2 ? 'amber' : 'green';
+      const health = fr > .5 ? 'Critical' : fr > .2 ? 'Warning' : 'Healthy';
       const latMs = p.avg_latency_ms;
       const lat = latMs > 30000 ? (latMs/1000).toFixed(0)+'s' : latMs > 1000 ? (latMs/1000).toFixed(1)+'s' : latMs.toFixed(0)+'ms';
       const cost = p.avg_cost_usd > 0 ? '$'+p.avg_cost_usd.toFixed(5) : 'Free';
@@ -890,7 +924,21 @@ function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const light = document.body.classList.toggle('light');
+  document.getElementById('theme-btn').textContent = light ? '🌙' : '☀';
+  localStorage.setItem('miso_theme', light ? 'light' : 'dark');
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
+if (localStorage.getItem('miso_theme') === 'light') {
+  document.body.classList.add('light');
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = '🌙';
+  });
+}
 refreshAll();
 setInterval(refreshAll, 30000);
 </script>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MISO</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #09090b; --surface: #18181b; --s2: #27272a; --border: rgba(255,255,255,.07);
+  --text: #e4e4e7; --muted: #71717a; --dim: #52525b;
+  --accent: #7c3aed; --accent2: #a855f7;
+  --green: #4ade80; --blue: #60a5fa; --amber: #fbbf24;
+}
+body.light {
+  --bg: #f4f4f5; --surface: #ffffff; --s2: #f0f0f2; --border: rgba(0,0,0,.08);
+  --text: #18181b; --muted: #71717a; --dim: #a1a1aa;
+}
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+header {
+  padding: 18px 32px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.logo { font-size: 1.1rem; font-weight: 800; letter-spacing: -.04em; color: var(--text); }
+.logo span { color: var(--accent2); }
+header .spacer { flex: 1; }
+.theme-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 8px; padding: 5px 10px; font-size: .75rem; cursor: pointer;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent2); }
+.status-row { display: flex; align-items: center; gap: 6px; font-size: .72rem; color: var(--muted); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+.dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+main {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 48px 24px;
+}
+.hero { text-align: center; margin-bottom: 48px; }
+.hero h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -.04em; color: var(--text); }
+.hero h1 span { color: var(--accent2); }
+.hero p { margin-top: 10px; color: var(--muted); font-size: .9rem; max-width: 440px; line-height: 1.6; }
+
+.grid { display: grid; grid-template-columns: repeat(2, 300px); gap: 16px; }
+@media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 22px 22px 20px; cursor: pointer; text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; gap: 10px; transition: border-color .15s, transform .1s;
+}
+.card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+.card-icon { font-size: 1.6rem; }
+.card-title { font-size: .95rem; font-weight: 700; color: var(--text); }
+.card-desc { font-size: .78rem; color: var(--muted); line-height: 1.55; }
+.card-badge {
+  align-self: flex-start; font-size: .62rem; font-weight: 700; letter-spacing: .06em;
+  padding: 2px 8px; border-radius: 10px; text-transform: uppercase;
+}
+.badge-purple { background: rgba(168,85,247,.12); color: var(--accent2); }
+.badge-blue   { background: rgba(96,165,250,.12);  color: var(--blue); }
+.badge-green  { background: rgba(74,222,128,.12);  color: var(--green); }
+.badge-amber  { background: rgba(251,191,36,.12);  color: var(--amber); }
+
+footer {
+  padding: 16px 32px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px;
+  font-size: .7rem; color: var(--dim);
+}
+.footer-links { display: flex; gap: 12px; }
+.footer-links a { color: var(--muted); text-decoration: none; }
+.footer-links a:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">MISO<span> ◈</span></span>
+  <div class="status-row">
+    <div class="dot" id="hdot"></div>
+    <span id="hlabel">connecting…</span>
+  </div>
+  <div class="spacer"></div>
+  <button class="theme-btn" id="tbtn" onclick="toggleTheme()">☀ Light</button>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>MISO <span>Command</span></h1>
+    <p>Multi-agent intelligence system — strategic counsel, autonomous execution, and real-time decision support.</p>
+  </div>
+
+  <div class="grid">
+    <a class="card" href="/dashboard">
+      <div class="card-icon">⬡</div>
+      <div class="card-title">Forge</div>
+      <div class="card-desc">PRD pipeline, goal management, agent workspace, code generation, and file uploads.</div>
+      <span class="card-badge badge-purple">Main workspace</span>
+    </a>
+
+    <a class="card" href="/admin">
+      <div class="card-icon">⚙</div>
+      <div class="card-title">Admin</div>
+      <div class="card-desc">System health, provider failure rates, flywheel status, costs, and Consigliere chat.</div>
+      <span class="card-badge badge-blue">System ops</span>
+    </a>
+
+    <a class="card" href="/consigliere">
+      <div class="card-icon">◉</div>
+      <div class="card-title">Consigliere</div>
+      <div class="card-desc">Standalone strategic counsel. Pop out alongside Meet, email, or any live session.</div>
+      <span class="card-badge badge-green">Live support</span>
+    </a>
+
+    <a class="card" href="/prd">
+      <div class="card-icon">◎</div>
+      <div class="card-title">PRD Studio</div>
+      <div class="card-desc">Review and refine product requirements. Audit specs, view bounty board, manage roadmap.</div>
+      <span class="card-badge badge-amber">Product</span>
+    </a>
+  </div>
+</main>
+
+<footer>
+  <span id="spend-label"></span>
+  <div class="footer-links">
+    <a href="/dashboard">Forge</a>
+    <a href="/admin">Admin</a>
+    <a href="/consigliere">Consigliere</a>
+    <a href="/prd">PRD</a>
+  </div>
+</footer>
+
+<script>
+const HOST = 'https://miso.stemcultivation.com';
+
+async function ping() {
+  try {
+    const r = await fetch(HOST + '/health');
+    const d = await r.json();
+    const ok = d.status === 'healthy';
+    document.getElementById('hdot').className = 'dot ' + (ok ? 'green' : '');
+    document.getElementById('hlabel').textContent = ok ? 'Healthy' : 'Degraded';
+  } catch { document.getElementById('hlabel').textContent = 'Unreachable'; }
+}
+
+async function loadSpend() {
+  try {
+    const d = await fetch(HOST + '/apps/cost_monitor_api/llm/summary').then(r => r.json());
+    document.getElementById('spend-label').textContent =
+      `Today: $${d.spent_usd.toFixed(2)} / $${d.cap_usd} cap`;
+  } catch {}
+}
+
+function toggleTheme() {
+  const light = document.body.classList.toggle('light');
+  const btn = document.getElementById('tbtn');
+  btn.textContent = light ? '🌙 Dark' : '☀ Light';
+  localStorage.setItem('miso_theme', light ? 'light' : 'dark');
+}
+
+if (localStorage.getItem('miso_theme') === 'light') {
+  document.body.classList.add('light');
+  document.getElementById('tbtn').textContent = '🌙 Dark';
+}
+
+ping();
+loadSpend();
+</script>
+</body>
+</html>
