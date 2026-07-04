@@ -1782,7 +1782,7 @@ async function sendMessage() {
   if(_goalId) ctx.push('Goal ID: '+_goalId);
 
   var _abortCtrl = new AbortController();
-  var _abortTimer = setTimeout(function(){ _abortCtrl.abort(); }, 45000);
+  var _abortTimer = setTimeout(function(){ _abortCtrl.abort(); }, 90000);
   try {
     var r = await fetch('/apps/consigliere_agent/chat', {
       method: 'POST',
@@ -1804,7 +1804,7 @@ async function sendMessage() {
     loadGoals();
   } catch(e) {
     clearTimeout(_abortTimer);
-    var msg = e.name === 'AbortError' ? 'No response in 45s — MISO is busy, try again' : 'Error: ' + e.message;
+    var msg = e.name === 'AbortError' ? 'No response in 90s — MISO is busy, try again' : 'Error: ' + e.message;
     finalizeBubble(bid, msg, 0, [], null);
     toast(msg, false);
   } finally {

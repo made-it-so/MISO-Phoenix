@@ -1,0 +1,173 @@
+#miso-toggle {
+  position: fixed;
+  top: 72px;
+  right: 16px;
+  z-index: 9999;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1a1a2e;
+  border: 2px solid #4a9eff;
+  color: #4a9eff;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(74,158,255,.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .15s;
+}
+#miso-toggle:hover { transform: scale(1.1); }
+
+#miso-panel {
+  position: fixed;
+  top: 130px;
+  right: 16px;
+  width: 340px;
+  height: calc(100vh - 140px);
+  z-index: 9998;
+  background: #0d0d1a;
+  border: 1px solid #2a2a4a;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 32px rgba(0,0,0,.6);
+  font-family: -apple-system, sans-serif;
+  overflow: hidden;
+}
+#miso-panel.hidden { display: none; }
+
+#miso-header {
+  padding: 10px 14px;
+  background: #1a1a2e;
+  border-bottom: 1px solid #2a2a4a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4a9eff;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+#miso-header > span:first-child { flex: 1; }
+#miso-meeting-label {
+  font-size: 10px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+#miso-listen-btn {
+  background: none;
+  border: 1px solid #2a2a5a;
+  border-radius: 6px;
+  color: #4a9eff;
+  font-size: 10px;
+  padding: 2px 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#miso-listen-btn:hover { border-color: #4a9eff; }
+#miso-close {
+  cursor: pointer;
+  color: #666;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+#miso-close:hover { color: #ccc; }
+
+#miso-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#miso-messages::-webkit-scrollbar { width: 4px; }
+#miso-messages::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+.miso-msg {
+  max-width: 90%;
+  padding: 8px 11px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.miso-msg.user {
+  align-self: flex-end;
+  background: #1e3a5f;
+  color: #d0e8ff;
+}
+.miso-msg.assistant {
+  align-self: flex-start;
+  background: #1a1a2e;
+  color: #e0e0f0;
+  border: 1px solid #2a2a4a;
+}
+.miso-msg.system {
+  align-self: center;
+  background: transparent;
+  color: #555;
+  font-size: 11px;
+  font-style: italic;
+}
+.miso-thinking {
+  align-self: flex-start;
+  color: #4a9eff;
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+#miso-input-row {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid #2a2a4a;
+  flex-shrink: 0;
+}
+#miso-input {
+  flex: 1;
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  color: #e0e0f0;
+  font-size: 12.5px;
+  padding: 7px 10px;
+  resize: none;
+  outline: none;
+  height: 36px;
+  max-height: 100px;
+  overflow-y: auto;
+  font-family: inherit;
+}
+#miso-input:focus { border-color: #4a9eff; }
+#miso-send {
+  background: #4a9eff;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+#miso-send:hover { background: #6ab4ff; }
+#miso-send:disabled { background: #333; cursor: default; }
+
+#miso-jarvis-banner {
+  background: #0a1628;
+  border-bottom: 1px solid #1a3a5a;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: #4a9eff;
+  display: none;
+}
+#miso-jarvis-banner.active { display: block; }

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MISO Monitor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #09090b;
+    --surface: #18181b;
+    --s2:      #27272a;
+    --border:  rgba(255,255,255,.08);
+    --text:    #e4e4e7;
+    --muted:   #71717a;
+    --dim:     #52525b;
+    --accent:  #7c3aed;
+    --up:      #4ade80;
+    --down:    #f87171;
+    --amber:   #fbbf24;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px; height: 100vh; display: flex; flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .hdr {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .hdr-logo { font-size: .85rem; font-weight: 800; color: #fff; letter-spacing: -.02em; }
+  .hdr-sep  { color: var(--dim); font-size: .7rem; }
+  .hdr-app  { font-size: .72rem; color: var(--muted); flex: 1; }
+  .hdr-btn  {
+    background: none; border: none; color: var(--dim); cursor: pointer;
+    padding: 4px 6px; border-radius: 5px; font-size: .7rem; transition: color .1s;
+  }
+  .hdr-btn:hover { color: var(--text); }
+
+  /* ── Context pill ── */
+  .ctx-bar {
+    padding: 8px 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    background: var(--surface);
+  }
+  .ctx-badge {
+    font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 10px; background: var(--s2); color: var(--muted);
+  }
+  .ctx-badge.gmail    { background: rgba(234,88,12,.15);  color: #fb923c; }
+  .ctx-badge.calendar { background: rgba(59,130,246,.12); color: #60a5fa; }
+  .ctx-badge.docs     { background: rgba(74,222,128,.1);  color: #4ade80; }
+  .ctx-badge.sheets   { background: rgba(74,222,128,.1);  color: #4ade80; }
+  .ctx-badge.meet     { background: rgba(248,113,113,.1); color: #f87171; }
+  .ctx-badge.drive    { background: rgba(251,191,36,.1);  color: var(--amber); }
+  .ctx-detail { font-size: .72rem; color: var(--muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .analyze-btn {
+    background: var(--accent); border: none; color: #fff; border-radius: 8px;
+    padding: 5px 12px; font-size: .72rem; font-weight: 600; cursor: pointer;
+    white-space: nowrap; transition: opacity .15s;
+  }
+  .analyze-btn:disabled { opacity: .5; cursor: default; }
+  .analyze-btn.loading  { opacity: .7; }
+
+  /* ── Stakes selector ── */
+  .stakes-bar {
+    display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .stakes-label { font-size: .65rem; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+  .stakes-pills { display: flex; gap: 4px; flex: 1; }
+  .stake-pill {
+    padding: 3px 10px; border-radius: 20px; font-size: .68rem; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); color: var(--muted);
+    background: none; transition: all .1s;
+  }
+  .stake-pill.active.low    { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,.08); }
+  .stake-pill.active.medium { border-color: var(--amber); color: var(--amber); background: rgba(251,191,36,.08); }
+  .stake-pill.active.high   { border-color: #f87171; color: #f87171; background: rgba(248,113,113,.08); }
+  .auto-toggle { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+  .auto-toggle label { font-size: .65rem; color: var(--dim); cursor: pointer; }
+  input[type=checkbox] { cursor: pointer; accent-color: var(--accent); }
+
+  /* ── Messages ── */
+  #msgs {
+    flex: 1; overflow-y: auto; padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .msg-user {
+    align-self: flex-end; background: #4c1d95; color: #e9d5ff;
+    border-radius: 12px 12px 2px 12px; padding: 8px 12px;
+    max-width: 88%; font-size: .8rem; line-height: 1.55; word-break: break-word;
+  }
+  .msg-bot {
+    align-self: flex-start; background: var(--surface); color: var(--text);
+    border-radius: 12px 12px 12px 2px; padding: 10px 12px;
+    max-width: 95%; font-size: .8rem; line-height: 1.6; word-break: break-word;
+    border: 1px solid var(--border);
+  }
+  .msg-bot.analysis {
+    border-color: rgba(124,58,237,.3); border-left: 3px solid var(--accent);
+  }
+  .msg-meta { font-size: .65rem; color: var(--dim); margin-top: 4px; }
+  .msg-thinking {
+    display: flex; gap: 4px; align-items: center; padding: 6px 0;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim);
+    animation: pulse 1.2s ease-in-out infinite; }
+  .dot:nth-child(2) { animation-delay: .2s; }
+  .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+  /* ── Input ── */
+  .input-row {
+    display: flex; gap: 8px; padding: 10px 14px;
+    border-top: 1px solid var(--border); flex-shrink: 0; background: var(--bg);
+  }
+  #input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: inherit;
+    font-size: .8rem; padding: 8px 12px; resize: none; outline: none;
+    transition: border-color .15s; line-height: 1.4;
+  }
+  #input:focus { border-color: var(--accent); }
+  .send-btn {
+    background: var(--accent); border: none; color: #fff; border-radius: 10px;
+    width: 36px; flex-shrink: 0; cursor: pointer; font-size: .85rem;
+    transition: opacity .15s;
+  }
+  .send-btn:disabled { opacity: .4; }
+
+  /* ── Settings overlay ── */
+  #settings-panel {
+    display: none; position: absolute; inset: 0; background: var(--bg);
+    z-index: 10; flex-direction: column; padding: 20px;
+  }
+  #settings-panel.open { display: flex; }
+  .settings-title { font-size: .9rem; font-weight: 700; margin-bottom: 20px; }
+  .settings-field { margin-bottom: 16px; }
+  .settings-field label { display: block; font-size: .72rem; color: var(--muted); margin-bottom: 5px; }
+  .settings-field input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: .8rem; outline: none;
+  }
+  .settings-field input:focus { border-color: var(--accent); }
+  .settings-save {
+    background: var(--accent); border: none; color: #fff; border-radius: 8px;
+    padding: 8px 20px; font-size: .8rem; font-weight: 600; cursor: pointer;
+  }
+  .settings-close {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 8px; padding: 8px 16px; font-size: .8rem; cursor: pointer; margin-left: 8px;
+  }
+
+  .meet-status { font-size: .68rem; color: var(--muted); flex: 1; }
+  .transcript-line {
+    align-self: flex-start; font-size: .75rem; color: var(--muted);
+    padding: 3px 10px; border-left: 2px solid rgba(248,113,113,.4);
+    line-height: 1.5; word-break: break-word; max-width: 95%;
+  }
+
+  /* ── Empty state ── */
+  .empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; gap: 10px; color: var(--dim); text-align: center;
+  }
+  .empty-icon { font-size: 2rem; opacity: .3; }
+  .empty-text { font-size: .8rem; max-width: 200px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div id="settings-panel">
+  <div class="settings-title">⚙ MISO Settings</div>
+  <div class="settings-field">
+    <label>MISO API Host</label>
+    <input id="host-input" placeholder="https://miso.stemcultivation.com">
+  </div>
+  <div class="settings-field">
+    <label>API Key <span style="color:var(--dim);font-weight:400">(leave blank if MISO_API_KEY is not set)</span></label>
+    <input id="key-input" type="password" placeholder="••••••••">
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button class="settings-save" onclick="saveSettings()">Save</button>
+    <button class="settings-close" onclick="closeSettings()">Cancel</button>
+  </div>
+</div>
+
+<div class="hdr">
+  <span class="hdr-logo">MISO</span>
+  <span class="hdr-sep">/</span>
+  <span class="hdr-app" id="hdr-app">G Suite Monitor</span>
+  <button class="hdr-btn" title="Clear messages" onclick="clearMsgs()">⌫</button>
+  <button class="hdr-btn" title="Settings" onclick="openSettings()">⚙</button>
+</div>
+
+<div class="ctx-bar">
+  <span class="ctx-badge" id="ctx-badge">—</span>
+  <span class="ctx-detail" id="ctx-detail">No context yet — open a G Suite app</span>
+  <button class="analyze-btn" id="analyze-btn" onclick="analyzeNow()">⚡ Analyze</button>
+</div>
+
+<div class="stakes-bar">
+  <span class="stakes-label">Stakes</span>
+  <div class="stakes-pills">
+    <button class="stake-pill low"    onclick="setStakes('low')">Low</button>
+    <button class="stake-pill medium" onclick="setStakes('medium')">Medium</button>
+    <button class="stake-pill high active" onclick="setStakes('high')">High ⚔</button>
+  </div>
+  <div class="auto-toggle">
+    <input type="checkbox" id="auto-chk" checked>
+    <label for="auto-chk">Auto-analyze</label>
+  </div>
+</div>
+
+<div id="msgs">
+  <div class="empty">
+    <div class="empty-icon">🧠</div>
+    <div class="empty-text">Navigate to Gmail, Calendar, Docs, Sheets, or Meet — MISO will watch and critique in real time.</div>
+  </div>
+</div>
+
+<div class="input-row">
+  <textarea id="input" rows="2" placeholder="Ask anything about what you're working on…"
+    onkeydown="handleKey(event)"></textarea>
+  <button class="send-btn" id="send-btn" onclick="sendChat()">↑</button>
+</div>
+
+<script>
+'use strict';
+
+let _stakes = 'high';
+let _ctx = null;
+let _thinking = false;
+const $msgs = document.getElementById('msgs');
+
+// ── Stakes ────────────────────────────────────────────────────────────────────
+function setStakes(s) {
+  _stakes = s;
+  document.querySelectorAll('.stake-pill').forEach(el => {
+    el.classList.toggle('active', el.classList.contains(s));
+  });
+}
+
+// ── Context display ───────────────────────────────────────────────────────────
+function updateCtxBar(ctx) {
+  if (!ctx) return;
+  _ctx = ctx;
+  const badge  = document.getElementById('ctx-badge');
+  const detail = document.getElementById('ctx-detail');
+  const hdrApp = document.getElementById('hdr-app');
+
+  badge.className = 'ctx-badge ' + (ctx.app || '');
+  badge.textContent = (ctx.app || '?').toUpperCase();
+
+  let detail_text = '';
+  switch (ctx.app) {
+    case 'gmail':
+      detail_text = ctx.mode === 'compose'
+        ? `Composing: "${ctx.subject || '(no subject)'}" — ${ctx.wordCount || 0}w`
+        : ctx.mode === 'read'
+        ? `Reading: "${ctx.subject || '?'}" from ${ctx.from || '?'}`
+        : 'Inbox';
+      break;
+    case 'calendar':
+      detail_text = `${ctx.events?.length || 0} events visible — ${ctx.date || ''}`;
+      break;
+    case 'docs':
+      detail_text = ctx.selection
+        ? `${ctx.selection.split(' ').length} words selected`
+        : ctx.title || 'Document';
+      break;
+    case 'meet':
+      const dur = ctx.duration ? Math.round(ctx.duration/60)+'m' : '';
+      detail_text = `${ctx.title || 'Meeting'} ${dur} · ${ctx.participantCount||'?'} people`;
+      break;
+    default:
+      detail_text = ctx.title || ctx.app || '';
+  }
+  detail.textContent = detail_text;
+  hdrApp.textContent = APP_LABELS[ctx.app] || 'G Suite';
+
+  // Show/hide Meet recording bar
+  if (typeof updateCtxBarMeet === 'function') updateCtxBarMeet(ctx.app);
+
+  // Auto-analyze on significant context changes
+  if (document.getElementById('auto-chk').checked && !_thinking) {
+    const shouldAutoAnalyze =
+      (ctx.app === 'gmail' && ctx.mode === 'compose' && (ctx.wordCount || 0) > 30) ||
+      (ctx.app === 'calendar');
+    if (shouldAutoAnalyze) {
+      clearTimeout(window._autoTimer);
+      window._autoTimer = setTimeout(analyzeNow, 4000);
+    }
+  }
+}
+
+const APP_LABELS = {
+  gmail: 'Gmail', calendar: 'Calendar', docs: 'Docs',
+  sheets: 'Sheets', slides: 'Slides', meet: 'Meet', drive: 'Drive',
+};
+
+// ── Analyze ───────────────────────────────────────────────────────────────────
+function analyzeNow() {
+  if (_thinking) return;
+  const btn = document.getElementById('analyze-btn');
+
+  // Get freshest context from active tab
+  chrome.runtime.sendMessage({ type: 'GET_CTX' }, (ctx) => {
+    const finalCtx = ctx || _ctx;
+    if (!finalCtx) {
+      appendBot('No context available. Navigate to a G Suite app first.', false);
+      return;
+    }
+    _ctx = finalCtx;
+    updateCtxBar(finalCtx);
+
+    // Show what we're analyzing
+    const label = finalCtx.app === 'gmail' && finalCtx.mode === 'compose'
+      ? `Analyzing draft: "${finalCtx.subject || '(no subject)'}" (${finalCtx.wordCount || 0} words)`
+      : `Analyzing ${(APP_LABELS[finalCtx.app] || finalCtx.app)} context…`;
+    appendUser(label);
+    appendThinking();
+    btn.disabled = true;
+    btn.textContent = '⏳';
+
+    chrome.runtime.sendMessage({ type: 'ANALYZE', ctx: finalCtx, mode: _stakes }, (res) => {
+      removeThinking();
+      btn.disabled = false;
+      btn.textContent = '⚡ Analyze';
+      if (res?.ok) {
+        appendBot(res.content, true);
+      } else {
+        appendBot('Analysis failed: ' + (res?.content || 'unknown error'), false);
+      }
+    });
+  });
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+function sendChat() {
+  const inp = document.getElementById('input');
+  const msg = inp.value.trim();
+  if (!msg || _thinking) return;
+  inp.value = '';
+  inp.style.height = '';
+
+  // Inject current context as preamble if asking about what's on screen
+  let content = msg;
+  if (_ctx && /\b(this|here|current|what i|what's|open)\b/i.test(msg)) {
+    content = `[Context: ${_ctx.app?.toUpperCase()} — ${JSON.stringify({
+      mode: _ctx.mode, subject: _ctx.subject, title: _ctx.title,
+    })}]\n\n${msg}`;
+  }
+
+  appendUser(msg);
+  appendThinking();
+  document.getElementById('send-btn').disabled = true;
+
+  chrome.runtime.sendMessage({ type: 'CHAT', content, stakes: _stakes }, (res) => {
+    removeThinking();
+    document.getElementById('send-btn').disabled = false;
+    if (res?.ok) {
+      appendBot(res.content, false);
+    } else {
+      appendBot('MISO unreachable — is it running at localhost:8000?', false);
+    }
+  });
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChat();
+  }
+  // Auto-resize
+  const ta = e.target;
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+}
+
+// ── DOM helpers ───────────────────────────────────────────────────────────────
+function clearEmpty() {
+  const empty = $msgs.querySelector('.empty');
+  if (empty) empty.remove();
+}
+
+function appendUser(text) {
+  clearEmpty();
+  _thinking = true;
+  const d = document.createElement('div');
+  d.className = 'msg-user';
+  d.textContent = text;
+  $msgs.appendChild(d);
+  $msgs.scrollTop = $msgs.scrollHeight;
+}
+
+function appendBot(text, isAnalysis) {
+  _thinking = false;
+  const d = document.createElement('div');
+  d.className = 'msg-bot' + (isAnalysis ? ' analysis' : '');
+  // Basic markdown: **bold**, `code`
+  d.innerHTML = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`([^`]+)`/g,'<code style="background:var(--s2);padding:1px 4px;border-radius:3px;font-size:.75rem">$1</code>')
+    .replace(/\n/g,'<br>');
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  meta.textContent = new Date().toLocaleTimeString();
+  d.appendChild(meta);
+  $msgs.appendChild(d);
+  $msgs.scrollTop = $msgs.scrollHeight;
+}
+
+function appendThinking() {
+  const d = document.createElement('div');
+  d.className = 'msg-thinking';
+  d.id = '__thinking__';
+  d.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  $msgs.appendChild(d);
+  $msgs.scrollTop = $msgs.scrollHeight;
+}
+
+function removeThinking() {
+  document.getElementById('__thinking__')?.remove();
+}
+
+function clearMsgs() {
+  $msgs.innerHTML = '<div class="empty"><div class="empty-icon">🧠</div><div class="empty-text">Analysis cleared. Navigate to a G Suite app to start.</div></div>';
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function openSettings() {
+  chrome.storage.local.get(['misoHost', 'misoApiKey'], (s) => {
+    document.getElementById('host-input').value = s.misoHost || 'https://miso.stemcultivation.com';
+    document.getElementById('key-input').value  = s.misoApiKey || '';
+    document.getElementById('settings-panel').classList.add('open');
+  });
+}
+function closeSettings() {
+  document.getElementById('settings-panel').classList.remove('open');
+}
+function saveSettings() {
+  const h = document.getElementById('host-input').value.trim().replace(/\/$/, '');
+  const k = document.getElementById('key-input').value.trim();
+  chrome.runtime.sendMessage({ type: 'SET_HOST', host: h, apiKey: k }, () => {
+    closeSettings();
+  });
+}
+
+// ── Meet recording ────────────────────────────────────────────────────────────
+
+let _recorder     = null;
+function updateCtxBarMeet(app) { /* no-op — Meet audio capture removed */ }
+
+// ── Listen for pushed context from background ─────────────────────────────────
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === 'CTX_PUSHED') {
+    updateCtxBar(msg.ctx);
+    updateCtxBarMeet(msg.ctx?.app);
+  }
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+chrome.runtime.sendMessage({ type: 'GET_CTX' }, (ctx) => {
+  if (ctx) {
+    updateCtxBar(ctx);
+    updateCtxBarMeet(ctx.app);
+  }
+});
+</script>
+</body>
+</html>
