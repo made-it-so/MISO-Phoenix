@@ -380,20 +380,24 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
         <button onclick="setPrompt(&quot;What's the strongest argument against what I'm doing?&quot;)" class="empty-chip" style="font-size:.72rem">Devil's advocate</button>
         <button onclick="setPrompt('Summarise what you know about my current work and goals')" class="empty-chip" style="font-size:.72rem">Summarise</button>
       </div>
+      <!-- Attachment chip — shown when a file is attached and being/been analyzed -->
+      <div id="attach-chip" style="display:none;align-items:center;gap:6px;margin-bottom:6px;padding:5px 10px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:9px;font-size:.75rem;color:var(--text-muted)">
+        <i id="attach-chip-icon" class="fas fa-paperclip" style="font-size:.65rem;color:var(--accent)"></i>
+        <span id="attach-chip-name" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <button onclick="_clearAttachment()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;padding:0;font-size:.7rem;flex-shrink:0">✕</button>
+      </div>
       <div id="prompt-wrap">
-        <button id="import-code-btn" onclick="openImportModal()" title="Import code or image to reverse-engineer a PRD"
+        <!-- Single attach button — handles both images and code/zip files -->
+        <button id="attach-btn" onclick="document.getElementById('chat-file-input').click()" title="Attach image or code file"
           style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border-2);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:color .15s,border-color .15s"
           onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--accent-border)'"
           onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border-2)'">
-          <i class="fas fa-file-code" style="font-size:.68rem"></i>
+          <i class="fas fa-paperclip" style="font-size:.68rem"></i>
         </button>
-        <button onclick="openImageGenModal()" title="Generate image or art"
-          style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border-2);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:color .15s,border-color .15s"
-          onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--accent-border)'"
-          onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border-2)'">
-          <i class="fas fa-image" style="font-size:.68rem"></i>
-        </button>
-        <textarea id="prompt-input" rows="1" placeholder="Ask MISO — strategy, decisions, goals, or describe what you want to build…"
+        <input id="chat-file-input" type="file" multiple style="display:none"
+          accept=".zip,.py,.js,.ts,.jsx,.tsx,.html,.css,.json,.yaml,.yml,.md,.txt,.sql,.sh,.go,.rs,.toml,.png,.jpg,.jpeg,.gif,.webp"
+          onchange="handleChatAttach(this.files)">
+        <textarea id="prompt-input" rows="1" placeholder="Ask MISO — or attach a file and describe what you want to build…"
           oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
         <button id="send-btn" onclick="sendMessage()">
           <i class="fas fa-arrow-up" style="font-size:.74rem"></i>
@@ -611,6 +615,7 @@ var _prdData    = null;
 var _goalId     = null;   // goal record created at blueprint phase
 var _stopGoalExecution = false;
 var _drag       = { on: false, ox: 0, oy: 0, ex: 0, ey: 0 };
+var _attachment = null;   // { name, context } — set after successful inline upload
 
 // ── Utils ────────────────────────────────────────────────────────────────────
 function esc(s){ var d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; }
@@ -1225,8 +1230,8 @@ if(localStorage.getItem('miso_theme')==='light'){
 // ── Suggestions ──────────────────────────────────────────────────────────────
 var SUGGESTIONS = [
   ['What should I prioritise?',   "What should I prioritise right now?"],
-  ['Anything I'm missing?',       "What am I missing or not seeing clearly?"],
-  ['Strongest counter-argument',  "What's the strongest argument against what I'm doing?"],
+  ["Anything I'm missing?",       "What am I missing or not seeing clearly?"],
+  ["Strongest counter-argument",  "What's the strongest argument against what I'm doing?"],
   ['Summarise my work',           "Summarise what you know about my current work and goals"],
   ['What should I worry about?',  "Is there anything I should be worried about?"],
   ['Build something',             "I want to build "],
@@ -1674,6 +1679,81 @@ function _mdToHtml(s) {
     .replace(/\n/g,'<br>');
 }
 
+// ── Inline file attachment ────────────────────────────────────────────────────
+var _IMAGE_EXTS_CHAT = ['png','jpg','jpeg','gif','webp'];
+
+function _clearAttachment() {
+  _attachment = null;
+  document.getElementById('attach-chip').style.display = 'none';
+  document.getElementById('chat-file-input').value = '';
+}
+
+function _setChip(name, status) {
+  var chip = document.getElementById('attach-chip');
+  var icon = document.getElementById('attach-chip-icon');
+  var label = document.getElementById('attach-chip-name');
+  chip.style.display = 'flex';
+  label.textContent = name + (status ? '  ' + status : '');
+  icon.className = status === '⟳ analyzing…'
+    ? 'fas fa-circle-notch fa-spin'
+    : status === '✓'
+    ? 'fas fa-check'
+    : 'fas fa-paperclip';
+  icon.style.color = status === '✓' ? '#4ade80' : 'var(--accent)';
+}
+
+async function handleChatAttach(files) {
+  if(!files || !files.length) return;
+  var file = files[0];
+  var name = file.name;
+  var ext  = name.split('.').pop().toLowerCase();
+  var isImg = _IMAGE_EXTS_CHAT.indexOf(ext) >= 0;
+
+  _setChip(name, '⟳ analyzing…');
+  document.getElementById('attach-btn').disabled = true;
+
+  var endpoint = isImg ? '/apps/multimodal_ingest/image' : '/apps/multimodal_ingest/codebase';
+  var form = new FormData();
+  form.append(isImg ? 'file' : 'files', file);
+  form.append('intent', 'analyze and summarize for use as context in chat');
+
+  try {
+    var r = await fetch(endpoint, {method:'POST', body: form});
+    var d = await r.json();
+    if(!r.ok || d.error) throw new Error(d.detail || d.error || 'Analysis failed');
+
+    var a = d.analysis || {};
+    var parts = [];
+    if(isImg) {
+      if(a.plain_summary) parts.push(a.plain_summary);
+      if(a.what_it_does)  parts.push(a.what_it_does);
+      if(a.description && !parts.length) parts.push(a.description);
+    } else {
+      if(a.purpose)     parts.push('Purpose: ' + a.purpose);
+      if(a.description) parts.push(a.description);
+      if(a.components && a.components.length)
+        parts.push('Components: ' + a.components.slice(0,5).join(', '));
+    }
+    var summary = parts.join(' ') || 'File analyzed.';
+    _attachment = { name: name, context: '"' + (d.name || name) + '": ' + summary };
+    _setChip(name, '✓');
+
+    // Pre-fill placeholder to prompt the user
+    var inp = document.getElementById('prompt-input');
+    if(!inp.value.trim()) {
+      inp.placeholder = isImg
+        ? 'Describe what you want to build from this image…'
+        : 'What do you want to do with this code?';
+    }
+  } catch(e) {
+    _clearAttachment();
+    toast('Attachment failed: ' + e.message, false);
+  } finally {
+    document.getElementById('attach-btn').disabled = false;
+    document.getElementById('chat-file-input').value = '';
+  }
+}
+
 function _consBubbleHtml(text) {
   return '<div class="msg-avatar"><i class="fas fa-microchip" style="font-size:.58rem"></i></div>'
     +'<div class="msg-bubble"><div class="msg-body">'+_mdToHtml(text)+'</div></div>';
@@ -1696,27 +1776,37 @@ async function sendMessage() {
   var bid = addMisoBubble('', null, null, true, null);
 
   var ctx = [];
+  if(_attachment) ctx.push('Attached file — ' + _attachment.context);
   if(_currentGoal && _currentGoal.intent) ctx.push('Active goal: "'+_currentGoal.intent.slice(0,150)+'" [status='+(_currentGoal.status||'active')+']');
   if(_prdData && _prdData.bp && _prdData.bp.title) ctx.push('PRD open: "'+_prdData.bp.title+'"');
   if(_goalId) ctx.push('Goal ID: '+_goalId);
 
+  var _abortCtrl = new AbortController();
+  var _abortTimer = setTimeout(function(){ _abortCtrl.abort(); }, 45000);
   try {
     var r = await fetch('/apps/consigliere_agent/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text, context: ctx.join('\n')||null, conversation_id: _consSessionId})
+      body: JSON.stringify({message: text, context: ctx.join('\n')||null, conversation_id: _consSessionId}),
+      signal: _abortCtrl.signal
     });
+    clearTimeout(_abortTimer);
+    if(!r.ok) throw new Error('Server error ' + r.status);
     var d = await r.json();
     if(d.error) throw new Error(d.error);
     if(d.conversation_id) _consSessionId = d.conversation_id;
     var el = document.getElementById(bid);
     if(el) { el.innerHTML = _consBubbleHtml(d.response || 'No response'); scrollThread(); }
     _saveConsSession(text);
+    _clearAttachment();
+    document.getElementById('prompt-input').placeholder = 'Ask MISO — or attach a file and describe what you want to build…';
     loadSessions();
     loadGoals();
   } catch(e) {
-    finalizeBubble(bid, 'Error: '+e.message, 0, [], null);
-    toast('Failed: '+e.message, false);
+    clearTimeout(_abortTimer);
+    var msg = e.name === 'AbortError' ? 'No response in 45s — MISO is busy, try again' : 'Error: ' + e.message;
+    finalizeBubble(bid, msg, 0, [], null);
+    toast(msg, false);
   } finally {
     _generating = false;
     document.getElementById('send-btn').disabled = false;
